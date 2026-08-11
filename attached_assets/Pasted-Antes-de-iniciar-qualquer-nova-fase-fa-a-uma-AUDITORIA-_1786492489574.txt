@@ -1,0 +1,65 @@
+Antes de iniciar qualquer nova fase, faça uma AUDITORIA FINAL da Fase 2.
+
+Não crie novos arquivos, não altere o schema e não implemente endpoints.
+
+Quero apenas verificar dois pontos do relatório:
+
+1. CONTROLE DE MIGRATIONS
+
+Você informou que utiliza `drizzle-orm/migrator`, mas também mencionou uma tabela `schema_migrations`.
+
+Verifique e informe exatamente:
+
+* Qual mecanismo é responsável por controlar as migrations?
+* Existe `schema_migrations` criada pelo projeto?
+* Existe `drizzle.__drizzle_migrations`?
+* Qual delas é efetivamente utilizada pelo comando `pnpm --filter @workspace/db run migrate`?
+* Existe algum mecanismo duplicado ou redundante?
+* Mostre o trecho relevante de `migrate.ts` e explique qual tabela ele utiliza.
+* Confirme que executar `migrate` novamente não reaplica `0001_initial_schema.sql`.
+
+2. TESTE / CLEANUP
+
+Você informou que o cleanup dos testes precisou usar:
+
+`ALTER TABLE ... DISABLE TRIGGER`
+
+Verifique:
+
+* Em quais linhas/arquivo isso existe.
+* Confirme que isso existe SOMENTE no script de testes.
+* Confirme que nenhum código da aplicação normal utiliza DISABLE TRIGGER.
+* Confirme que os triggers append-only continuam permanentemente ativos fora do cleanup de testes.
+* Confirme que `appointment_status_history` e `audit_logs` não podem ser UPDATE/DELETE pela aplicação normal.
+
+3. INTEGRIDADE DOS TRIGGERS
+
+Confirme que estão ativos no banco:
+
+* `set_updated_at()` nas 9 tabelas corretas;
+* `prevent_modification()` em `appointment_status_history`;
+* `prevent_modification()` em `audit_logs`;
+* `prevent_price_at_booking_change()` em `appointments`.
+
+4. NÃO ALTERAR NADA
+
+Esta etapa é exclusivamente de auditoria.
+
+Não faça migration nova.
+Não altere tabelas.
+Não altere constraints.
+Não altere índices.
+Não altere triggers.
+Não altere o seed.
+Não implemente endpoints.
+
+Ao final, apresente somente:
+
+* mecanismo de migration efetivamente utilizado;
+* tabelas de controle existentes;
+* arquivo/trecho responsável pelo migrate;
+* localização do DISABLE TRIGGER no teste;
+* confirmação de que os triggers estão ativos;
+* conclusão: OK ou problema encontrado.
+
+Depois disso, aguarde minha autorização.
