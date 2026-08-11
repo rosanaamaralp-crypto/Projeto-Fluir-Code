@@ -1,0 +1,163 @@
+APROVADO.
+
+A versão revisada do Modelo de Dados — Fase 2 está aprovada para implementação.
+
+Pode prosseguir AGORA exclusivamente com a criação das migrations do banco de dados.
+
+### ESCOPO AUTORIZADO NESTA ETAPA
+
+Implementar:
+
+1. Migration inicial do PostgreSQL com as 14 tabelas aprovadas:
+
+   * roles
+   * users
+   * clients
+   * professionals
+   * addresses
+   * services
+   * professional_services
+   * availability
+   * blocked_periods
+   * resources
+   * appointments
+   * appointment_status_history
+   * notifications
+   * audit_logs
+
+2. Criar todas as PKs, FKs e constraints aprovadas.
+
+3. Implementar:
+
+   * btree_gist;
+   * EXCLUDE de profissional;
+   * EXCLUDE de recurso;
+   * EXCLUDE de cliente;
+   * UNIQUE(client_id) em addresses;
+   * índice UNIQUE em lower(email);
+   * CHECKs de modalidade;
+   * CHECKs de status;
+   * CHECKs de datas/horários;
+   * CHECKs de valores monetários;
+   * demais constraints definidas no modelo aprovado.
+
+4. Criar todos os índices aprovados.
+
+5. Criar o seed inicial das roles:
+
+ADMIN
+PROFESSIONAL
+CLIENT
+
+6. Criar exatamente 5 resources:
+
+Maca 01
+Maca 02
+Maca 03
+Maca 04
+Maca 05
+
+Todos com:
+
+type = MASSAGE_TABLE
+status = ACTIVE
+
+7. Criar a estrutura completa de appointment_status_history, incluindo:
+
+old_start_datetime
+old_end_datetime
+new_start_datetime
+new_end_datetime
+old_resource_id
+new_resource_id
+old_address_id
+new_address_id
+
+8. Garantir que a remarcação preserve o mesmo appointment_id/UUID e seja registrada no histórico.
+
+### REGRAS IMPORTANTES
+
+NÃO implementar ainda:
+
+* CRUD;
+* endpoints;
+* controllers;
+* services de negócio;
+* telas;
+* autenticação;
+* Clerk;
+* notificações funcionais;
+* agenda;
+* lógica completa de disponibilidade;
+* fluxo de agendamento;
+* Home Care;
+* relatórios;
+* dashboards.
+
+Esta etapa é SOMENTE a fundação do banco.
+
+### DECISÃO SOBRE EMAIL
+
+Para o MVP, manter:
+
+* email normalizado para lowercase;
+* UNIQUE INDEX em lower(email);
+* email de usuário INACTIVE continua reservado e não pode ser reutilizado.
+
+Não criar fluxo de reutilização de email nesta fase.
+
+### IMPORTANTE SOBRE A MIGRATION
+
+Antes de executar qualquer alteração no banco:
+
+1. Apresente o nome dos arquivos de migration que serão criados.
+2. Apresente um resumo do SQL/DDL que será aplicado.
+3. Confirme a ordem de criação das tabelas para respeitar as FKs.
+4. Confirme a ordem de criação das constraints EXCLUDE.
+5. Confirme a estratégia de rollback.
+6. Confirme como o seed será idempotente.
+7. Só depois execute as migrations.
+
+### VALIDAÇÃO OBRIGATÓRIA APÓS A MIGRATION
+
+Depois da criação, execute testes automatizados verificando pelo menos:
+
+1. As 14 tabelas existem.
+2. As 3 roles existem.
+3. Exatamente 5 macas existem.
+4. Email case-insensitive funciona.
+5. Um cliente não consegue possuir dois endereços no MVP.
+6. Dois agendamentos do mesmo profissional no mesmo intervalo são rejeitados.
+7. Dois agendamentos do mesmo cliente no mesmo intervalo são rejeitados.
+8. Duas reservas da mesma maca no mesmo intervalo são rejeitadas.
+9. Home Care com maca é rejeitado.
+10. Home Care sem endereço é rejeitado.
+11. Presencial sem maca é rejeitado.
+12. Presencial com endereço é rejeitado.
+13. CANCELLED não bloqueia novo horário.
+14. COMPLETED não bloqueia novo horário.
+15. NO_SHOW não bloqueia novo horário.
+16. O preço_at_booking pode preservar o preço histórico.
+17. As FKs com ON DELETE RESTRICT funcionam.
+18. appointment_status_history permanece append-only.
+
+### NÃO AVANCE PARA A PRÓXIMA FASE
+
+Depois de executar e validar as migrations, pare.
+
+Entregue um relatório contendo:
+
+* migrations criadas;
+* arquivos alterados;
+* tabelas criadas;
+* constraints criadas;
+* índices criados;
+* seeds criados;
+* testes executados;
+* resultado de cada teste;
+* eventuais problemas encontrados;
+* comandos usados para validar.
+
+Não implemente API ou telas até receber nova autorização.
+
+A partir deste momento, considere o Modelo de Dados — Fase 2 como a especificação oficial aprovada do banco do Projeto Fluir da Vida.
