@@ -1,0 +1,102 @@
+Antes de executar a migration, faça uma última revisão técnica do plano apresentado.
+
+A estrutura conceitual está aprovada e quero manter as decisões já definidas na documentação do Projeto Fluir da Vida.
+
+Porém, antes de criar ou modificar qualquer arquivo, valide especificamente os seguintes pontos:
+
+1. `updated_at`
+   Os campos `updated_at` possuem `DEFAULT now()`, mas isso não garante atualização automática. Defina uma estratégia consistente para que `updated_at` seja atualizado em toda alteração de registros relevantes, preferencialmente de forma centralizada e segura. Não deixe essa responsabilidade esquecida para os endpoints futuros.
+
+2. Índices
+   Confirme que a migration final contém TODOS os índices previstos na proposta técnica, além das três EXCLUDE constraints:
+
+* usuários;
+* appointments;
+* availability;
+* blocked_periods;
+* notifications;
+* audit_logs;
+* appointment_status_history;
+* índices UNIQUE funcionais;
+* demais índices definidos no documento.
+
+3. Constraints e enums
+   Confirme que todos os valores definidos na proposta possuem proteção adequada no banco quando isso for responsabilidade do schema, especialmente:
+
+* status de usuários;
+* status de clientes;
+* status de profissionais;
+* status de serviços;
+* modalidades;
+* tipos/status de resources;
+* status de blocked_periods;
+* status de appointments.
+
+4. Integridade dos agendamentos
+   Confirme que estão preservadas todas as regras:
+
+* HOME_CARE exige address_id e não permite resource_id;
+* IN_PERSON exige resource_id e não permite address_id;
+* end_datetime > start_datetime;
+* price_at_booking >= 0;
+* conflito de profissional;
+* conflito de cliente;
+* conflito de maca;
+* bloqueio de profissional;
+* todas as EXCLUDE constraints.
+
+5. Integridade de domínio
+   Confirme que a camada de banco e/ou aplicação impedirá:
+
+* agendar serviço incompatível com a modalidade;
+* profissional sem habilitação para o serviço;
+* endereço pertencente a outro cliente;
+* recurso inexistente/inativo;
+* profissional inativo;
+* cliente inativo;
+* serviço inativo.
+
+6. Histórico
+   Confirme que a criação de um appointment gera obrigatoriamente seu registro inicial em appointment_status_history e que as alterações de status/remarcações preservam o histórico append-only.
+
+7. Preço histórico
+   Confirme que `price_at_booking` será definido pelo backend a partir de `services.price` no momento da criação e não poderá ser recalculado ou alterado posteriormente.
+
+8. Remarcação
+   Manter a decisão já aprovada: remarcação através de UPDATE do mesmo appointment, preservando o UUID e registrando no histórico:
+
+* horário anterior;
+* horário novo;
+* maca anterior/nova quando aplicável;
+* endereço anterior/novo quando aplicável.
+
+9. Seed
+   Confirme que o seed é idempotente e cria exatamente:
+
+* 3 roles;
+* 5 macas;
+  sem criar usuários administrativos fictícios, profissionais ou clientes de teste nesta etapa.
+
+10. Reexecução da migration
+    Confirme que existe uma estratégia segura para impedir execução acidental da mesma migration duas vezes e que uma falha não deixa o banco parcialmente criado.
+
+11. Segurança
+    Confirme que `password_hash` nunca será exposto por DTOs/API e que nenhum token ou senha será incluído em `audit_logs.old_data` ou `new_data`.
+
+12. Documentação
+    Depois da implementação, atualize `replit.md` e crie/atualize a documentação da Fase 2 informando exatamente:
+
+* arquivos criados;
+* migrations executadas;
+* tabelas;
+* índices;
+* constraints;
+* seeds;
+* comandos para executar migration e seed;
+* testes realizados;
+* eventuais decisões que continuem pendentes.
+
+IMPORTANTE:
+Ainda NÃO execute a migration.
+
+Primeiro apresente o resultado dessa revisão técnica e informe se encontrou algum problema ou ponto que precise de decisão. Só depois da minha aprovação explícita você deverá criar/modificar os arquivos.
