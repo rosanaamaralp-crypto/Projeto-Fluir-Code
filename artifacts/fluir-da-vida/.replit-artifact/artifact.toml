@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Projeto Fluir"
+description = "Fundação técnica do Projeto Fluir, uma plataforma web para gestão de atendimentos do Fluir da Vida. Esta primeira etapa contém somente a base de desenvolvimento, sem módulos de negócio."
+version = "1.0.0"
+id = "artifacts/fluir-da-vida"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24405
+
+[services.development]
+run = "pnpm --filter @workspace/fluir-da-vida run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fluir-da-vida", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/fluir-da-vida/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24405"
+BASE_PATH = "/"

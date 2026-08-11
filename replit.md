@@ -1,6 +1,6 @@
-# [Project name]
+# Projeto Fluir
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 
 ## Run & Operate
 
@@ -10,6 +10,8 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm run lint` — check formatting across project source files
+- `pnpm run test` — run foundation tests
 
 ## Stack
 
@@ -22,23 +24,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `docs/` — documentação oficial e decisões da fundação
+- `artifacts/fluir-da-vida/` — frontend React/Vite
+- `artifacts/api-server/` — API Express
+- `lib/api-spec/` — contrato OpenAPI
+- `lib/db/` — camada Drizzle/PostgreSQL, sem schema definitivo na Fase 1
+- `shared/` — espaço reservado para tipos compartilhados
+- `tests/` — testes automatizados da fundação
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- A Fase 1 mantém somente o health check técnico; módulos de negócio aguardam aprovação da próxima fase.
+- O acesso ao banco é criado sob demanda para que a API possa iniciar sem schema definitivo.
+- O contrato OpenAPI é a fonte de verdade para a API e seus clientes gerados.
+- O lint inicial usa Prettier, já disponível no workspace; regras de ESLint ficam para quando houver código de produto.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+O produto será uma plataforma para clientes, profissionais e administradores gerenciarem atendimentos presenciais e Home Care. Esses módulos ainda não foram implementados.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Implementar por fases e aguardar aprovação entre checkpoints.
+- Não inventar regras de negócio nem avançar para módulos não autorizados.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Após alterar `lib/api-spec/openapi.yaml`, executar o codegen antes de usar os tipos gerados.
+- Não criar schema ou migrations definitivas antes da aprovação da Fase 2.
 
 ## Pointers
 

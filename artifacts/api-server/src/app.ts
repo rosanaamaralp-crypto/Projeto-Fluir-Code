@@ -31,4 +31,30 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+app.use((_req, res) => {
+  res.status(404).json({
+    error: {
+      code: "NOT_FOUND",
+      message: "Endpoint não encontrado.",
+    },
+  });
+});
+
+app.use(
+  (
+    err: unknown,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    logger.error({ err }, "Unhandled API error");
+    res.status(500).json({
+      error: {
+        code: "SERVER_ERROR",
+        message: "Ocorreu um erro interno.",
+      },
+    });
+  },
+);
+
 export default app;
