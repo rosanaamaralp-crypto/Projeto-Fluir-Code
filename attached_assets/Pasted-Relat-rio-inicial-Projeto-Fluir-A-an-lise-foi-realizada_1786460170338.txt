@@ -1,0 +1,304 @@
+Relatório inicial — Projeto Fluir
+A análise foi realizada conforme o arquivo REPLIT-PRIMEIRO-PROMPT.md, começando pelo índice e dando prioridade aos Documentos 18, 17, 16, 15, 14 e 13.
+
+Nenhum código ou tela foi criado nesta etapa.
+
+1. Entendimento resumido do sistema
+O Projeto Fluir, descrito nos documentos como Fluir da Vida, será uma plataforma para gestão de atendimentos, incluindo:
+
+clientes;
+profissionais;
+serviços;
+disponibilidade e bloqueios;
+agendamentos;
+atendimentos presenciais;
+Home Care;
+cinco macas;
+cancelamentos e remarcações;
+histórico;
+notificações internas;
+relatórios;
+auditoria.
+Existem três perfis principais:
+
+Administrador: controla a operação geral;
+Profissional: gerencia sua agenda e seus atendimentos;
+Cliente: agenda e acompanha seus próprios atendimentos.
+A regra central é que o backend seja a fonte definitiva da verdade. A interface não poderá decidir sozinha se um horário, profissional ou maca está disponível.
+
+2. Stack recomendada
+Recomendo manter uma arquitetura web TypeScript com:
+
+Frontend: React + Vite;
+Backend: Node.js + Express;
+Banco: PostgreSQL;
+ORM: Drizzle ORM;
+Contratos: OpenAPI;
+Validação: Zod;
+Comunicação frontend/backend: React Query com cliente gerado a partir do OpenAPI;
+Testes: Vitest, testes de integração da API e testes de concorrência;
+Estilos: Design System centralizado com tokens e componentes reutilizáveis.
+Essa escolha é adequada porque:
+
+combina com a estrutura já existente;
+funciona bem no Replit;
+suporta banco relacional;
+facilita validações consistentes;
+permite centralizar as regras críticas de agendamento;
+possibilita geração automática de contratos entre frontend e backend;
+mantém espaço para crescimento futuro.
+3. Arquitetura proposta
+A arquitetura deverá seguir:
+
+Interface
+   ↓
+API
+   ↓
+Serviços de domínio
+   ↓
+Repositórios
+   ↓
+PostgreSQL
+
+Serviços de domínio principais
+AppointmentService
+AvailabilityService
+ResourceService
+NotificationService
+AuditService
+As regras de conflito, duração, disponibilidade, Home Care e reserva de macas devem ficar nesses serviços, e não espalhadas pelas telas.
+
+Módulos previstos
+autenticação;
+usuários;
+clientes;
+profissionais;
+serviços;
+disponibilidade;
+recursos;
+agendamentos;
+notificações;
+relatórios;
+auditoria.
+4. Estrutura inicial proposta
+A estrutura poderá ser organizada da seguinte forma:
+
+docs/
+  documentação oficial do Projeto Fluir
+artifacts/
+  fluir-da-vida/
+    frontend React/Vite
+  api-server/
+    rotas e serviços da API
+lib/
+  api-spec/
+    contratos OpenAPI
+  api-client-react/
+    cliente e hooks gerados
+  api-zod/
+    schemas gerados
+  db/
+    schema, migrations e seed
+tests/
+  unit/
+  integration/
+  concurrency/
+  e2e/
+shared/
+  tipos, enums e utilitários compartilhados
+
+O frontend do produto ainda não será criado nesta fase. A base existente de API e bibliotecas poderá ser aproveitada na etapa de implementação.
+
+5. Banco de dados proposto
+As entidades principais identificadas são:
+
+users;
+roles;
+clients;
+professionals;
+services;
+professional_services;
+addresses;
+availability;
+blocked_periods;
+resources;
+appointments;
+appointment_status_history;
+notifications;
+audit_logs.
+Regras essenciais do banco
+e-mail de usuário com controle de duplicidade;
+relacionamentos por chaves estrangeiras;
+registros históricos preservados;
+preferência por desativação em vez de exclusão;
+índices para consultas de agenda;
+timestamps consistentes;
+timezone operacional definido explicitamente;
+transações para criação, alteração, cancelamento e remarcação de agendamentos.
+Recursos iniciais
+O sistema deverá iniciar com:
+
+Maca 01;
+Maca 02;
+Maca 03;
+Maca 04;
+Maca 05.
+Atendimentos presenciais consomem uma maca. Home Care não consome maca.
+
+6. Autenticação e autorização
+A documentação prevê autenticação com usuário, senha, sessão e perfis.
+
+Para o Replit, recomendo usar Clerk gerenciado pelo Replit para autenticação, mantendo a autorização do negócio no próprio banco da aplicação:
+
+Clerk identifica o usuário
+        ↓
+Banco do Projeto Fluir identifica o perfil
+        ↓
+Backend valida a permissão da operação
+
+Nesse modelo:
+
+o Clerk administra login e sessão;
+o banco mantém o perfil ADMIN, PROFESSIONAL ou CLIENT;
+o backend valida todas as permissões;
+o cliente nunca poderá acessar dados de outro cliente;
+o profissional verá somente os dados necessários à sua atuação;
+a interface nunca será considerada mecanismo de segurança.
+Essa recomendação precisa ser aprovada porque alguns trechos da documentação mencionam uma tabela própria com password_hash.
+
+7. Estratégia de testes
+A qualidade deverá ser validada em camadas.
+
+Testes unitários
+Para:
+
+cálculo de duração;
+sobreposição de horários;
+disponibilidade;
+bloqueios;
+regras de modalidade;
+transições de status;
+seleção de macas.
+Testes de integração
+Para:
+
+login e sessão;
+permissões;
+clientes;
+profissionais;
+serviços;
+disponibilidade;
+agendamentos;
+Home Care;
+cancelamento;
+remarcação;
+histórico;
+auditoria.
+Testes críticos de concorrência
+Devem comprovar que:
+
+dois usuários não reservam o mesmo profissional no mesmo horário;
+dois usuários não reservam a mesma maca simultaneamente;
+cinco atendimentos presenciais podem ocorrer quando há cinco macas;
+o sexto atendimento presencial é rejeitado;
+cliques ou requisições duplicadas não criam dois agendamentos.
+Testes de interface
+desktop;
+notebook;
+tablet;
+celular;
+acessibilidade;
+estados de carregamento, vazio, sucesso e erro;
+navegação por teclado;
+mensagens amigáveis.
+8. Riscos técnicos
+Os principais riscos são:
+
+Concorrência na agenda: exige transações e proteção no banco.
+Timezone: horários incorretos podem causar conflitos e agendamentos inválidos.
+Permissões: proteger apenas a interface não é suficiente.
+Duplicidade: duplo clique ou reenvio de requisição pode duplicar agendamentos.
+Home Care: exige endereço obrigatório e não pode reservar maca.
+Histórico: desativação e cancelamento não podem apagar dados importantes.
+Documentação duplicada: existem dois arquivos referentes ao Documento 06 — Home Care.
+Contratos incompletos: alguns endpoints e campos ainda precisam de padronização.
+Identidade visual: a paleta definitiva e os arquivos oficiais do logotipo ainda não foram fornecidos.
+9. Conflitos e duplicidades encontrados
+1. Autenticação
+A documentação menciona autenticação própria com password_hash, enquanto a recomendação para o Replit é usar autenticação gerenciada.
+
+É necessário escolher entre:
+
+Clerk gerenciado pelo Replit;
+autenticação própria da aplicação.
+2. Status inicial do agendamento
+Há duas possibilidades documentadas:
+
+PENDING → CONFIRMED
+
+ou iniciar diretamente como:
+
+CONFIRMED
+
+Essa decisão afeta API, banco, telas e testes.
+
+3. Pagamentos
+O Documento 10 classifica preço como parte do MVP, mas informa que pagamento online não é obrigatório.
+
+Minha interpretação é:
+
+o serviço terá preço cadastrado;
+não haverá cobrança online no primeiro MVP.
+Essa interpretação precisa ser confirmada.
+
+4. Endereços
+O MVP menciona endereço no cadastro do cliente, enquanto outros documentos já preveem múltiplos endereços e endpoints para gerenciá-los.
+
+É necessário definir se o MVP terá:
+
+apenas um endereço por cliente;
+múltiplos endereços desde o início.
+5. Modalidade do serviço
+O Documento 10 indica que o serviço possui modalidade, mas alguns contratos de API não deixam claro se:
+
+o serviço terá uma modalidade única;
+o serviço poderá aceitar Presencial e Home Care;
+haverá uma tabela específica de compatibilidade.
+6. Cancelamento
+A documentação permite cancelamento por cliente, profissional e administrador, mas não define:
+
+prazo limite para cancelamento;
+necessidade de motivo;
+regras diferentes por perfil;
+possibilidade de cancelar atendimentos já iniciados.
+7. Ordem das fases
+O Documento 17 e o Documento 18 apresentam ordens de implementação diferentes em alguns pontos. Como o índice estabelece o Documento 18 como autoridade operacional superior, a ordem do Documento 18 deverá prevalecer, salvo aprovação diferente.
+
+8. Numeração dos documentos
+A numeração externa dos arquivos não corresponde sempre à numeração interna dos documentos. O índice já registra essa ocorrência e deve continuar sendo usado como referência.
+
+10. Dúvidas que impedem a implementação
+Antes da Fase 0, precisamos confirmar:
+
+Usaremos Clerk gerenciado pelo Replit ou autenticação própria?
+Qual é o timezone oficial da operação?
+O agendamento começa como PENDING ou CONFIRMED?
+O MVP terá um endereço ou múltiplos endereços por cliente?
+O MVP terá preço cadastrado sem pagamento online?
+Um serviço poderá aceitar as duas modalidades ou terá uma modalidade específica?
+Quais são as regras de cancelamento e prazo limite?
+O logotipo e a paleta oficial serão fornecidos antes da implementação visual?
+Recomendação para aprovação
+Minha recomendação é aprovar:
+
+React + Vite;
+Express;
+PostgreSQL;
+Drizzle;
+OpenAPI + Zod;
+Clerk para autenticação;
+autorização baseada em perfil no backend;
+desenvolvimento por fases;
+banco transacional para agenda e macas;
+nenhum pagamento, WhatsApp, mapas ou IA no MVP.
+Aguardo sua aprovação desta análise e as decisões dos pontos bloqueadores antes de iniciar a fundação técnica.
