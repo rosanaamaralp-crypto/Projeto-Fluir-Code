@@ -1,1 +1,14 @@
-export {};
+export { roles } from "./roles.js";
+export { users } from "./users.js";
+export { clients } from "./clients.js";
+export { professionals } from "./professionals.js";
+export { addresses } from "./addresses.js";
+export { services } from "./services.js";
+export { professionalServices } from "./professional-services.js";
+export { availability } from "./availability.js";
+export { blockedPeriods } from "./blocked-periods.js";
+export { resources } from "./resources.js";
+export { appointments } from "./appointments.js";
+export { appointmentStatusHistory } from "./appointment-status-history.js";
+export { notifications } from "./notifications.js";
+export { auditLogs } from "./audit-logs.js";
