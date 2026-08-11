@@ -17,7 +17,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir todas as telas previstas para o sistema e como cada perfil navegará entre elas.
+   Definir todas as telas previstas para o sistema e como cada perfil navegará entre elas.
 
 O documento deverá responder:
 
@@ -31,14 +31,15 @@ O documento deverá responder:
 2. PERFIS
 O sistema terá três visões principais:
 
-  ADMINISTRADOR
-  PROFISSIONAL
-  CLIENTE
+ADMINISTRADOR
+PROFISSIONAL
+CLIENTE
 
 Cada perfil deverá possuir experiência própria.
 
 3. FLUXO GERAL
-```text id="v8y1dy" LOGIN │ ├── ADMINISTRADOR │ ↓ │ DASHBOARD ADMIN │ ├──
+
+````text id="v8y1dy" LOGIN │ ├── ADMINISTRADOR │ ↓ │ DASHBOARD ADMIN │ ├──
 PROFISSIONAL │ ↓ │ DASHBOARD PROFISSIONAL │ └── CLIENTE ↓ DASHBOARD CLIENTE
 
   ---
@@ -936,3 +937,4 @@ A necessidade deverá estar registrada em um dos documentos oficiais.
       O mapa de telas transforma a arquitetura em experiência de uso.
 
                                                  21
+````

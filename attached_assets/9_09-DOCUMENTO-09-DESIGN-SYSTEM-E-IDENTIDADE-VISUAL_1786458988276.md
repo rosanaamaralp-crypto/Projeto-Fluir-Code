@@ -17,7 +17,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: ALTA
 
 1. OBJETIVO
-Definir a linguagem visual do sistema Fluir da Vida Oficial.
+   Definir a linguagem visual do sistema Fluir da Vida Oficial.
 
 O sistema deverá transmitir:
 
@@ -33,20 +33,20 @@ A interface não deverá parecer um sistema hospitalar excessivamente frio nem u
 de agendamento.
 
 2. REFERÊNCIA DE IDENTIDADE
-A identidade visual deverá partir da comunicação oficial do Espaço Fluir da Vida e manter coerência
-entre:
+   A identidade visual deverá partir da comunicação oficial do Espaço Fluir da Vida e manter coerência
+   entre:
 
-     • site;
-     • redes sociais;
-     • agendamento;
-     • sistema administrativo;
-     • comunicação com clientes.
+   • site;
+   • redes sociais;
+   • agendamento;
+   • sistema administrativo;
+   • comunicação com clientes.
 
 A página oficial de links apresenta o ecossistema digital da marca, incluindo agendamento e seus
 principais canais.
 
 3. PRINCÍPIO VISUAL
-A interface deverá seguir:
+   A interface deverá seguir:
 
                                                      1
 
@@ -56,7 +56,7 @@ O cliente deverá sentir que está utilizando o ambiente digital do próprio Flu
 software terceirizado.
 
 4. LOGOTIPO
-O logotipo oficial deverá ser utilizado sempre que disponível em arquivo adequado.
+   O logotipo oficial deverá ser utilizado sempre que disponível em arquivo adequado.
 
 Formatos preferenciais:
 
@@ -85,18 +85,18 @@ Nenhum:
 deverá encostar no logotipo.
 
 6. VARIAÇÕES
-Preparar suporte para:
+   Preparar suporte para:
 
-     • logo principal;
-     • logo para fundo claro;
-     • logo para fundo escuro;
-     • versão reduzida, quando existir.
+   • logo principal;
+   • logo para fundo claro;
+   • logo para fundo escuro;
+   • versão reduzida, quando existir.
 
                                                     2
 
 7. PALETA DE CORES
-A paleta definitiva deverá ser extraída/confirmada a partir dos materiais oficiais da marca antes da
-implementação final.
+   A paleta definitiva deverá ser extraída/confirmada a partir dos materiais oficiais da marca antes da
+   implementação final.
 
 Estrutura prevista:
 
@@ -182,17 +182,17 @@ Para:
 Essas cores devem permanecer visualmente distinguíveis da paleta institucional.
 
 9. STATUS DOS AGENDAMENTOS
-Padrão visual:
+   Padrão visual:
 
-  CONFIRMADO
-  CONCLUÍDO
-  PENDENTE
-  CANCELADO
+CONFIRMADO
+CONCLUÍDO
+PENDENTE
+CANCELADO
 
                                                   4
 
-  EM ATENDIMENTO
-  AUSENTE
+EM ATENDIMENTO
+AUSENTE
 
 Cada status deverá possuir:
 
@@ -203,7 +203,7 @@ Cada status deverá possuir:
 Nunca utilizar somente cor para comunicar o status.
 
 10. MODALIDADES
-PRESENCIAL
+    PRESENCIAL
 
 Utilizar um indicador visual relacionado ao espaço físico.
 
@@ -213,32 +213,32 @@ Utilizar indicador visual relacionado a atendimento externo/casa.
 
 Exemplo conceitual:
 
-  📍 Presencial
-  🏠 Home Care
+📍 Presencial
+🏠 Home Care
 
 Os ícones finais deverão ser definidos pelo Design System.
 
 11. MACAS
-A visualização administrativa deverá possuir estados claros:
+    A visualização administrativa deverá possuir estados claros:
 
-  Disponível
-  Ocupada
-  Bloqueada
+Disponível
+Ocupada
+Bloqueada
 
 Exemplo:
 
-  Maca 01      Disponível
-  Maca 02      Ocupada
-  Maca 03      Ocupada
+Maca 01 Disponível
+Maca 02 Ocupada
+Maca 03 Ocupada
 
                                                     5
 
-  Maca 04      Disponível
-  Maca 05      Bloqueada
+Maca 04 Disponível
+Maca 05 Bloqueada
 
 12. TIPOGRAFIA
-O sistema deverá utilizar uma família tipográfica moderna, altamente legível e com excelente suporte
-para português.
+    O sistema deverá utilizar uma família tipográfica moderna, altamente legível e com excelente suporte
+    para português.
 
 Deverá possuir pelo menos:
 
@@ -250,28 +250,28 @@ Deverá possuir pelo menos:
 Evitar excesso de pesos.
 
 13. HIERARQUIA TIPOGRÁFICA
-Estrutura:
+    Estrutura:
 
-  H1
-  Página
+H1
+Página
 
-  H2
-  Seção
+H2
+Seção
 
-  H3
-  Subseção
+H3
+Subseção
 
-  Body
-  Texto principal
+Body
+Texto principal
 
-  Small
-  Informações auxiliares
+Small
+Informações auxiliares
 
-  Caption
-  Informações secundárias
+Caption
+Informações secundárias
 
 14. BOTÕES
-Os botões deverão possuir hierarquia.
+    Os botões deverão possuir hierarquia.
 
                                                   6
 
@@ -312,23 +312,23 @@ Exemplos:
 Não utilizar múltiplos botões primários competindo visualmente na mesma tela.
 
 16. FORMULÁRIOS
-Campos deverão possuir:
+    Campos deverão possuir:
 
-     • label;
-     • campo;
-     • estado normal;
-     • foco;
-     • erro;
+    • label;
+    • campo;
+    • estado normal;
+    • foco;
+    • erro;
 
                                                     7
 
-      • preenchido;
-      • desabilitado.
+    • preenchido;
+    • desabilitado.
 
 Nunca depender somente do placeholder para identificar o campo.
 
 17. MENSAGENS DE ERRO
-As mensagens deverão ser humanas.
+    As mensagens deverão ser humanas.
 
 Evitar:
 
@@ -352,13 +352,13 @@ Voltar
 Cancelar agendamento
 
 19. CARDS
-Cards serão utilizados principalmente para:
+    Cards serão utilizados principalmente para:
 
-      • próximo atendimento;
-      • indicadores;
-      • macas;
-      • profissionais;
-      • serviços.
+    • próximo atendimento;
+    • indicadores;
+    • macas;
+    • profissionais;
+    • serviços.
 
 Não utilizar cards para absolutamente tudo.
 
@@ -374,7 +374,7 @@ O dashboard deverá priorizar:
 Evitar excesso de gráficos no MVP.
 
 21. AGENDA
-A agenda é uma das principais interfaces do sistema.
+    A agenda é uma das principais interfaces do sistema.
 
 Deverá possuir:
 
@@ -423,26 +423,26 @@ O cliente não deverá visualizar informações operacionais desnecessárias.
 
 Exemplo:
 
-  15/08
-  14:00
+15/08
+14:00
 
-  Drenagem
-  Ana
+Drenagem
+Ana
 
-  Presencial
+Presencial
 
 25. MACAS — VISUAL
-A área administrativa poderá apresentar as cinco macas como recursos independentes.
+    A área administrativa poderá apresentar as cinco macas como recursos independentes.
 
-  ┌──────────┐
-  │ MACA 01     │
-  │ Livre       │
-  └──────────┘
+┌──────────┐
+│ MACA 01 │
+│ Livre │
+└──────────┘
 
-  ┌──────────┐
-  │ MACA 02     │
-  │ Ocupada     │
-  └──────────┘
+┌──────────┐
+│ MACA 02 │
+│ Ocupada │
+└──────────┘
 
                                                   10
 
@@ -451,22 +451,22 @@ Home Care deverá ser reconhecido rapidamente na agenda.
 
 Exemplo:
 
-  14:00
-  Maria Silva
-  Drenagem
-  🏠 Home Care
+14:00
+Maria Silva
+Drenagem
+🏠 Home Care
 
 27. PRESENCIAL — VISUAL
-Exemplo:
+    Exemplo:
 
-  15:00
-  João Silva
-  Atendimento
-  📍 Fluir da Vida
-  Maca 03
+15:00
+João Silva
+Atendimento
+📍 Fluir da Vida
+Maca 03
 
 28. ÍCONES
-Utilizar uma única biblioteca de ícones no sistema.
+    Utilizar uma única biblioteca de ícones no sistema.
 
 Não misturar estilos diferentes.
 
@@ -483,19 +483,19 @@ Exemplo:
 
                                                       11
 
-  4
-  8
-  12
-  16
-  24
-  32
-  48
-  64
+4
+8
+12
+16
+24
+32
+48
+64
 
 Os valores poderão ser adaptados durante a implementação.
 
 30. BORDAS
-Evitar excesso de bordas.
+    Evitar excesso de bordas.
 
 Cards e áreas deverão utilizar principalmente:
 
@@ -519,23 +519,23 @@ Utilizar sombras discretas.
 A interface não deverá parecer excessivamente "3D".
 
 33. TABELAS
-Tabelas deverão ser utilizadas principalmente no ambiente administrativo.
+    Tabelas deverão ser utilizadas principalmente no ambiente administrativo.
 
                                                  12
 
 Exemplo:
 
-  Cliente | Serviço | Profissional | Data | Status
+Cliente | Serviço | Profissional | Data | Status
 
 No celular, deverão ser adaptadas ou transformadas em cards/listas.
 
 34. FILTROS
-Filtros deverão ser simples e organizados.
+    Filtros deverão ser simples e organizados.
 
 Não apresentar dez filtros abertos simultaneamente em telas pequenas.
 
 35. NAVEGAÇÃO
-Desktop:
+    Desktop:
 
 menu lateral
 
@@ -544,16 +544,16 @@ Mobile:
 menu inferior ou menu compacto, conforme contexto.
 
 36. DASHBOARD MOBILE
-No celular:
+    No celular:
 
-     • prioridade para próximo atendimento;
-     • ações principais;
-     • agenda do dia.
+    • prioridade para próximo atendimento;
+    • ações principais;
+    • agenda do dia.
 
 Informações secundárias deverão ficar abaixo.
 
 37. RESPONSIVIDADE
-Breakpoints deverão ser definidos de forma consistente.
+    Breakpoints deverão ser definidos de forma consistente.
 
 A interface não deverá simplesmente "encolher".
 
@@ -577,12 +577,12 @@ Toda operação que depender do backend deverá possuir estado de carregamento.
 
 Exemplo:
 
-  Confirmando agendamento...
+Confirmando agendamento...
 
 Não deixar o usuário sem resposta.
 
 40. ESTADO VAZIO
-Quando não houver dados:
+    Quando não houver dados:
 
 Não mostrar apenas uma tela vazia.
 
@@ -595,9 +595,9 @@ E, quando aplicável:
 Agendar atendimento
 
 41. ESTADO DE ERRO
-Exemplo:
+    Exemplo:
 
-       Não conseguimos carregar sua agenda.
+    Não conseguimos carregar sua agenda.
 
                                                14
 
@@ -606,60 +606,60 @@ Ações:
 Tentar novamente
 
 42. ESTADO OFFLINE / CONEXÃO
-O sistema deverá estar preparado para falhas de conexão.
+    O sistema deverá estar preparado para falhas de conexão.
 
 Não confirmar uma operação localmente como se tivesse sido salva quando o backend não confirmou.
 
 43. IDENTIDADE ENTRE SITE E SISTEMA
-O sistema deverá manter coerência com a presença digital do Fluir da Vida.
+    O sistema deverá manter coerência com a presença digital do Fluir da Vida.
 
 A página oficial de links funciona como ponto de entrada para os canais digitais da marca, portanto o
 sistema de agendamento deverá parecer parte do mesmo ecossistema.
 
 44. TOM VISUAL
-O sistema deverá evitar aparência:
+    O sistema deverá evitar aparência:
 
-     • excessivamente corporativa;
-     • hospitalar;
-     • agressiva;
-     • tecnológica demais;
-     • infantil.
+    • excessivamente corporativa;
+    • hospitalar;
+    • agressiva;
+    • tecnológica demais;
+    • infantil.
 
 Buscar:
 
 acolhedor + profissional + limpo + moderno.
 
 45. FOTOGRAFIA E IMAGENS
-Quando forem utilizadas imagens:
+    Quando forem utilizadas imagens:
 
-     • priorizar materiais oficiais;
-     • evitar imagens genéricas incompatíveis com a marca;
-     • manter consistência visual;
-     • não sobrecarregar telas operacionais.
+    • priorizar materiais oficiais;
+    • evitar imagens genéricas incompatíveis com a marca;
+    • manter consistência visual;
+    • não sobrecarregar telas operacionais.
 
                                                   15
 
 46. ILUSTRAÇÕES
-Ilustrações poderão ser utilizadas em:
+    Ilustrações poderão ser utilizadas em:
 
-     • estados vazios;
-     • onboarding;
-     • páginas institucionais.
+    • estados vazios;
+    • onboarding;
+    • páginas institucionais.
 
 Não são necessárias em todas as telas.
 
 47. MICROINTERAÇÕES
-Podem existir animações discretas para:
+    Podem existir animações discretas para:
 
-     • confirmação;
-     • abertura de modal;
-     • mudança de estado;
-     • carregamento.
+    • confirmação;
+    • abertura de modal;
+    • mudança de estado;
+    • carregamento.
 
 Evitar animações que atrasem tarefas.
 
 48. EXPERIÊNCIA DE AGENDAMENTO
-O agendamento deverá ser a experiência mais importante do sistema.
+    O agendamento deverá ser a experiência mais importante do sistema.
 
 Objetivo:
 
@@ -703,23 +703,23 @@ As propriedades visuais deverão ser centralizadas em tokens.
 
 Exemplo conceitual:
 
-  colors.primary
-  colors.secondary
-  colors.background
-  colors.surface
-  colors.text
-  colors.success
-  colors.warning
-  colors.error
+colors.primary
+colors.secondary
+colors.background
+colors.surface
+colors.text
+colors.success
+colors.warning
+colors.error
 
-  spacing.xs
-  spacing.sm
-  spacing.md
-  spacing.lg
+spacing.xs
+spacing.sm
+spacing.md
+spacing.lg
 
-  radius.sm
-  radius.md
-  radius.lg
+radius.sm
+radius.md
+radius.lg
 
 Os valores definitivos deverão ser configurados conforme a identidade visual oficial.
 
@@ -728,39 +728,39 @@ Os valores definitivos deverão ser configurados conforme a identidade visual of
 52. NÃO DUPLICAR ESTILOS
 O Agent não deverá criar:
 
-  ButtonGreen
-  GreenButton
-  PrimaryGreenButton
-  ConfirmButton
+ButtonGreen
+GreenButton
+PrimaryGreenButton
+ConfirmButton
 
 quando todos representam o mesmo componente.
 
 Deverá existir:
 
-  Button variant="primary"
+Button variant="primary"
 
 53. DESIGN SYSTEM E BACKLOG
-Novos componentes visuais deverão ser adicionados ao Design System quando forem reutilizáveis.
+    Novos componentes visuais deverão ser adicionados ao Design System quando forem reutilizáveis.
 
 Não transformar cada nova tela em uma coleção de estilos isolados.
 
 54. REGRA PARA PROTÓTIPOS
-Todo protótipo futuro deverá indicar:
+    Todo protótipo futuro deverá indicar:
 
-  TELA:
-  PERFIL:
-  OBJETIVO:
-  ORIGEM:
-  AÇÕES:
+TELA:
+PERFIL:
+OBJETIVO:
+ORIGEM:
+AÇÕES:
 
 Exemplo:
 
-  TELA: Novo Agendamento
-  PERFIL: Cliente
-  OBJETIVO: Criar atendimento
-  ORIGEM: Dashboard
-  AÇÕES: Selecionar serviço, modalidade, profissional,
-  data e horário
+TELA: Novo Agendamento
+PERFIL: Cliente
+OBJETIVO: Criar atendimento
+ORIGEM: Dashboard
+AÇÕES: Selecionar serviço, modalidade, profissional,
+data e horário
 
                                                  18
 
@@ -782,23 +782,23 @@ ADMINISTRADOR — NOVO AGENDAMENTO
 Nunca deixar essa informação implícita.
 
 56. REGRA PARA O REPLIT AGENT
-Antes de criar qualquer componente:
+    Antes de criar qualquer componente:
 
-     1. consultar este Design System;
-     2. verificar se o componente já existe;
-     3. reutilizar o componente existente;
-     4. utilizar tokens;
-     5. manter responsividade;
-     6. manter acessibilidade;
-     7. não inventar nova identidade visual.
+    1.  consultar este Design System;
+    2.  verificar se o componente já existe;
+    3.  reutilizar o componente existente;
+    4.  utilizar tokens;
+    5.  manter responsividade;
+    6.  manter acessibilidade;
+    7.  não inventar nova identidade visual.
 
 57. IDENTIDADE VISUAL — REGRA FINAL
-A identidade visual deverá ser:
+    A identidade visual deverá ser:
 
-       reconhecível como Fluir da Vida mesmo sem o usuário visualizar o endereço do site.
+    reconhecível como Fluir da Vida mesmo sem o usuário visualizar o endereço do site.
 
 58. PRINCÍPIO FINAL
-O sistema deverá parecer:
+    O sistema deverá parecer:
 
 Fluir da Vida primeiro.
 

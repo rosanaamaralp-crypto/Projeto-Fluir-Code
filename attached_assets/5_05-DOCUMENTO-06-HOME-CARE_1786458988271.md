@@ -17,15 +17,15 @@ Status: Regra oficial do sistema
 Prioridade: ALTA
 
 1. OBJETIVO
-Permitir que profissionais do Fluir da Vida Oficial realizem atendimentos fora do espaço físico,
-mantendo a mesma organização da agenda utilizada nos atendimentos presenciais.
+   Permitir que profissionais do Fluir da Vida Oficial realizem atendimentos fora do espaço físico,
+   mantendo a mesma organização da agenda utilizada nos atendimentos presenciais.
 
 O Home Care deverá fazer parte da agenda principal.
 
 Não será criado um sistema separado.
 
 2. MODALIDADES DE ATENDIMENTO
-O sistema terá inicialmente duas modalidades:
+   O sistema terá inicialmente duas modalidades:
 
 PRESENCIAL
 
@@ -40,10 +40,10 @@ Atendimento realizado no endereço do cliente.
 Não utiliza maca.
 
 3. REGRA PRINCIPAL
-Todo agendamento deverá possuir uma modalidade:
+   Todo agendamento deverá possuir uma modalidade:
 
-  IN_PERSON
-  HOME_CARE
+IN_PERSON
+HOME_CARE
 
 A modalidade deverá ser definida no momento da criação do agendamento.
 
@@ -52,7 +52,7 @@ A modalidade deverá ser definida no momento da criação do agendamento.
 4. ATENDIMENTO PRESENCIAL
 Quando:
 
-  modality = IN_PERSON
+modality = IN_PERSON
 
 o sistema deverá:
 
@@ -65,7 +65,7 @@ o sistema deverá:
 5. ATENDIMENTO HOME CARE
 Quando:
 
-  modality = HOME_CARE
+modality = HOME_CARE
 
 o sistema deverá:
 
@@ -89,7 +89,8 @@ Home Care
                                                     2
 
 7. FLUXO PRESENCIAL
-```text id="5j9z1h" Novo agendamento ↓ Cliente ↓ Serviço ↓ Presencial ↓ Data ↓ Horário ↓ Sistema
+
+````text id="5j9z1h" Novo agendamento ↓ Cliente ↓ Serviço ↓ Presencial ↓ Data ↓ Horário ↓ Sistema
 encontra maca ↓ Confirmar
 
   ---
@@ -559,3 +560,4 @@ O Home Care deverá ser:
       evoluir para uma gestão inteligente de deslocamentos.
 
                                                13
+````

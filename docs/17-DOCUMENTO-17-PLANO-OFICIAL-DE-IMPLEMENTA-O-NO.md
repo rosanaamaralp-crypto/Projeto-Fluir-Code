@@ -18,7 +18,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: MÁXIMA
 
 1. OBJETIVO
-Transformar toda a documentação do Fluir da Vida em um sistema funcional desenvolvido no Replit.
+   Transformar toda a documentação do Fluir da Vida em um sistema funcional desenvolvido no Replit.
 
 Este documento define:
 
@@ -36,110 +36,110 @@ Este documento define:
 NÃO construir o sistema inteiro de uma vez.
 O desenvolvimento deverá ocorrer em etapas.
 
-  DOCUMENTAÇÃO
-        ↓
-  FUNDAÇÃO
-          ↓
-  BANCO
-        ↓
-  AUTENTICAÇÃO
-        ↓
-  USUÁRIOS
-        ↓
-  SERVIÇOS
-          ↓
+DOCUMENTAÇÃO
+↓
+FUNDAÇÃO
+↓
+BANCO
+↓
+AUTENTICAÇÃO
+↓
+USUÁRIOS
+↓
+SERVIÇOS
+↓
 
                                                  1
 
-  AGENDA
-        ↓
-  RECURSOS
-        ↓
-  DASHBOARDS
-        ↓
-  RELATÓRIOS
-        ↓
-  TESTES
-        ↓
-  PRODUÇÃO
+AGENDA
+↓
+RECURSOS
+↓
+DASHBOARDS
+↓
+RELATÓRIOS
+↓
+TESTES
+↓
+PRODUÇÃO
 
 3. PRINCÍPIO DO DESENVOLVIMENTO
-Cada etapa deverá:
+   Cada etapa deverá:
 
-    1. ser implementada;
-    2. ser testada;
-    3. ser revisada;
-    4. ser aprovada;
-    5. somente então liberar a próxima.
+   1. ser implementada;
+   2. ser testada;
+   3. ser revisada;
+   4. ser aprovada;
+   5. somente então liberar a próxima.
 
 4. DOCUMENTOS DE REFERÊNCIA
-O Replit Agent deverá considerar como documentos oficiais:
+   O Replit Agent deverá considerar como documentos oficiais:
 
-  Documento 01
-  Visão do sistema
+Documento 01
+Visão do sistema
 
-  Documento 02
-  Escopo
+Documento 02
+Escopo
 
-  Documento 03
-  MVP
+Documento 03
+MVP
 
-  Documento 04
-  Backlog
+Documento 04
+Backlog
 
-  Documento 05
-  Fluxos
+Documento 05
+Fluxos
 
-  Documento 06
-  Perfis e permissões
+Documento 06
+Perfis e permissões
 
-  Documento 07
+Documento 07
 
                                                  2
 
-  Regras de agendamento
+Regras de agendamento
 
-  Documento 08
-  Regras de capacidade
+Documento 08
+Regras de capacidade
 
-  Documento 09
-  Design System
+Documento 09
+Design System
 
-  Documento 10
-  Telas
+Documento 10
+Telas
 
-  Documento 11
-  Experiência do usuário
+Documento 11
+Experiência do usuário
 
-  Documento 12
-  Documento Mestre
+Documento 12
+Documento Mestre
 
-  Documento 13
-  Arquitetura Técnica
+Documento 13
+Arquitetura Técnica
 
-  Documento 14
-  Regras de Negócio
+Documento 14
+Regras de Negócio
 
-  Documento 15
-  Mapa de Telas
+Documento 15
+Mapa de Telas
 
-  Documento 16
-  API e Contratos
+Documento 16
+API e Contratos
 
 5. FASE 0 — PREPARAÇÃO
-Objetivo
-Preparar o projeto no Replit antes de escrever funcionalidades.
+   Objetivo
+   Preparar o projeto no Replit antes de escrever funcionalidades.
 
 Atividades
-     • criar projeto;
-     • definir stack;
-     • configurar ambiente;
-     • configurar banco;
-     • configurar variáveis;
-     • criar estrutura de pastas;
-     • configurar lint;
-     • configurar testes;
-     • configurar migrations.
+• criar projeto;
+• definir stack;
+• configurar ambiente;
+• configurar banco;
+• configurar variáveis;
+• criar estrutura de pastas;
+• configurar lint;
+• configurar testes;
+• configurar migrations.
 
                                                    3
 
@@ -156,29 +156,29 @@ Não avançar enquanto:
 7. FASE 1 — BANCO DE DADOS
 Criar inicialmente:
 
-  users
-  roles
-  clients
-  professionals
-  services
-  professional_services
-  addresses
-  availability
-  blocked_periods
-  resources
-  appointments
-  appointment_status_history
-  notifications
-  audit_logs
+users
+roles
+clients
+professionals
+services
+professional_services
+addresses
+availability
+blocked_periods
+resources
+appointments
+appointment_status_history
+notifications
+audit_logs
 
 8. SEED INICIAL
-Criar:
+   Criar:
 
-  1 administrador
-  1 profissional
-  1 cliente
-  5 macas
-  serviços de teste
+1 administrador
+1 profissional
+1 cliente
+5 macas
+serviços de teste
 
                                            4
 
@@ -205,18 +205,18 @@ Implementar:
 11. AUTORIZAÇÃO
 Implementar:
 
-  ADMIN
-  PROFESSIONAL
-  CLIENT
+ADMIN
+PROFESSIONAL
+CLIENT
 
 12. CHECKPOINT 2
-Testar:
+    Testar:
 
-  ADMIN → acesso administrativo
+ADMIN → acesso administrativo
 
-  PROFESSIONAL → acesso profissional
+PROFESSIONAL → acesso profissional
 
-  CLIENT → acesso cliente
+CLIENT → acesso cliente
 
 E principalmente:
 
@@ -266,35 +266,35 @@ Implementar:
 16. CHECKPOINT 4
 Testar:
 
-  Serviço ativo → aparece
+Serviço ativo → aparece
 
-  Serviço inativo → não aparece
+Serviço inativo → não aparece
 
 17. FASE 5 — DISPONIBILIDADE
-Implementar:
+    Implementar:
 
-      • horários do profissional;
-      • dias;
-      • horários;
-      • bloqueios.
+    • horários do profissional;
+    • dias;
+    • horários;
+    • bloqueios.
 
 18. CHECKPOINT 5
-Testar:
+    Testar:
 
-  Profissional disponível
-          ↓
-  horário aparece
+Profissional disponível
+↓
+horário aparece
 
-  Profissional bloqueado
-          ↓
-  horário não aparece
+Profissional bloqueado
+↓
+horário não aparece
 
 19. FASE 6 — MOTOR DE DISPONIBILIDADE
-Esta é uma etapa crítica.
+    Esta é uma etapa crítica.
 
 Criar serviço centralizado:
 
-  AvailabilityService
+AvailabilityService
 
 Ele deverá calcular horários possíveis.
 
@@ -340,14 +340,14 @@ Resultado:
 21. FASE 7 — RECURSOS
 Criar cinco macas:
 
-  Maca 01
-  Maca 02
-  Maca 03
+Maca 01
+Maca 02
+Maca 03
 
                                    8
 
-  Maca 04
-  Maca 05
+Maca 04
+Maca 05
 
 Implementar:
 
@@ -359,7 +359,7 @@ Implementar:
 22. CHECKPOINT 7
 Teste obrigatório:
 
-  5 atendimentos simultâneos
+5 atendimentos simultâneos
 
 Resultado:
 
@@ -372,7 +372,7 @@ Sexto atendimento:
 23. FASE 8 — MOTOR DE AGENDAMENTO
 Criar:
 
-  AppointmentService
+AppointmentService
 
 Este serviço deverá centralizar:
 
@@ -451,20 +451,20 @@ Implementar:
 27. CHECKPOINT 9
 Teste:
 
-  Agendamento A
-  10:00
-  Maca 01
+Agendamento A
+10:00
+Maca 01
 
-  Remarcar
-  para 14:00
+Remarcar
+para 14:00
 
-  Resultado:
+Resultado:
 
-  10:00 → liberado
-  14:00 → reservado
+10:00 → liberado
+14:00 → reservado
 
 28. FASE 11 — TELAS ADMINISTRATIVAS
-Construir:
+    Construir:
 
     1. Dashboard;
     2. Agenda;
@@ -479,42 +479,42 @@ Construir:
                                       11
 
 29. CHECKPOINT 10
-Verificar:
+    Verificar:
 
-       • navegação;
-       • permissões;
-       • dados reais;
-       • filtros;
-       • estados vazios;
-       • erros;
-       • responsividade.
+    • navegação;
+    • permissões;
+    • dados reais;
+    • filtros;
+    • estados vazios;
+    • erros;
+    • responsividade.
 
 30. FASE 12 — TELAS PROFISSIONAIS
-Construir:
+    Construir:
 
-      1. Dashboard;
-      2. Minha Agenda;
-      3. Atendimento;
-      4. Clientes;
-      5. Disponibilidade;
-      6. Bloqueios;
-      7. Perfil;
-      8. Notificações.
+    1. Dashboard;
+    2. Minha Agenda;
+    3. Atendimento;
+    4. Clientes;
+    5. Disponibilidade;
+    6. Bloqueios;
+    7. Perfil;
+    8. Notificações.
 
 31. CHECKPOINT 11
-Testar fluxo:
+    Testar fluxo:
 
-  LOGIN
-  ↓
-  DASHBOARD
-  ↓
-  AGENDA
-  ↓
-  ATENDIMENTO
-  ↓
-  INICIAR
-  ↓
-  CONCLUIR
+LOGIN
+↓
+DASHBOARD
+↓
+AGENDA
+↓
+ATENDIMENTO
+↓
+INICIAR
+↓
+CONCLUIR
 
                             12
 
@@ -532,24 +532,24 @@ Construir:
 33. FLUXO PRINCIPAL
 Testar:
 
-  LOGIN
-  ↓
-  NOVO AGENDAMENTO
-  ↓
-  SERVIÇO
-  ↓
-  MODALIDADE
-  ↓
-  PROFISSIONAL
-  ↓
-  DATA
-  ↓
-  HORÁRIO
-  ↓
-  CONFIRMAÇÃO
+LOGIN
+↓
+NOVO AGENDAMENTO
+↓
+SERVIÇO
+↓
+MODALIDADE
+↓
+PROFISSIONAL
+↓
+DATA
+↓
+HORÁRIO
+↓
+CONFIRMAÇÃO
 
 34. CHECKPOINT 12
-Testar como cliente real.
+    Testar como cliente real.
 
 O fluxo deverá ser simples e sem informações técnicas.
 
@@ -588,60 +588,60 @@ E:
 Implementar indicadores reais.
 
 38. ADMIN
-Indicadores:
+    Indicadores:
 
-       • hoje;
-       • próximos;
+    • hoje;
+    • próximos;
 
                                  14
 
-      • concluídos;
-      • cancelados;
-      • Home Care;
-      • ocupação.
+    • concluídos;
+    • cancelados;
+    • Home Care;
+    • ocupação.
 
 39. PROFISSIONAL
-Indicadores:
+    Indicadores:
 
-      • atendimentos;
-      • agenda;
-      • próximo atendimento.
+    • atendimentos;
+    • agenda;
+    • próximo atendimento.
 
 40. CLIENTE
-Indicadores:
+    Indicadores:
 
-      • próximo atendimento;
-      • próximos agendamentos;
-      • histórico.
+    • próximo atendimento;
+    • próximos agendamentos;
+    • histórico.
 
 41. FASE 16 — RELATÓRIOS
-Implementar:
+    Implementar:
 
-      • atendimentos;
-      • cancelamentos;
-      • ausência;
-      • Home Care;
-      • ocupação;
-      • recursos.
+    • atendimentos;
+    • cancelamentos;
+    • ausência;
+    • Home Care;
+    • ocupação;
+    • recursos.
 
 42. FASE 17 — AUDITORIA
-Implementar logs administrativos.
+    Implementar logs administrativos.
 
 Testar:
 
-  Usuário
-  ↓
-  Ação
+Usuário
+↓
+Ação
 
                                     15
 
-  ↓
-  Registro
-  ↓
-  Data/Hora
+↓
+Registro
+↓
+Data/Hora
 
 43. FASE 18 — NOTIFICAÇÕES
-Implementar inicialmente notificações internas.
+    Implementar inicialmente notificações internas.
 
 Exemplos:
 
@@ -691,110 +691,108 @@ Home Care
 45. TESTE CRÍTICO DE CONCORRÊNCIA
 Simular:
 
-  Cliente A
-  +
-  Cliente B
-  ↓
-  mesmo profissional
-  +
-  mesmo horário
+Cliente A +
+Cliente B
+↓
+mesmo profissional +
+mesmo horário
 
 Somente um deverá conseguir reservar.
 
 46. TESTE DE CONCORRÊNCIA DAS MACAS
-Simular seis solicitações simultâneas.
+    Simular seis solicitações simultâneas.
 
 Resultado:
 
-  5 → sucesso
-  1 → conflito
+5 → sucesso
+1 → conflito
 
 47. FASE 20 — SEGURANÇA
-Revisar:
+    Revisar:
 
-     • autenticação;
-     • autorização;
-     • sessões;
-     • senhas;
-     • variáveis;
-     • exposição de dados;
-     • APIs;
-     • logs.
+    • autenticação;
+    • autorização;
+    • sessões;
+    • senhas;
+    • variáveis;
+    • exposição de dados;
+    • APIs;
+    • logs.
 
                                          17
 
 48. FASE 21 — PERFORMANCE
-Avaliar:
+    Avaliar:
 
-      • consultas;
-      • índices;
-      • agenda;
-      • dashboard;
-      • paginação;
-      • carregamento.
+    • consultas;
+    • índices;
+    • agenda;
+    • dashboard;
+    • paginação;
+    • carregamento.
 
 49. FASE 22 — RESPONSIVIDADE
-Testar:
+    Testar:
 
-  Desktop
-  Notebook
-  Tablet
-  Celular
+Desktop
+Notebook
+Tablet
+Celular
 
 50. FASE 23 — PREPARAÇÃO PARA PRODUÇÃO
-Checklist:
+    Checklist:
 
-  Banco de produção
-  Variáveis
-  Domínio
-  HTTPS
-  Backup
-  Logs
-  Monitoramento
-  Segurança
-  Migrations
-  Seed controlado
+Banco de produção
+Variáveis
+Domínio
+HTTPS
+Backup
+Logs
+Monitoramento
+Segurança
+Migrations
+Seed controlado
 
 51. REGRA DE DEPLOY
-Nunca colocar uma alteração grande diretamente em produção sem testar.
+    Nunca colocar uma alteração grande diretamente em produção sem testar.
 
                                                18
 
 52. ESTRATÉGIA DE BRANCH
-Sempre que possível:
+    Sempre que possível:
 
-  main
-  development
-  feature/*
+main
+development
+feature/*
 
 53. CHECKPOINT FINAL
-Antes de considerar o MVP concluído:
+    Antes de considerar o MVP concluído:
 
-     • [ ] Login
-     • [ ] Perfis
-     • [ ] Clientes
-     • [ ] Profissionais
-     • [ ] Serviços
-     • [ ] Disponibilidade
-     • [ ] Bloqueios
-     • [ ] Cinco macas
-     • [ ] Agendamento
-     • [ ] Cancelamento
-     • [ ] Remarcação
-     • [ ] Home Care
-     • [ ] Dashboards
-     • [ ] Histórico
-     • [ ] Auditoria
-     • [ ] Notificações
-     • [ ] Relatórios
-     • [ ] Responsividade
-     • [ ] Segurança
-     • [ ] Testes
+    • [ ] Login
+    • [ ] Perfis
+    • [ ] Clientes
+    • [ ] Profissionais
+    • [ ] Serviços
+    • [ ] Disponibilidade
+    • [ ] Bloqueios
+    • [ ] Cinco macas
+    • [ ] Agendamento
+    • [ ] Cancelamento
+    • [ ] Remarcação
+    • [ ] Home Care
+    • [ ] Dashboards
+    • [ ] Histórico
+    • [ ] Auditoria
+    • [ ] Notificações
+    • [ ] Relatórios
+    • [ ] Responsividade
+    • [ ] Segurança
+    • [ ] Testes
 
 54. COMO USAR O REPLIT AGENT
-Nunca enviar:
+    Nunca enviar:
 
-       "Construa todo o sistema Fluir da Vida."
+    "Construa todo o sistema Fluir da Vida."
 
 Enviar tarefas pequenas e específicas.
 
@@ -812,9 +810,9 @@ Depois:
 Somente depois avançar.
 
 55. PROMPT PADRÃO PARA CADA ETAPA
-Antes de cada tarefa, utilizar estrutura:
+    Antes de cada tarefa, utilizar estrutura:
 
-```text id="9z1v2x" CONTEXTO Você está desenvolvendo o Fluir da Vida.
+````text id="9z1v2x" CONTEXTO Você está desenvolvendo o Fluir da Vida.
 
 DOCUMENTOS Use os documentos oficiais do projeto.
 
@@ -1032,3 +1030,4 @@ Essas decisões pertencem ao projeto.
       Usuário aprova.
 
                                        25
+````

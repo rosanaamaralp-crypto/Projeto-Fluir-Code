@@ -16,7 +16,7 @@ Versão: 1.0
 Objetivo: Definir a estrutura lógica do banco de dados.
 
 1. USERS
-Tabela principal de autenticação.
+   Tabela principal de autenticação.
 
 Campos
 
@@ -32,12 +32,12 @@ Campos
 
 Role
 
-  ADMIN
-  PROFESSIONAL
-  CLIENT
+ADMIN
+PROFESSIONAL
+CLIENT
 
 2. CLIENTS
-Dados específicos do cliente.
+   Dados específicos do cliente.
 
 Campos
 
@@ -103,7 +103,7 @@ Um profissional poderá realizar vários serviços.
 Um serviço poderá ser realizado por vários profissionais.
 
 6. PROFESSIONAL_AVAILABILITY
-Disponibilidade recorrente.
+   Disponibilidade recorrente.
 
 Campos
 
@@ -131,11 +131,11 @@ Recursos físicos do espaço.
 
 Inicialmente:
 
-  Maca 01
-  Maca 02
-  Maca 03
-  Maca 04
-  Maca 05
+Maca 01
+Maca 02
+Maca 03
+Maca 04
+Maca 05
 
                                                    3
 
@@ -151,17 +151,17 @@ Type
 
 Inicialmente:
 
-  MASSAGE_BED
+MASSAGE_BED
 
 A arquitetura deverá permitir futuramente:
 
-  ROOM
-  EQUIPMENT
-  CABIN
-  OTHER
+ROOM
+EQUIPMENT
+CABIN
+OTHER
 
 9. APPOINTMENTS
-Tabela principal da agenda.
+   Tabela principal da agenda.
 
 Campos
 
@@ -185,11 +185,11 @@ Campos
 10. MODALITY
 Valores:
 
-  IN_PERSON
-  HOME_CARE
+IN_PERSON
+HOME_CARE
 
 11. APPOINTMENT_HISTORY
-Histórico.
+    Histórico.
 
 Campos
 
@@ -239,7 +239,7 @@ Campos planejados:
 Não necessariamente será implementado no MVP.
 
 14. FUTURE — PAYMENTS
-Preparado para futura implementação financeira.
+    Preparado para futura implementação financeira.
 
 Possíveis campos:
 
@@ -267,40 +267,39 @@ Campos:
 
 16. RELACIONAMENTOS PRINCIPAIS
 
-  USER
-   │
-   ├── CLIENT
-   │
-   └── PROFESSIONAL
+USER
+│
+├── CLIENT
+│
+└── PROFESSIONAL
 
-  PROFESSIONAL
-         │
-         ├── AVAILABILITY
-         ├── BLOCKS
-         └── SERVICES
+PROFESSIONAL
+│
+├── AVAILABILITY
+├── BLOCKS
+└── SERVICES
 
-  CLIENT
-         │
-         └── APPOINTMENTS
+CLIENT
+│
+└── APPOINTMENTS
 
-  PROFESSIONAL
-         │
-         └── APPOINTMENTS
+PROFESSIONAL
+│
+└── APPOINTMENTS
 
-  SERVICE
-         │
-         └── APPOINTMENTS
+SERVICE
+│
+└── APPOINTMENTS
 
-  RESOURCE
-         │
-         └── APPOINTMENTS
+RESOURCE
+│
+└── APPOINTMENTS
 
 17. REGRA CRÍTICA DO BANCO
-A aplicação deverá garantir que:
+    A aplicação deverá garantir que:
 
-  PROFISSIONAL
-  +
-  INTERVALO DE TEMPO
+PROFISSIONAL +
+INTERVALO DE TEMPO
 
 não possua conflito.
 
@@ -319,9 +318,9 @@ Essas validações deverão ocorrer no backend.
 Não confiar somente na interface.
 
 18. HOME CARE
-Quando:
+    Quando:
 
-     modality = HOME_CARE
+    modality = HOME_CARE
 
 o campo:
 
@@ -332,9 +331,9 @@ deverá permanecer vazio/nulo.
 O endereço deverá ser informado conforme a implementação definida.
 
 19. PRESENCIAL
-Quando:
+    Quando:
 
-     modality = IN_PERSON
+    modality = IN_PERSON
 
 o sistema deverá exigir:
 
@@ -349,35 +348,35 @@ Apesar de o espaço possuir cinco macas atualmente, não devemos criar cinco tab
 
 ❌ Não criar:
 
-  maca_01
-  maca_02
-  maca_03
-  maca_04
-  maca_05
+maca_01
+maca_02
+maca_03
+maca_04
+maca_05
 
 Correto:
 
 Uma tabela:
 
-  resources
+resources
 
 com cinco registros.
 
 Isso permitirá crescimento futuro.
 
 21. AUDITORIA
-Alterações críticas deverão ser rastreáveis.
+    Alterações críticas deverão ser rastreáveis.
 
 Exemplos:
 
-  Quem criou?
-  Quem alterou?
-  Quem cancelou?
-  Quando?
-  O que mudou?
+Quem criou?
+Quem alterou?
+Quem cancelou?
+Quando?
+O que mudou?
 
 22. DADOS SENSÍVEIS
-Dados pessoais deverão ser tratados com segurança e acesso baseado em função.
+    Dados pessoais deverão ser tratados com segurança e acesso baseado em função.
 
 Nunca expor informações de clientes para usuários sem autorização.
 
@@ -391,7 +390,7 @@ O MVP deverá ser simples.
 A arquitetura deverá ser preparada para crescimento.
 
 24. REGRA PARA O REPLIT AGENT
-Antes de criar ou modificar tabelas:
+    Antes de criar ou modificar tabelas:
 
     1. analisar este documento;
     2. verificar relacionamentos existentes;

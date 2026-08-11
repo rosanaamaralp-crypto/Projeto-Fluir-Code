@@ -17,7 +17,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir todas as telas previstas para o sistema e identificar claramente:
+   Definir todas as telas previstas para o sistema e identificar claramente:
 
        • qual perfil utiliza;
        • objetivo da tela;
@@ -43,22 +43,22 @@ Nenhuma tela deverá ser criada sem definir:
 
 3. ESTRUTURA GERAL
 
-  SISTEMA
-  │
-  ├── AUTENTICAÇÃO
-  │
-  ├── ADMINISTRADOR
+SISTEMA
+│
+├── AUTENTICAÇÃO
+│
+├── ADMINISTRADOR
 
                                                      1
 
-  │
-  ├── PROFISSIONAL
-  │
-  └── CLIENTE
+│
+├── PROFISSIONAL
+│
+└── CLIENTE
 
 4. AUTENTICAÇÃO
-TELA 01 — LOGIN
-Perfil: Todos
+   TELA 01 — LOGIN
+   Perfil: Todos
 
 Elementos
 
@@ -73,12 +73,12 @@ Ação
 
 Após autenticação:
 
-  ADMIN → Dashboard Administrativo
-  PROFISSIONAL → Dashboard Profissional
-  CLIENTE → Dashboard do Cliente
+ADMIN → Dashboard Administrativo
+PROFISSIONAL → Dashboard Profissional
+CLIENTE → Dashboard do Cliente
 
 5. TELA 02 — RECUPERAR SENHA
-Perfil: Todos
+   Perfil: Todos
 
 Elementos
 
@@ -103,16 +103,16 @@ Campos
 7. CLIENTE — NAVEGAÇÃO
 Menu principal:
 
-  Início
-  Agendar
-  Meus Agendamentos
-  Histórico
-  Meu Perfil
-  Sair
+Início
+Agendar
+Meus Agendamentos
+Histórico
+Meu Perfil
+Sair
 
 8. CLIENTE — DASHBOARD
-TELA 10
-Perfil: Cliente
+   TELA 10
+   Perfil: Cliente
 
 Objetivo
 
@@ -125,25 +125,25 @@ Mostrar rapidamente:
 
 Exemplo
 
-  Olá, Maria!
+Olá, Maria!
 
-  Seu próximo atendimento
+Seu próximo atendimento
 
-  📅 15/08
-  ⏰ 14:00
-  Serviço: ...
+📅 15/08
+⏰ 14:00
+Serviço: ...
 
                                    3
 
-  Profissional: ...
+Profissional: ...
 
-  [Ver atendimento]
+[Ver atendimento]
 
-  [Novo agendamento]
+[Novo agendamento]
 
 9. CLIENTE — NOVO AGENDAMENTO
-TELA 11
-Perfil: Cliente
+   TELA 11
+   Perfil: Cliente
 
 Etapa 1
 
@@ -153,8 +153,8 @@ Etapa 2
 
 Selecionar modalidade.
 
-  Presencial
-  Home Care
+Presencial
+Home Care
 
 Etapa 3
 
@@ -173,8 +173,8 @@ Etapa 6
 Confirmar.
 
 10. CLIENTE — ENDEREÇO HOME CARE
-TELA 12
-Perfil: Cliente
+    TELA 12
+    Perfil: Cliente
 
                            4
 
@@ -211,10 +211,10 @@ Botão
 Confirmar agendamento
 
 12. CLIENTE — SUCESSO
-TELA 14
-Mostrar:
+    TELA 14
+    Mostrar:
 
-       Agendamento confirmado!
+    Agendamento confirmado!
 
 Informações:
 
@@ -294,14 +294,14 @@ Ações
 17. PROFISSIONAL — NAVEGAÇÃO
 Menu:
 
-  Início
-  Minha Agenda
-  Agendamentos
-  Clientes
-  Disponibilidade
-  Home Care
-  Meu Perfil
-  Sair
+Início
+Minha Agenda
+Agendamentos
+Clientes
+Disponibilidade
+Home Care
+Meu Perfil
+Sair
 
                                    7
 
@@ -328,16 +328,16 @@ Prioridade:
 Dia
 
 20. PROFISSIONAL — DETALHE DO ATENDIMENTO
-TELA 22
-Mostrar:
+    TELA 22
+    Mostrar:
 
-      • cliente;
-      • serviço;
-      • horário;
-      • modalidade;
-      • maca, se presencial;
-      • endereço, se Home Care;
-      • observações.
+    • cliente;
+    • serviço;
+    • horário;
+    • modalidade;
+    • maca, se presencial;
+    • endereço, se Home Care;
+    • observações.
 
 Ações
 
@@ -353,23 +353,23 @@ Ações
 TELA 23
 Fluxo:
 
-  Cliente
-  ↓
-  Serviço
-  ↓
-  Modalidade
-  ↓
-  Data
-  ↓
-  Horário
-  ↓
-  Confirmação
+Cliente
+↓
+Serviço
+↓
+Modalidade
+↓
+Data
+↓
+Horário
+↓
+Confirmação
 
 O profissional já estará definido.
 
 22. PROFISSIONAL — CLIENTES
-TELA 24
-Lista de clientes relacionados aos seus atendimentos.
+    TELA 24
+    Lista de clientes relacionados aos seus atendimentos.
 
 Buscar
 
@@ -404,26 +404,26 @@ Campos:
 TELA 27
 Permitir configurar:
 
-  Segunda
-  08:00 — 18:00
+Segunda
+08:00 — 18:00
 
-  Terça
-  08:00 — 18:00
+Terça
+08:00 — 18:00
 
 26. PROFISSIONAL — BLOQUEIO
-TELA 28
-Campos:
+    TELA 28
+    Campos:
 
-     • data;
-     • hora inicial;
-     • hora final;
-     • motivo.
+    • data;
+    • hora inicial;
+    • hora final;
+    • motivo.
 
                                               10
 
 27. PROFISSIONAL — HOME CARE
-TELA 29
-Lista de Home Care.
+    TELA 29
+    Lista de Home Care.
 
 Mostrar:
 
@@ -446,16 +446,16 @@ Mostrar:
 29. ADMINISTRADOR — NAVEGAÇÃO
 Menu principal:
 
-  Dashboard
-  Agenda
-  Agendamentos
-  Clientes
-  Profissionais
-  Serviços
-  Macas
-  Relatórios
-  Configurações
-  Sair
+Dashboard
+Agenda
+Agendamentos
+Clientes
+Profissionais
+Serviços
+Macas
+Relatórios
+Configurações
+Sair
 
                         11
 
@@ -498,26 +498,26 @@ Filtros:
 TELA 42
 Fluxo:
 
-  Cliente
-  ↓
-  Profissional
-  ↓
-  Serviço
-  ↓
-  Modalidade
-  ↓
-  Data
-  ↓
-  Horário
-  ↓
-  Validação
-  ↓
-  Confirmação
+Cliente
+↓
+Profissional
+↓
+Serviço
+↓
+Modalidade
+↓
+Data
+↓
+Horário
+↓
+Validação
+↓
+Confirmação
 
 34. ADMINISTRADOR — DETALHE DO
-AGENDAMENTO
-TELA 43
-Mostrar todas as informações relevantes.
+    AGENDAMENTO
+    TELA 43
+    Mostrar todas as informações relevantes.
 
 Ações
 
@@ -560,8 +560,8 @@ TELA 46
 Cadastro completo.
 
 38. ADMINISTRADOR — PROFISSIONAIS
-TELA 47
-Lista:
+    TELA 47
+    Lista:
 
          • nome;
          • especialidade;
@@ -569,35 +569,35 @@ Lista:
 
                                    14
 
-      • status;
-      • agenda.
+    • status;
+    • agenda.
 
 39. ADMINISTRADOR — DETALHE DO
-PROFISSIONAL
-TELA 48
-Mostrar:
+    PROFISSIONAL
+    TELA 48
+    Mostrar:
 
-      • dados;
-      • serviços;
-      • disponibilidade;
-      • bloqueios;
-      • agenda;
-      • status.
+    • dados;
+    • serviços;
+    • disponibilidade;
+    • bloqueios;
+    • agenda;
+    • status.
 
 40. ADMINISTRADOR — NOVO PROFISSIONAL
-TELA 49
-Cadastro:
+    TELA 49
+    Cadastro:
 
-      • nome;
-      • e-mail;
-      • telefone;
-      • especialidade;
-      • serviços;
-      • disponibilidade.
+    • nome;
+    • e-mail;
+    • telefone;
+    • especialidade;
+    • serviços;
+    • disponibilidade.
 
 41. ADMINISTRADOR — SERVIÇOS
-TELA 50
-Lista de serviços.
+    TELA 50
+    Lista de serviços.
 
 Mostrar:
 
@@ -626,11 +626,11 @@ Campos:
 TELA 52
 Mostrar:
 
-  Maca 01
-  Maca 02
-  Maca 03
-  Maca 04
-  Maca 05
+Maca 01
+Maca 02
+Maca 03
+Maca 04
+Maca 05
 
 Status:
 
@@ -663,31 +663,31 @@ Estrutura inicial:
 Relatórios financeiros poderão ser adicionados posteriormente.
 
 46. ADMINISTRADOR — CONFIGURAÇÕES
-TELA 55
-Categorias futuras:
+    TELA 55
+    Categorias futuras:
 
-      • dados do estabelecimento;
-      • horários;
-      • regras de agenda;
-      • notificações;
-      • usuários;
-      • permissões;
-      • integrações.
+    • dados do estabelecimento;
+    • horários;
+    • regras de agenda;
+    • notificações;
+    • usuários;
+    • permissões;
+    • integrações.
 
 47. ADMINISTRADOR — HISTÓRICO/AUDITORIA
-TELA 56
-Mostrar:
+    TELA 56
+    Mostrar:
 
-      • usuário;
-      • ação;
-      • data;
-      • entidade;
-      • alteração.
+    • usuário;
+    • ação;
+    • data;
+    • entidade;
+    • alteração.
 
                                                  17
 
 48. TELAS FUTURAS
-Não fazem parte obrigatoriamente do MVP.
+    Não fazem parte obrigatoriamente do MVP.
 
 Possíveis telas:
 
@@ -703,75 +703,75 @@ Possíveis telas:
 
 49. MAPA DE NAVEGAÇÃO — CLIENTE
 
-  LOGIN
-   ↓
-  DASHBOARD
-   ├── NOVO AGENDAMENTO
-   │       ├── SERVIÇO
-   │       ├── MODALIDADE
-   │       ├── PROFISSIONAL
-   │       ├── DATA
-   │       ├── HORÁRIO
-   │       └── CONFIRMAÇÃO
-   │
-   ├── MEUS AGENDAMENTOS
-   │       └── DETALHE
-   │
-   ├── HISTÓRICO
-   │
-   └── MEU PERFIL
+LOGIN
+↓
+DASHBOARD
+├── NOVO AGENDAMENTO
+│ ├── SERVIÇO
+│ ├── MODALIDADE
+│ ├── PROFISSIONAL
+│ ├── DATA
+│ ├── HORÁRIO
+│ └── CONFIRMAÇÃO
+│
+├── MEUS AGENDAMENTOS
+│ └── DETALHE
+│
+├── HISTÓRICO
+│
+└── MEU PERFIL
 
 50. MAPA DE NAVEGAÇÃO — PROFISSIONAL
 
-  LOGIN
-   ↓
-  DASHBOARD
-   ├── MINHA AGENDA
-   │       └── DETALHE
+LOGIN
+↓
+DASHBOARD
+├── MINHA AGENDA
+│ └── DETALHE
 
                                            18
 
-   │
-   ├── NOVO AGENDAMENTO
-   │
-   ├── CLIENTES
-   │      └── DETALHE
-   │
-   ├── DISPONIBILIDADE
-   │
-   ├── HOME CARE
-   │
-   └── MEU PERFIL
+│
+├── NOVO AGENDAMENTO
+│
+├── CLIENTES
+│ └── DETALHE
+│
+├── DISPONIBILIDADE
+│
+├── HOME CARE
+│
+└── MEU PERFIL
 
 51. MAPA DE NAVEGAÇÃO — ADMINISTRADOR
 
-  LOGIN
-   ↓
-  DASHBOARD
-   ├── AGENDA
-   │      └── DETALHE
-   │
-   ├── NOVO AGENDAMENTO
-   │
-   ├── CLIENTES
-   │      └── DETALHE
-   │
-   ├── PROFISSIONAIS
-   │      └── DETALHE
-   │
-   ├── SERVIÇOS
-   │
-   ├── MACAS
-   │      └── DETALHE
-   │
-   ├── RELATÓRIOS
-   │
-   ├── AUDITORIA
-   │
-   └── CONFIGURAÇÕES
+LOGIN
+↓
+DASHBOARD
+├── AGENDA
+│ └── DETALHE
+│
+├── NOVO AGENDAMENTO
+│
+├── CLIENTES
+│ └── DETALHE
+│
+├── PROFISSIONAIS
+│ └── DETALHE
+│
+├── SERVIÇOS
+│
+├── MACAS
+│ └── DETALHE
+│
+├── RELATÓRIOS
+│
+├── AUDITORIA
+│
+└── CONFIGURAÇÕES
 
 52. REGRA DE IDENTIFICAÇÃO DAS TELAS
-Toda documentação visual futura deverá identificar explicitamente:
+    Toda documentação visual futura deverá identificar explicitamente:
 
 PERFIL: CLIENTE
 
@@ -788,41 +788,41 @@ PERFIL: ADMINISTRADOR
 Nunca apresentar uma tela sem informar a qual perfil ela pertence.
 
 53. RESPONSIVIDADE
-As telas deverão funcionar em:
+    As telas deverão funcionar em:
 
-     • desktop;
-     • tablet;
-     • celular.
+    • desktop;
+    • tablet;
+    • celular.
 
 A experiência deverá ser adaptada para cada tamanho.
 
 54. PRIORIDADE MOBILE
-O cliente deverá possuir uma experiência especialmente boa no celular.
+    O cliente deverá possuir uma experiência especialmente boa no celular.
 
 O profissional também deverá conseguir utilizar agenda e Home Care pelo celular.
 
 O administrador terá maior prioridade para desktop, mas deverá possuir responsividade.
 
 55. COMPONENTES REUTILIZÁVEIS
-O sistema deverá utilizar componentes reutilizáveis:
+    O sistema deverá utilizar componentes reutilizáveis:
 
-     • botão;
-     • campo;
-     • seletor;
-     • calendário;
-     • card;
-     • modal;
-     • tabela;
-     • agenda;
-     • status;
-     • alerta;
-     • confirmação;
-     • navegação.
+    • botão;
+    • campo;
+    • seletor;
+    • calendário;
+    • card;
+    • modal;
+    • tabela;
+    • agenda;
+    • status;
+    • alerta;
+    • confirmação;
+    • navegação.
 
                                                   20
 
 56. PRINCÍPIO DE CONSISTÊNCIA
-Uma mesma ação deverá ter comportamento semelhante em todo o sistema.
+    Uma mesma ação deverá ter comportamento semelhante em todo o sistema.
 
 Exemplo:
 
@@ -831,18 +831,18 @@ Cancelar agendamento
 deverá seguir o mesmo padrão visual e lógico.
 
 57. REGRA PARA O REPLIT AGENT
-Antes de criar qualquer tela:
+    Antes de criar qualquer tela:
 
-     1. identificar o perfil;
-     2. consultar este documento;
-     3. consultar permissões;
-     4. consultar fluxo correspondente;
-     5. consultar modelo de dados;
-     6. reutilizar componentes existentes;
-     7. não criar uma tela duplicada sem necessidade.
+    1.  identificar o perfil;
+    2.  consultar este documento;
+    3.  consultar permissões;
+    4.  consultar fluxo correspondente;
+    5.  consultar modelo de dados;
+    6.  reutilizar componentes existentes;
+    7.  não criar uma tela duplicada sem necessidade.
 
 58. REGRA FINAL
-As telas são a representação visual das regras.
+    As telas são a representação visual das regras.
 
 Portanto:
 

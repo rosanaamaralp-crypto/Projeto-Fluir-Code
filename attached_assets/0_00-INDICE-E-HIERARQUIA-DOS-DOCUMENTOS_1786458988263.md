@@ -25,26 +25,26 @@ Também existem **dois arquivos enviados para o Documento 06 — Home Care**, id
 
 ## Índice dos 18 arquivos
 
-| Arquivo enviado | Documento interno | Assunto | Prioridade/uso |
-|---|---|---|---|
-| 01 | Documento 02 | [01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md](01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md) | Alta |
-| 02 | Documento 04 | [02-DOCUMENTO-04-MODELO-DE-DADOS.md](02-DOCUMENTO-04-MODELO-DE-DADOS.md) | — |
-| 03 | Documento 03 | [03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md](03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md) | CRÍTICA |
-| 04 | Documento 05 | [04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md](04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md) | CRÍTICA |
-| 05 | Documento 06 | [05-DOCUMENTO-06-HOME-CARE.md](05-DOCUMENTO-06-HOME-CARE.md) | ALTA |
-| 06 | Documento 06 | [06-DOCUMENTO-06-HOME-CARE.md](06-DOCUMENTO-06-HOME-CARE.md) | ALTA |
-| 07 | Documento 07 | [07-DOCUMENTO-07-FLUXOS-DO-SISTEMA.md](07-DOCUMENTO-07-FLUXOS-DO-SISTEMA.md) | CRÍTICA |
-| 08 | Documento 08 | [08-DOCUMENTO-08-MAPA-DE-TELAS-E-NAVEGA-O.md](08-DOCUMENTO-08-MAPA-DE-TELAS-E-NAVEGA-O.md) | CRÍTICA |
-| 09 | Documento 09 | [09-DOCUMENTO-09-DESIGN-SYSTEM-E-IDENTIDADE-VISUAL.md](09-DOCUMENTO-09-DESIGN-SYSTEM-E-IDENTIDADE-VISUAL.md) | ALTA |
-| 10 | Documento 10 | [10-DOCUMENTO-10-DEFINI-O-DO-MVP-E-ORDEM-DE.md](10-DOCUMENTO-10-DEFINI-O-DO-MVP-E-ORDEM-DE.md) | CRÍTICA |
-| 11 | Documento 11 | [11-DOCUMENTO-11-BACKLOG-FUTURO-COMPLETO.md](11-DOCUMENTO-11-BACKLOG-FUTURO-COMPLETO.md) | ESTRATÉGICA |
-| 12 | Documento 12 | [12-DOCUMENTO-12-PLANO-DE-TESTES-E-QUALIDADE.md](12-DOCUMENTO-12-PLANO-DE-TESTES-E-QUALIDADE.md) | CRÍTICA |
-| 13 | Documento 13 | [13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md](13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md) | CRÍTICA |
-| 14 | Documento 14 | [14-DOCUMENTO-14-ESPECIFICA-O-COMPLETA-DE-REGRAS-DE.md](14-DOCUMENTO-14-ESPECIFICA-O-COMPLETA-DE-REGRAS-DE.md) | CRÍTICA |
-| 15 | Documento 15 | [15-DOCUMENTO-15-MAPA-COMPLETO-DE-TELAS-E-NAVEGA-O.md](15-DOCUMENTO-15-MAPA-COMPLETO-DE-TELAS-E-NAVEGA-O.md) | CRÍTICA |
-| 16 | Documento 16 | [16-DOCUMENTO-16-ESPECIFICA-O-DE-API-E-CONTRATOS-DE.md](16-DOCUMENTO-16-ESPECIFICA-O-DE-API-E-CONTRATOS-DE.md) | CRÍTICA |
-| 17 | Documento 17 | [17-DOCUMENTO-17-PLANO-OFICIAL-DE-IMPLEMENTA-O-NO.md](17-DOCUMENTO-17-PLANO-OFICIAL-DE-IMPLEMENTA-O-NO.md) | MÁXIMA |
-| 18 | Documento 18 | [18-DOCUMENTO-18-PACOTE-MESTRE-PARA-O.md](18-DOCUMENTO-18-PACOTE-MESTRE-PARA-O.md) | CRÍTICO |
+| Arquivo enviado | Documento interno | Assunto                                                                                                            | Prioridade/uso |
+| --------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ | -------------- |
+| 01              | Documento 02      | [01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md](01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md)                                       | Alta           |
+| 02              | Documento 04      | [02-DOCUMENTO-04-MODELO-DE-DADOS.md](02-DOCUMENTO-04-MODELO-DE-DADOS.md)                                           | —              |
+| 03              | Documento 03      | [03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md](03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md)                                   | CRÍTICA        |
+| 04              | Documento 05      | [04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md](04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md)               | CRÍTICA        |
+| 05              | Documento 06      | [05-DOCUMENTO-06-HOME-CARE.md](05-DOCUMENTO-06-HOME-CARE.md)                                                       | ALTA           |
+| 06              | Documento 06      | [06-DOCUMENTO-06-HOME-CARE.md](06-DOCUMENTO-06-HOME-CARE.md)                                                       | ALTA           |
+| 07              | Documento 07      | [07-DOCUMENTO-07-FLUXOS-DO-SISTEMA.md](07-DOCUMENTO-07-FLUXOS-DO-SISTEMA.md)                                       | CRÍTICA        |
+| 08              | Documento 08      | [08-DOCUMENTO-08-MAPA-DE-TELAS-E-NAVEGA-O.md](08-DOCUMENTO-08-MAPA-DE-TELAS-E-NAVEGA-O.md)                         | CRÍTICA        |
+| 09              | Documento 09      | [09-DOCUMENTO-09-DESIGN-SYSTEM-E-IDENTIDADE-VISUAL.md](09-DOCUMENTO-09-DESIGN-SYSTEM-E-IDENTIDADE-VISUAL.md)       | ALTA           |
+| 10              | Documento 10      | [10-DOCUMENTO-10-DEFINI-O-DO-MVP-E-ORDEM-DE.md](10-DOCUMENTO-10-DEFINI-O-DO-MVP-E-ORDEM-DE.md)                     | CRÍTICA        |
+| 11              | Documento 11      | [11-DOCUMENTO-11-BACKLOG-FUTURO-COMPLETO.md](11-DOCUMENTO-11-BACKLOG-FUTURO-COMPLETO.md)                           | ESTRATÉGICA    |
+| 12              | Documento 12      | [12-DOCUMENTO-12-PLANO-DE-TESTES-E-QUALIDADE.md](12-DOCUMENTO-12-PLANO-DE-TESTES-E-QUALIDADE.md)                   | CRÍTICA        |
+| 13              | Documento 13      | [13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md](13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md) | CRÍTICA        |
+| 14              | Documento 14      | [14-DOCUMENTO-14-ESPECIFICA-O-COMPLETA-DE-REGRAS-DE.md](14-DOCUMENTO-14-ESPECIFICA-O-COMPLETA-DE-REGRAS-DE.md)     | CRÍTICA        |
+| 15              | Documento 15      | [15-DOCUMENTO-15-MAPA-COMPLETO-DE-TELAS-E-NAVEGA-O.md](15-DOCUMENTO-15-MAPA-COMPLETO-DE-TELAS-E-NAVEGA-O.md)       | CRÍTICA        |
+| 16              | Documento 16      | [16-DOCUMENTO-16-ESPECIFICA-O-DE-API-E-CONTRATOS-DE.md](16-DOCUMENTO-16-ESPECIFICA-O-DE-API-E-CONTRATOS-DE.md)     | CRÍTICA        |
+| 17              | Documento 17      | [17-DOCUMENTO-17-PLANO-OFICIAL-DE-IMPLEMENTA-O-NO.md](17-DOCUMENTO-17-PLANO-OFICIAL-DE-IMPLEMENTA-O-NO.md)         | MÁXIMA         |
+| 18              | Documento 18      | [18-DOCUMENTO-18-PACOTE-MESTRE-PARA-O.md](18-DOCUMENTO-18-PACOTE-MESTRE-PARA-O.md)                                 | CRÍTICO        |
 
 ## Como o Replit Agent deve usar esta pasta
 

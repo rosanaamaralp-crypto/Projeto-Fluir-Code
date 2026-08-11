@@ -19,7 +19,7 @@ Status: Base oficial para implementação
 Objetivo: Servir como fonte operacional para o desenvolvimento no Replit
 
 1. REGRA ABSOLUTA
-Este documento é uma consolidação dos documentos oficiais do projeto.
+   Este documento é uma consolidação dos documentos oficiais do projeto.
 
 O Replit Agent deverá:
 
@@ -53,196 +53,191 @@ Construir uma plataforma de gestão de atendimentos do Fluir da Vida, permitindo
 3. PERFIS
 Existem três perfis principais:
 
-  ADMINISTRADOR
-  PROFISSIONAL
-  CLIENTE
+ADMINISTRADOR
+PROFISSIONAL
+CLIENTE
 
 Cada perfil possui permissões próprias.
 
 4. REGRA DE SEGURANÇA
-Nunca confiar apenas na interface para controlar permissões.
+   Nunca confiar apenas na interface para controlar permissões.
 
 Toda operação deverá ser validada no backend.
 
 5. ARQUITETURA
-Arquitetura lógica:
+   Arquitetura lógica:
 
-  ┌──────────────────────────┐
-  │           FRONTEND              │
-  │                                 │
-  │ Telas / Componentes             │
-  └────────────┬─────────────┘
-                      │
-                      ↓
-  ┌──────────────────────────┐
-  │               API               │
-  │                                 │
-  │ Controllers / Routes            │
-  └────────────┬─────────────┘
-                      │
-                      ↓
-  ┌──────────────────────────┐
-  │       REGRAS DE NEGÓCIO         │
-  │                                 │
-  │ Services / Domain               │
-  └────────────┬─────────────┘
-                      │
-                      ↓
-  ┌──────────────────────────┐
+┌──────────────────────────┐
+│ FRONTEND │
+│ │
+│ Telas / Componentes │
+└────────────┬─────────────┘
+│
+↓
+┌──────────────────────────┐
+│ API │
+│ │
+│ Controllers / Routes │
+└────────────┬─────────────┘
+│
+↓
+┌──────────────────────────┐
+│ REGRAS DE NEGÓCIO │
+│ │
+│ Services / Domain │
+└────────────┬─────────────┘
+│
+↓
+┌──────────────────────────┐
 
                                                  2
 
-  │           BANCO                │
-  └──────────────────────────┘
+│ BANCO │
+└──────────────────────────┘
 
 6. PRINCÍPIO ARQUITETURAL
-Não colocar regras críticas diretamente nos componentes da interface.
+   Não colocar regras críticas diretamente nos componentes da interface.
 
 Exemplo:
 
 Errado:
 
-  Tela decide se uma maca está disponível.
+Tela decide se uma maca está disponível.
 
 Correto:
 
-  Tela
-  ↓
-  API
-  ↓
-  Regra de disponibilidade
-  ↓
-  Banco
+Tela
+↓
+API
+↓
+Regra de disponibilidade
+↓
+Banco
 
 7. DOMÍNIO PRINCIPAL
-Os principais módulos serão:
+   Os principais módulos serão:
 
-  Authentication
-  Users
-  Clients
-  Professionals
-  Services
-  Availability
-  Resources
-  Appointments
-  Notifications
-  Reports
-  Audit
+Authentication
+Users
+Clients
+Professionals
+Services
+Availability
+Resources
+Appointments
+Notifications
+Reports
+Audit
 
                                                   3
 
 8. BANCO DE DADOS
 Estrutura inicial:
 
-  users
-  roles
-  clients
-  professionals
-  services
-  professional_services
-  addresses
-  availability
-  blocked_periods
-  resources
-  appointments
-  appointment_status_history
-  notifications
-  audit_logs
+users
+roles
+clients
+professionals
+services
+professional_services
+addresses
+availability
+blocked_periods
+resources
+appointments
+appointment_status_history
+notifications
+audit_logs
 
 9. RECURSOS
-O sistema começa com cinco macas:
+   O sistema começa com cinco macas:
 
-  Maca 01
-  Maca 02
-  Maca 03
-  Maca 04
-  Maca 05
+Maca 01
+Maca 02
+Maca 03
+Maca 04
+Maca 05
 
 Esses recursos serão utilizados nos atendimentos presenciais.
 
 10. MODALIDADES
-Existem duas modalidades principais:
+    Existem duas modalidades principais:
 
-  IN_PERSON
-  HOME_CARE
+IN_PERSON
+HOME_CARE
 
                                                   4
 
 11. ATENDIMENTO PRESENCIAL
 Fluxo:
 
-  Serviço
-  ↓
-  Profissional
-  ↓
-  Data
-  ↓
-  Horário
-  ↓
-  Verificar maca
-  ↓
-  Reservar maca
-  ↓
-  Criar agendamento
+Serviço
+↓
+Profissional
+↓
+Data
+↓
+Horário
+↓
+Verificar maca
+↓
+Reservar maca
+↓
+Criar agendamento
 
 12. HOME CARE
-Fluxo:
+    Fluxo:
 
-  Serviço
-  ↓
-  Home Care
-  ↓
-  Endereço
-  ↓
-  Profissional
-  ↓
-  Data
-  ↓
-  Horário
-  ↓
-  Criar agendamento
+Serviço
+↓
+Home Care
+↓
+Endereço
+↓
+Profissional
+↓
+Data
+↓
+Horário
+↓
+Criar agendamento
 
 Não utilizar maca.
 
 13. REGRA MAIS IMPORTANTE DA AGENDA
-Um horário somente é válido quando:
+    Um horário somente é válido quando:
 
                                       5
 
-  PROFISSIONAL DISPONÍVEL
-  +
-  SERVIÇO ATIVO
-  +
-  PROFISSIONAL HABILITADO
-  +
-  SEM BLOQUEIO
-  +
-  SEM CONFLITO
-  +
-  RECURSO DISPONÍVEL
+PROFISSIONAL DISPONÍVEL +
+SERVIÇO ATIVO +
+PROFISSIONAL HABILITADO +
+SEM BLOQUEIO +
+SEM CONFLITO +
+RECURSO DISPONÍVEL
 
 No Home Care:
 
-  RECURSO DISPONÍVEL
+RECURSO DISPONÍVEL
 
 não é necessário.
 
 14. DURAÇÃO
-A duração deverá vir do serviço.
+    A duração deverá vir do serviço.
 
 O frontend não deverá ser a fonte definitiva da duração.
 
 15. AGENDAMENTO
-O backend deverá validar novamente tudo no momento da criação.
+    O backend deverá validar novamente tudo no momento da criação.
 
 Nunca confiar apenas no horário previamente mostrado na tela.
 
 16. CONCORRÊNCIA
-Se dois clientes tentarem reservar simultaneamente:
+    Se dois clientes tentarem reservar simultaneamente:
 
-  Cliente A ─┐
-                ├── mesmo horário
-  Cliente B ─┘
+Cliente A ─┐
+├── mesmo horário
+Cliente B ─┘
 
 somente uma operação poderá vencer.
 
@@ -253,39 +248,39 @@ A segunda deverá receber conflito.
 17. CAPACIDADE DAS MACAS
 Para atendimento presencial:
 
-  1 maca → 1 atendimento simultâneo
+1 maca → 1 atendimento simultâneo
 
 Com cinco macas:
 
-  5 atendimentos simultâneos
+5 atendimentos simultâneos
 
 O sexto deverá ser bloqueado quando não houver outra capacidade disponível.
 
 18. STATUS DO AGENDAMENTO
-Utilizar estados claros.
+    Utilizar estados claros.
 
 Exemplo:
 
-  CONFIRMED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  NO_SHOW
+CONFIRMED
+IN_PROGRESS
+COMPLETED
+CANCELLED
+NO_SHOW
 
 Os estados finais deverão seguir exatamente as regras do domínio.
 
 19. HISTÓRICO
-Alterações importantes deverão gerar histórico.
+    Alterações importantes deverão gerar histórico.
 
 Exemplo:
 
-  Agendado
-  ↓
-  Remarcado
-  ↓
-  Iniciado
-  ↓
-  Concluído
+Agendado
+↓
+Remarcado
+↓
+Iniciado
+↓
+Concluído
 
                                                   7
 
@@ -294,64 +289,64 @@ Ações administrativas relevantes deverão gerar auditoria.
 
 Registrar:
 
-  usuário
-  ação
-  entidade
-  registro
-  data/hora
+usuário
+ação
+entidade
+registro
+data/hora
 
 21. API
-Estrutura inicial:
+    Estrutura inicial:
 
-  /api/auth
-  /api/users
-  /api/clients
-  /api/professionals
-  /api/services
-  /api/availability
-  /api/resources
-  /api/appointments
-  /api/notifications
-  /api/reports
-  /api/audit-logs
+/api/auth
+/api/users
+/api/clients
+/api/professionals
+/api/services
+/api/availability
+/api/resources
+/api/appointments
+/api/notifications
+/api/reports
+/api/audit-logs
 
 22. ENDPOINTS PRINCIPAIS
 
-  POST       /api/auth/login
-  POST       /api/auth/logout
-  GET        /api/auth/me
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
 
-  GET        /api/clients
-  POST       /api/clients
-  GET        /api/clients/:id
-  PATCH      /api/clients/:id
+GET /api/clients
+POST /api/clients
+GET /api/clients/:id
+PATCH /api/clients/:id
 
-  GET        /api/professionals
-  POST       /api/professionals
+GET /api/professionals
+POST /api/professionals
 
                                                   8
 
-GET     /api/professionals/:id
-PATCH   /api/professionals/:id
+GET /api/professionals/:id
+PATCH /api/professionals/:id
 
-GET     /api/services
-POST    /api/services
-PATCH   /api/services/:id
+GET /api/services
+POST /api/services
+PATCH /api/services/:id
 
-GET     /api/resources
-GET     /api/resources/status
+GET /api/resources
+GET /api/resources/status
 
-GET     /api/appointments
-GET     /api/appointments/:id
-POST    /api/appointments
-PATCH   /api/appointments/:id
+GET /api/appointments
+GET /api/appointments/:id
+POST /api/appointments
+PATCH /api/appointments/:id
 
-POST    /api/appointments/:id/cancel
-POST    /api/appointments/:id/start
-POST    /api/appointments/:id/complete
-POST    /api/appointments/:id/no-show
+POST /api/appointments/:id/cancel
+POST /api/appointments/:id/start
+POST /api/appointments/:id/complete
+POST /api/appointments/:id/no-show
 
-GET     /api/appointments/available-slots
+GET /api/appointments/available-slots
 
 23. TELAS ADMINISTRATIVAS
 
@@ -376,77 +371,77 @@ Bloqueios
 
                                          9
 
- Notificações
- Meu Perfil
+Notificações
+Meu Perfil
 
 25. TELAS CLIENTE
 
- Dashboard
- Novo Agendamento
- Meus Agendamentos
- Histórico
- Meus Endereços
- Meu Perfil
- Notificações
+Dashboard
+Novo Agendamento
+Meus Agendamentos
+Histórico
+Meus Endereços
+Meu Perfil
+Notificações
 
 26. FLUXO CLIENTE
 
- Login
- ↓
- Dashboard
- ↓
- Novo Agendamento
- ↓
- Serviço
- ↓
- Modalidade
- ↓
- Profissional
- ↓
- Data
- ↓
- Horário
- ↓
- Confirmação
- ↓
- Agendamento
+Login
+↓
+Dashboard
+↓
+Novo Agendamento
+↓
+Serviço
+↓
+Modalidade
+↓
+Profissional
+↓
+Data
+↓
+Horário
+↓
+Confirmação
+↓
+Agendamento
 
 27. FLUXO ADMINISTRADOR
 
- Login
- ↓
- Dashboard
+Login
+↓
+Dashboard
 
                      10
 
-  ↓
-  Agenda
-  ↓
-  Gerenciamento
-  ↓
-  Clientes
-  Profissionais
-  Serviços
-  Recursos
-  ↓
-  Relatórios
+↓
+Agenda
+↓
+Gerenciamento
+↓
+Clientes
+Profissionais
+Serviços
+Recursos
+↓
+Relatórios
 
 28. FLUXO PROFISSIONAL
 
-  Login
-  ↓
-  Dashboard
-  ↓
-  Minha Agenda
-  ↓
-  Atendimento
-  ↓
-  Iniciar
-  ↓
-  Concluir
+Login
+↓
+Dashboard
+↓
+Minha Agenda
+↓
+Atendimento
+↓
+Iniciar
+↓
+Concluir
 
 29. DESIGN
-A interface deverá seguir o Design System aprovado nos documentos anteriores.
+    A interface deverá seguir o Design System aprovado nos documentos anteriores.
 
 Prioridades:
 
@@ -461,40 +456,40 @@ Toda tela deverá tratar:
 
                                                 11
 
-  LOADING
-  EMPTY
-  SUCCESS
-  ERROR
+LOADING
+EMPTY
+SUCCESS
+ERROR
 
 31. RESPONSIVIDADE
-Obrigatório:
+    Obrigatório:
 
-  Desktop
-  Notebook
-  Tablet
-  Celular
+Desktop
+Notebook
+Tablet
+Celular
 
 32. TECNOLOGIA
-A stack definitiva deverá ser escolhida no início do projeto considerando:
+    A stack definitiva deverá ser escolhida no início do projeto considerando:
 
-     • compatibilidade com Replit;
-     • facilidade de manutenção;
-     • banco relacional;
-     • autenticação;
-     • testes;
-     • escalabilidade.
+    • compatibilidade com Replit;
+    • facilidade de manutenção;
+    • banco relacional;
+    • autenticação;
+    • testes;
+    • escalabilidade.
 
 Não mudar a stack no meio do projeto sem decisão registrada.
 
 33. ESTRUTURA DE PASTAS
-A estrutura final deverá separar:
+    A estrutura final deverá separar:
 
-  frontend
-  backend
-  database
-  shared
-  tests
-  docs
+frontend
+backend
+database
+shared
+tests
+docs
 
 A nomenclatura concreta poderá ser adaptada à stack escolhida.
 
@@ -503,51 +498,51 @@ A nomenclatura concreta poderá ser adaptada à stack escolhida.
 34. SERVIÇOS DE DOMÍNIO
 Criar serviços específicos para regras importantes:
 
-  AppointmentService
-  AvailabilityService
-  ResourceService
-  NotificationService
-  AuditService
+AppointmentService
+AvailabilityService
+ResourceService
+NotificationService
+AuditService
 
 35. APPOINTMENT SERVICE
-Responsável por:
+    Responsável por:
 
-     • criar;
-     • alterar;
-     • cancelar;
-     • iniciar;
-     • concluir;
-     • ausência;
-     • validar conflitos.
+    • criar;
+    • alterar;
+    • cancelar;
+    • iniciar;
+    • concluir;
+    • ausência;
+    • validar conflitos.
 
 36. AVAILABILITY SERVICE
-Responsável por:
+    Responsável por:
 
-     • disponibilidade;
-     • bloqueios;
-     • horários;
-     • conflitos;
-     • duração.
+    • disponibilidade;
+    • bloqueios;
+    • horários;
+    • conflitos;
+    • duração.
 
 37. RESOURCE SERVICE
-Responsável por:
+    Responsável por:
 
-     • disponibilidade das macas;
-     • ocupação;
-     • reserva;
-     • liberação.
+    • disponibilidade das macas;
+    • ocupação;
+    • reserva;
+    • liberação.
 
                                                       13
 
 38. NOTIFICATION SERVICE
-Responsável por gerar notificações internas.
+    Responsável por gerar notificações internas.
 
 39. AUDIT SERVICE
-Responsável pelo registro das ações auditáveis.
+    Responsável pelo registro das ações auditáveis.
 
 40. FASES DE DESENVOLVIMENTO
-FASE 1
-Fundação.
+    FASE 1
+    Fundação.
 
 FASE 2
 Banco.
@@ -623,22 +618,22 @@ FASE 24
 Produção.
 
 41. REGRA DE CHECKPOINT
-Depois de cada fase:
+    Depois de cada fase:
 
-  IMPLEMENTAR
-  ↓
-  TESTAR
-  ↓
-  CORRIGIR
-  ↓
-  VALIDAR
-  ↓
-  APROVAR
+IMPLEMENTAR
+↓
+TESTAR
+↓
+CORRIGIR
+↓
+VALIDAR
+↓
+APROVAR
 
 Somente então avançar.
 
 42. PRIMEIRO PROMPT PARA O REPLIT
-O primeiro prompt não deverá pedir funcionalidades.
+    O primeiro prompt não deverá pedir funcionalidades.
 
 Deverá pedir análise e preparação.
 
@@ -647,44 +642,44 @@ Deverá pedir análise e preparação.
 43. PROMPT 01 — ANÁLISE DO PROJETO
 Copiar para o Replit Agent:
 
-  Você será o agente responsável pelo desenvolvimento do sistema Fluir da Vida.
+Você será o agente responsável pelo desenvolvimento do sistema Fluir da Vida.
 
-  Antes de escrever qualquer código, analise cuidadosamente a documentação
-  oficial do projeto.
+Antes de escrever qualquer código, analise cuidadosamente a documentação
+oficial do projeto.
 
-  Objetivo desta etapa:
+Objetivo desta etapa:
 
-  1. entender a arquitetura;
-  2. identificar a stack mais adequada para execução no Replit;
-  3. propor a estrutura inicial do projeto;
-  4. identificar dependências necessárias;
-  5. identificar riscos técnicos;
-  6. identificar informações que estejam realmente ausentes.
+1. entender a arquitetura;
+2. identificar a stack mais adequada para execução no Replit;
+3. propor a estrutura inicial do projeto;
+4. identificar dependências necessárias;
+5. identificar riscos técnicos;
+6. identificar informações que estejam realmente ausentes.
 
-  IMPORTANTE:
+IMPORTANTE:
 
-  - Não implemente funcionalidades ainda.
-  - Não crie telas ainda.
-  - Não altere regras de negócio.
-  - Não invente requisitos.
-  - Não simplifique regras críticas.
-  - Não avance para a próxima etapa.
+- Não implemente funcionalidades ainda.
+- Não crie telas ainda.
+- Não altere regras de negócio.
+- Não invente requisitos.
+- Não simplifique regras críticas.
+- Não avance para a próxima etapa.
 
-  Ao final, apresente:
+Ao final, apresente:
 
-  1. stack recomendada;
-  2. arquitetura proposta;
-  3. estrutura de pastas;
-  4. dependências;
-  5. estratégia de banco;
-  6. estratégia de autenticação;
-  7. estratégia de testes;
-  8. dúvidas que realmente impedem a implementação.
+1. stack recomendada;
+2. arquitetura proposta;
+3. estrutura de pastas;
+4. dependências;
+5. estratégia de banco;
+6. estratégia de autenticação;
+7. estratégia de testes;
+8. dúvidas que realmente impedem a implementação.
 
-  Aguarde aprovação antes de implementar.
+Aguarde aprovação antes de implementar.
 
 44. APROVAÇÃO DA FASE 1
-Depois que o Agent responder, revisar.
+    Depois que o Agent responder, revisar.
 
 Não aceitar automaticamente.
 
@@ -701,39 +696,39 @@ Verificar:
 45. PROMPT 02 — FUNDAÇÃO
 Depois da aprovação:
 
-  Implemente somente a fundação técnica aprovada.
+Implemente somente a fundação técnica aprovada.
 
-  Crie:
+Crie:
 
-  - estrutura de pastas;
-  - configuração do projeto;
-  - configuração do banco;
-  - variáveis de ambiente;
-  - sistema de migrations;
-  - configuração de testes;
-  - configuração de lint;
-  - configuração básica de desenvolvimento.
+- estrutura de pastas;
+- configuração do projeto;
+- configuração do banco;
+- variáveis de ambiente;
+- sistema de migrations;
+- configuração de testes;
+- configuração de lint;
+- configuração básica de desenvolvimento.
 
-  Não implemente:
+Não implemente:
 
-  - telas;
-  - agenda;
-  - clientes;
-  - profissionais;
-  - serviços;
-  - autenticação completa.
+- telas;
+- agenda;
+- clientes;
+- profissionais;
+- serviços;
+- autenticação completa.
 
-  Execute os testes.
+Execute os testes.
 
-  Ao final informe:
+Ao final informe:
 
-  1. arquivos criados;
-  2. comandos executados;
-  3. testes realizados;
-  4. resultado;
-  5. problemas encontrados.
+1. arquivos criados;
+2. comandos executados;
+3. testes realizados;
+4. resultado;
+5. problemas encontrados.
 
-  Não avance além do escopo.
+Não avance além do escopo.
 
                                        18
 
@@ -946,7 +941,7 @@ Implemente testes de concorrência.
 Não implemente funcionalidades não relacionadas.
 
 54. PROMPT 11 — CANCELAMENTO E
-REMARCAÇÃO
+    REMARCAÇÃO
 
 Implemente cancelamento e remarcação.
 
@@ -1073,7 +1068,7 @@ Teste:
 3. profissional indisponível;
 4. conflito de horário.
 
-59. PROMPT 16 — NOTIFICAÇÕES
+5. PROMPT 16 — NOTIFICAÇÕES
 
 Implemente notificações internas.
 
@@ -1206,77 +1201,77 @@ Não faça deploy definitivo sem apresentar primeiro um checklist de produção.
 65. REGRA DE COMUNICAÇÃO COM O AGENT
 Depois de cada prompt:
 
-  Pergunte:
-  "O que foi implementado?"
+Pergunte:
+"O que foi implementado?"
 
-  Depois:
-  "Quais arquivos foram alterados?"
+Depois:
+"Quais arquivos foram alterados?"
 
-  Depois:
-  "Quais testes foram executados?"
+Depois:
+"Quais testes foram executados?"
 
-  Depois:
-  "Existe algum problema ou pendência?"
+Depois:
+"Existe algum problema ou pendência?"
 
 66. REGRA DE CONTROLE
-Se o Agent disser:
+    Se o Agent disser:
 
-       "Também aproveitei para melhorar..."
+    "Também aproveitei para melhorar..."
 
 Verificar exatamente o que foi alterado.
 
 Evitar mudanças fora do escopo.
 
 67. REGRA DE BACKUP
-Antes de alterações grandes:
+    Antes de alterações grandes:
 
-  commit
-  ou
-  checkpoint
+commit
+ou
+checkpoint
 
 68. REGRA DE ROLLBACK
-Toda alteração importante deverá poder ser revertida.
+    Toda alteração importante deverá poder ser revertida.
 
                                                  29
 
 69. DEFINIÇÃO DE MVP
-O MVP estará concluído quando o sistema conseguir executar o fluxo:
+    O MVP estará concluído quando o sistema conseguir executar o fluxo:
 
-  CLIENTE
-  ↓
-  LOGIN
-  ↓
-  ESCOLHER SERVIÇO
-  ↓
-  ESCOLHER MODALIDADE
-  ↓
-  ESCOLHER PROFISSIONAL
-  ↓
-  ESCOLHER DATA
-  ↓
-  ESCOLHER HORÁRIO
-  ↓
-  CONFIRMAR
-  ↓
-  AGENDAMENTO
-  ↓
-  PROFISSIONAL VISUALIZA
-  ↓
-  ATENDIMENTO
-  ↓
-  CONCLUSÃO
+CLIENTE
+↓
+LOGIN
+↓
+ESCOLHER SERVIÇO
+↓
+ESCOLHER MODALIDADE
+↓
+ESCOLHER PROFISSIONAL
+↓
+ESCOLHER DATA
+↓
+ESCOLHER HORÁRIO
+↓
+CONFIRMAR
+↓
+AGENDAMENTO
+↓
+PROFISSIONAL VISUALIZA
+↓
+ATENDIMENTO
+↓
+CONCLUSÃO
 
 E o administrador conseguir gerenciar toda a operação.
 
 70. TESTE REAL FINAL
-Criar cenário:
+    Criar cenário:
 
-  Cliente: Cliente Teste
-  Profissional: Profissional Teste
-  Serviço: Serviço Teste
-  Modalidade: Presencial
-  Data: data futura
-  Horário: horário disponível
+Cliente: Cliente Teste
+Profissional: Profissional Teste
+Serviço: Serviço Teste
+Modalidade: Presencial
+Data: data futura
+Horário: horário disponível
 
 Criar agendamento.
 
@@ -1284,43 +1279,36 @@ Depois:
 
                                                  30
 
-  Cliente → visualiza
-  Profissional → visualiza
-  Administrador → visualiza
+Cliente → visualiza
+Profissional → visualiza
+Administrador → visualiza
 
 Depois:
 
-  Profissional → inicia
-  Profissional → conclui
+Profissional → inicia
+Profissional → conclui
 
 Resultado:
 
-  Histórico atualizado
-  +
-  Auditoria registrada
+Histórico atualizado +
+Auditoria registrada
 
 71. TESTE HOME CARE
-Criar:
+    Criar:
 
-  Cliente
-  +
-  Serviço
-  +
-  Home Care
-  +
-  Endereço
-  +
-  Profissional
-  +
-  Horário
+Cliente +
+Serviço +
+Home Care +
+Endereço +
+Profissional +
+Horário
 
 Confirmar.
 
 Resultado:
 
-  Agendamento criado
-  +
-  Nenhuma maca ocupada
+Agendamento criado +
+Nenhuma maca ocupada
 
                               31
 
@@ -1329,120 +1317,117 @@ Criar cinco agendamentos simultâneos.
 
 Resultado:
 
-  Maca 01 → ocupada
-  Maca 02 → ocupada
-  Maca 03 → ocupada
-  Maca 04 → ocupada
-  Maca 05 → ocupada
+Maca 01 → ocupada
+Maca 02 → ocupada
+Maca 03 → ocupada
+Maca 04 → ocupada
+Maca 05 → ocupada
 
 Sexta tentativa:
 
-  CONFLITO
+CONFLITO
 
 73. TESTE DE CONCORRÊNCIA
-Dois clientes:
+    Dois clientes:
 
-  Cliente A
-  Cliente B
+Cliente A
+Cliente B
 
 tentando o mesmo:
 
-  Profissional
-  +
-  Serviço
-  +
-  Data
-  +
-  Horário
+Profissional +
+Serviço +
+Data +
+Horário
 
 Resultado:
 
-  1 → sucesso
-  1 → conflito
+1 → sucesso
+1 → conflito
 
                                         32
 
 74. TESTE DE SEGURANÇA
 Cliente tentando acessar:
 
-  /admin
+/admin
 
 Resultado:
 
-  403
+403
 
 ou redirecionamento apropriado.
 
 Cliente tentando consultar outro cliente:
 
-  GET /api/clients/outro-id
+GET /api/clients/outro-id
 
 Resultado:
 
-  acesso negado
+acesso negado
 
 75. TESTE DE REGRESSÃO
-Depois de cada alteração crítica:
+    Depois de cada alteração crítica:
 
-  npm test
+npm test
 
 ou equivalente da stack escolhida.
 
 Nunca assumir que a funcionalidade continua funcionando sem testar.
 
 76. REGRA PARA O USUÁRIO DO SISTEMA
-O usuário não deverá precisar conhecer:
+    O usuário não deverá precisar conhecer:
 
-     • banco;
-     • API;
-     • endpoint;
-     • ID;
-     • arquitetura;
+    • banco;
+    • API;
+    • endpoint;
+    • ID;
+    • arquitetura;
 
                                                 33
 
-     • regra técnica.
+    • regra técnica.
 
 Tudo isso deve ser abstraído pela interface.
 
 77. REGRA PARA O ADMINISTRADOR
-O administrador deverá conseguir controlar a operação sem acessar diretamente o banco.
+    O administrador deverá conseguir controlar a operação sem acessar diretamente o banco.
 
 78. REGRA PARA O PROFISSIONAL
-O profissional deverá enxergar somente o que precisa para executar seus atendimentos.
+    O profissional deverá enxergar somente o que precisa para executar seus atendimentos.
 
 79. REGRA PARA O CLIENTE
-O cliente deverá conseguir agendar com o mínimo possível de etapas e dúvidas.
+    O cliente deverá conseguir agendar com o mínimo possível de etapas e dúvidas.
 
 80. CRITÉRIO FINAL DE QUALIDADE
-O sistema deverá ser avaliado em cinco dimensões:
+    O sistema deverá ser avaliado em cinco dimensões:
 
-  FUNCIONAL
-  SEGURANÇA
-  USABILIDADE
-  PERFORMANCE
-  MANUTENIBILIDADE
+FUNCIONAL
+SEGURANÇA
+USABILIDADE
+PERFORMANCE
+MANUTENIBILIDADE
 
 Nenhuma delas deverá ser ignorada.
 
 81. FONTE DA VERDADE
-Quando houver conflito entre código e documentação:
+    Quando houver conflito entre código e documentação:
 
-  DOCUMENTAÇÃO
-  ↓
-  REGRA DE NEGÓCIO
-  ↓
-  DECISÃO REGISTRADA
+DOCUMENTAÇÃO
+↓
+REGRA DE NEGÓCIO
+↓
+DECISÃO REGISTRADA
 
                                                 34
 
-  ↓
-  CÓDIGO
+↓
+CÓDIGO
 
 O código deverá ser ajustado à regra aprovada.
 
 82. PRINCÍPIO FINAL DO PROJETO
-Não construir apenas uma aplicação que "funciona".
+    Não construir apenas uma aplicação que "funciona".
 
 Construir um sistema que seja:
 
@@ -1451,46 +1436,43 @@ Construir um sistema que seja:
 83. COMANDO FINAL PARA O REPLIT AGENT
 Somente após todo o projeto estar validado:
 
-  Faça uma auditoria final do projeto Fluir da Vida.
+Faça uma auditoria final do projeto Fluir da Vida.
 
-  Compare a implementação atual com toda a documentação oficial.
+Compare a implementação atual com toda a documentação oficial.
 
-  Identifique:
+Identifique:
 
-  1. funcionalidades ausentes;
-  2. regras de negócio não implementadas;
-  3. permissões incorretas;
-  4. endpoints ausentes;
-  5. telas ausentes;
-  6. testes ausentes;
-  7. problemas de segurança;
-  8. problemas de performance;
-  9. inconsistências entre frontend e backend;
-  10. dívida técnica relevante.
+1. funcionalidades ausentes;
+2. regras de negócio não implementadas;
+3. permissões incorretas;
+4. endpoints ausentes;
+5. telas ausentes;
+6. testes ausentes;
+7. problemas de segurança;
+8. problemas de performance;
+9. inconsistências entre frontend e backend;
+10. dívida técnica relevante.
 
-  NÃO corrija automaticamente.
+NÃO corrija automaticamente.
 
-  Primeiro apresente um relatório organizado por prioridade:
+Primeiro apresente um relatório organizado por prioridade:
 
-  CRÍTICO
-  ALTO
-  MÉDIO
-  BAIXO
+CRÍTICO
+ALTO
+MÉDIO
+BAIXO
 
-  Depois aguarde aprovação para executar as correções.
+Depois aguarde aprovação para executar as correções.
 
                                                   35
 
 84. ENCERRAMENTO
 Este documento deverá ser utilizado como:
 
-  MANUAL DE EXECUÇÃO
-  +
-  CHECKLIST
-  +
-  GUIA DE PROMPTS
-  +
-  CRITÉRIO DE ACEITE
+MANUAL DE EXECUÇÃO +
+CHECKLIST +
+GUIA DE PROMPTS +
+CRITÉRIO DE ACEITE
 
 O desenvolvimento deverá ocorrer de forma incremental.
 

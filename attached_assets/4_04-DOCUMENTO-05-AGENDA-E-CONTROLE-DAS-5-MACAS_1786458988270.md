@@ -17,23 +17,23 @@ Status: Regra oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir como o sistema deverá controlar:
+   Definir como o sistema deverá controlar:
 
-     • disponibilidade dos profissionais;
-     • horários;
-     • agendamentos;
-     • cinco macas;
-     • conflitos;
-     • atendimento presencial;
-     • Home Care;
-     • alterações;
-     • cancelamentos;
-     • remanejamentos.
+   • disponibilidade dos profissionais;
+   • horários;
+   • agendamentos;
+   • cinco macas;
+   • conflitos;
+   • atendimento presencial;
+   • Home Care;
+   • alterações;
+   • cancelamentos;
+   • remanejamentos.
 
 Este documento deverá ser considerado uma das principais referências do sistema.
 
 2. CONCEITO DA AGENDA
-A agenda não é apenas uma lista de horários.
+   A agenda não é apenas uma lista de horários.
 
 Ela representa a combinação de:
 
@@ -63,9 +63,9 @@ Isso não significa necessariamente cinco atendimentos simultâneos para cada pr
 Cada profissional possui sua própria disponibilidade.
 
 4. MACAS
-As cinco macas deverão ser cadastradas como recursos.
+   As cinco macas deverão ser cadastradas como recursos.
 
-```text id="r0ecjp" Maca 01 Maca 02 Maca 03 Maca 04 Maca 05
+````text id="r0ecjp" Maca 01 Maca 02 Maca 03 Maca 04 Maca 05
 
   Não deverão existir cinco estruturas diferentes no banco.
 
@@ -786,3 +786,4 @@ simples para o usuário, inteligente nos bastidores e rigorosa contra conflitos.
 Esse princípio é obrigatório para o desenvolvimento do Fluir da Vida Oficial.
 
                                                    17
+````

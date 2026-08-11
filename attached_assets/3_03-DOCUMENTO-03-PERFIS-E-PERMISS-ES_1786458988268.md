@@ -17,14 +17,14 @@ Status: Regra oficial do sistema
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir exatamente o que cada perfil pode:
+   Definir exatamente o que cada perfil pode:
 
-     • visualizar;
-     • criar;
-     • editar;
-     • cancelar;
-     • excluir;
-     • administrar.
+   • visualizar;
+   • criar;
+   • editar;
+   • cancelar;
+   • excluir;
+   • administrar.
 
 O sistema possui três perfis:
 
@@ -43,7 +43,7 @@ Portanto:
        Toda permissão deverá ser validada no servidor.
 
 3. MATRIZ GERAL
-                   Funcionalidade            Administrador   Profissional   Cliente
+Funcionalidade Administrador Profissional Cliente
 
                    Dashboard                            ✅             ✅         ✅
 
@@ -83,7 +83,7 @@ Portanto:
 
 Legenda
 
-* Cliente visualiza somente seus próprios agendamentos.
+- Cliente visualiza somente seus próprios agendamentos.
 
 ** Profissional visualiza clientes relacionados aos seus atendimentos.
 
@@ -94,12 +94,12 @@ Legenda
 ***** O profissional poderá alterar somente configurações permitidas para seu perfil.
 
 4. ADMINISTRADOR
-O administrador possui o maior nível de acesso.
+   O administrador possui o maior nível de acesso.
 
 Pode visualizar
-     • todos os clientes;
-     • todos os profissionais;
-     • todos os serviços;
+• todos os clientes;
+• todos os profissionais;
+• todos os serviços;
 
                                                    2
 
@@ -194,10 +194,10 @@ Pode:
 Todas as alterações devem respeitar as regras de conflito.
 
 11. PROFISSIONAL
-O profissional possui autonomia operacional, mas não possui controle administrativo total.
+    O profissional possui autonomia operacional, mas não possui controle administrativo total.
 
 12. PROFISSIONAL — AGENDA
-Pode:
+    Pode:
 
         • visualizar sua agenda;
         • visualizar dia;
@@ -211,7 +211,7 @@ Pode:
 Não pode visualizar a agenda completa de outros profissionais.
 
 13. PROFISSIONAL — CLIENTES
-Pode:
+    Pode:
 
         • cadastrar cliente;
         • visualizar clientes relacionados aos seus atendimentos;
@@ -222,7 +222,7 @@ Pode:
 Não poderá acessar clientes sem relação operacional quando essa restrição estiver configurada.
 
 14. PROFISSIONAL — AGENDAMENTO
-Pode criar:
+    Pode criar:
 
 Para si mesmo
 
@@ -245,7 +245,7 @@ Home Care
 O sistema solicita endereço.
 
 15. PROFISSIONAL — ALTERAÇÃO
-Pode alterar seus próprios atendimentos conforme as regras do sistema.
+    Pode alterar seus próprios atendimentos conforme as regras do sistema.
 
 Pode:
 
@@ -258,7 +258,7 @@ Pode:
 A troca de profissional deverá ser restrita ao administrador, salvo regra futura específica.
 
 16. PROFISSIONAL — CANCELAMENTO
-Pode cancelar atendimentos sob sua responsabilidade.
+    Pode cancelar atendimentos sob sua responsabilidade.
 
 O sistema deverá:
 
@@ -302,7 +302,7 @@ Pode:
 Não deverá visualizar dados de Home Care de outros profissionais sem permissão.
 
 19. CLIENTE
-O cliente possui acesso extremamente restrito.
+    O cliente possui acesso extremamente restrito.
 
 Seu objetivo é:
 
@@ -323,7 +323,7 @@ Pode cadastrar:
 Pode atualizar seus dados permitidos.
 
 21. CLIENTE — AGENDAMENTO
-Pode:
+    Pode:
 
         • visualizar serviços disponíveis;
         • visualizar profissionais disponíveis;
@@ -334,7 +334,7 @@ Pode:
 Não escolhe a maca.
 
 22. CLIENTE — MACA
-O cliente não precisa saber qual maca será utilizada.
+    O cliente não precisa saber qual maca será utilizada.
 
 A maca é um recurso interno do espaço.
 
@@ -349,7 +349,7 @@ Sem expor:
 Isso é uma decisão de experiência e poderá ser alterado futuramente.
 
 23. CLIENTE — HOME CARE
-O cliente poderá selecionar atendimento Home Care quando essa modalidade estiver disponível.
+    O cliente poderá selecionar atendimento Home Care quando essa modalidade estiver disponível.
 
 O sistema deverá:
 
@@ -382,26 +382,26 @@ Exemplo:
 O sistema verifica novamente a disponibilidade.
 
 26. CLIENTE — CANCELAMENTO
-Pode cancelar seus próprios agendamentos dentro das regras estabelecidas.
+    Pode cancelar seus próprios agendamentos dentro das regras estabelecidas.
 
 O cancelamento deverá ser registrado.
 
 27. CLIENTE — RESTRIÇÕES
-Não pode:
+    Não pode:
 
-     • visualizar outros clientes;
-     • visualizar agenda interna;
-     • visualizar macas;
-     • visualizar relatórios;
-     • alterar profissional;
-     • administrar serviços;
-     • administrar usuários;
-     • alterar configurações administrativas.
+    • visualizar outros clientes;
+    • visualizar agenda interna;
+    • visualizar macas;
+    • visualizar relatórios;
+    • alterar profissional;
+    • administrar serviços;
+    • administrar usuários;
+    • alterar configurações administrativas.
 
                                                   9
 
 28. EXCLUSÃO
-Por segurança, registros importantes não deverão ser simplesmente excluídos.
+    Por segurança, registros importantes não deverão ser simplesmente excluídos.
 
 Preferir:
 
@@ -409,29 +409,29 @@ Desativação lógica.
 
 Exemplo:
 
-  status = INACTIVE
+status = INACTIVE
 
 Isso preserva histórico.
 
 29. EXCLUSÃO DE AGENDAMENTO
-Agendamento não deverá ser fisicamente apagado.
+    Agendamento não deverá ser fisicamente apagado.
 
 Deverá mudar de estado:
 
-  CANCELLED
+CANCELLED
 
 E permanecer no histórico.
 
 30. PERMISSÕES FUTURAS
-A arquitetura deverá permitir futuramente permissões mais específicas.
+    A arquitetura deverá permitir futuramente permissões mais específicas.
 
 Exemplo:
 
-  ADMIN
-  MANAGER
-  PROFESSIONAL
-  RECEPTIONIST
-  CLIENT
+ADMIN
+MANAGER
+PROFESSIONAL
+RECEPTIONIST
+CLIENT
 
 Também poderá permitir permissões granulares.
 
@@ -461,56 +461,56 @@ Cada operação deverá possuir autorização.
 
 Exemplo conceitual:
 
-  POST /appointments
+POST /appointments
 
 O servidor deverá verificar:
 
-  usuário autenticado?
-  ↓
-  qual perfil?
-  ↓
-  pode criar agendamento?
-  ↓
-  qual profissional?
-  ↓
-  qual cliente?
-  ↓
-  qual recurso?
-  ↓
-  há conflito?
+usuário autenticado?
+↓
+qual perfil?
+↓
+pode criar agendamento?
+↓
+qual profissional?
+↓
+qual cliente?
+↓
+qual recurso?
+↓
+há conflito?
 
                                                    11
 
-  ↓
-  criar
+↓
+criar
 
 33. REGRA CRÍTICA
-Nunca confiar em dados enviados pelo navegador.
+    Nunca confiar em dados enviados pelo navegador.
 
 Mesmo que o usuário envie:
 
-  role = ADMIN
+role = ADMIN
 
 o servidor deverá utilizar a função real armazenada no sistema.
 
 34. AUDITORIA
-Operações administrativas importantes deverão registrar:
+    Operações administrativas importantes deverão registrar:
 
-     • usuário;
-     • ação;
-     • data;
-     • entidade;
-     • registro alterado;
-     • valor anterior;
-     • valor posterior.
+    • usuário;
+    • ação;
+    • data;
+    • entidade;
+    • registro alterado;
+    • valor anterior;
+    • valor posterior.
 
 35. PRINCÍPIO DE MENOR PRIVILÉGIO
-Cada usuário deverá possuir somente o acesso necessário para executar sua função.
+    Cada usuário deverá possuir somente o acesso necessário para executar sua função.
 
 Isso reduz riscos e protege os dados.
 
 36. REGRA PARA O REPLIT AGENT
-O Agent deverá tratar este documento como regra de segurança.
+    O Agent deverá tratar este documento como regra de segurança.
 
 Nunca:
 
@@ -526,7 +526,7 @@ Nunca:
 Qualquer alteração de permissão deverá ser previamente discutida e aprovada.
 
 37. RESUMO
-ADMINISTRADOR
+    ADMINISTRADOR
 
 Controla o espaço.
 

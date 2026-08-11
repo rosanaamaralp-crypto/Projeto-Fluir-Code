@@ -17,8 +17,8 @@ Status: Documento oficial de planejamento
 Prioridade: ESTRATÉGICA
 
 1. OBJETIVO
-Registrar todas as funcionalidades, melhorias, integrações e possibilidades futuras planejadas para o
-sistema Fluir da Vida Oficial.
+   Registrar todas as funcionalidades, melhorias, integrações e possibilidades futuras planejadas para o
+   sistema Fluir da Vida Oficial.
 
 Este documento existe para garantir que:
 
@@ -61,8 +61,8 @@ P4 — Exploratória
 Ideia futura que ainda precisa ser validada.
 
 4. AGENDA INTELIGENTE
-BF-001 — Sugestão inteligente de horários
-Prioridade: P1
+   BF-001 — Sugestão inteligente de horários
+   Prioridade: P1
 
 Sistema sugere horários considerando:
 
@@ -204,17 +204,17 @@ BF-025 — Cancelamento
 BF-026 — Reagendamento
 
 8. SMS
-BF-027 — Lembretes por SMS
-Somente se fizer sentido economicamente.
+   BF-027 — Lembretes por SMS
+   Somente se fizer sentido economicamente.
 
 9. PAGAMENTOS
-BF-028 — Registro de pagamento
-Registrar:
+   BF-028 — Registro de pagamento
+   Registrar:
 
-     • valor;
-     • data;
-     • forma;
-     • status.
+   • valor;
+   • data;
+   • forma;
+   • status.
 
 BF-029 — PIX
 Integração com pagamento PIX.
@@ -240,7 +240,7 @@ BF-035 — Recorrência
 Planos com cobrança recorrente.
 
 10. FINANCEIRO
-BF-036 — Contas a receber
+    BF-036 — Contas a receber
 
 BF-037 — Contas a pagar
 
@@ -257,10 +257,10 @@ BF-041 — Relatórios financeiros
 BF-042 — Conciliação
 
 11. PACOTES E PLANOS
-BF-043 — Pacotes de sessões
-Exemplo:
+    BF-043 — Pacotes de sessões
+    Exemplo:
 
-       Pacote com 10 sessões.
+    Pacote com 10 sessões.
 
 BF-044 — Controle de sessões restantes
 Exemplo:
@@ -274,12 +274,12 @@ BF-046 — Planos recorrentes
 BF-047 — Assinaturas
 
 12. AVALIAÇÕES
-BF-048 — Avaliação pós-atendimento
-Cliente avalia:
+    BF-048 — Avaliação pós-atendimento
+    Cliente avalia:
 
-      • atendimento;
-      • profissional;
-      • experiência.
+    • atendimento;
+    • profissional;
+    • experiência.
 
                                      8
 
@@ -293,13 +293,13 @@ BF-051 — NPS
 Avaliação da experiência geral.
 
 13. CRM
-BF-052 — Segmentação de clientes
-Exemplos:
+    BF-052 — Segmentação de clientes
+    Exemplos:
 
-      • novos;
-      • recorrentes;
-      • inativos;
-      • alto valor.
+    • novos;
+    • recorrentes;
+    • inativos;
+    • alto valor.
 
 BF-053 — Histórico de relacionamento
 
@@ -316,7 +316,7 @@ BF-056 — Cupons
 BF-057 — Benefícios
 
 14. FIDELIZAÇÃO
-BF-058 — Programa de fidelidade
+    BF-058 — Programa de fidelidade
 
 BF-059 — Pontos
 
@@ -326,7 +326,7 @@ BF-061 — Indicação
 Cliente indica outro cliente.
 
 15. MARKETING
-BF-062 — Campanhas automáticas
+    BF-062 — Campanhas automáticas
 
 BF-063 — Aniversariantes
 Mensagem automática.
@@ -361,8 +361,8 @@ BF-073 — No-show
 BF-074 — Retenção de clientes
 
 17. DASHBOARD EXECUTIVO
-BF-075
-Dashboard para gestão estratégica.
+    BF-075
+    Dashboard para gestão estratégica.
 
 Indicadores:
 
@@ -401,7 +401,7 @@ BF-080 — Assistente do cliente
 Auxiliar na escolha do serviço.
 
 19. AUTOMATIZAÇÕES
-BF-081 — Confirmação automática
+    BF-081 — Confirmação automática
 
                                                 12
 
@@ -414,7 +414,7 @@ BF-084 — Reativação automática
 BF-085 — Pós-atendimento automático
 
 20. PROFISSIONAIS
-BF-086 — Indicadores individuais
+    BF-086 — Indicadores individuais
 
 BF-087 — Metas
 
@@ -425,7 +425,7 @@ BF-089 — Avaliações recebidas
 BF-090 — Comissão
 
 21. RECURSOS FÍSICOS
-A arquitetura deverá permitir futuramente cadastrar outros recursos além das cinco macas.
+    A arquitetura deverá permitir futuramente cadastrar outros recursos além das cinco macas.
 
 BF-091
 Novas macas.
@@ -442,10 +442,10 @@ BF-094
 Cabines.
 
 22. MULTIUNIDADE
-BF-095 — Mais de uma unidade
-Exemplo:
+    BF-095 — Mais de uma unidade
+    Exemplo:
 
-```text id="x6q3bb" Unidade Guarulhos Unidade São Paulo Unidade Campinas
+````text id="x6q3bb" Unidade Guarulhos Unidade São Paulo Unidade Campinas
 
   Cada unidade poderá possuir:
 
@@ -909,3 +909,4 @@ O backlog representa tudo aquilo que poderemos construir depois.
 Nada planejado deverá ser perdido.
 
                                                 24
+````

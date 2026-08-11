@@ -17,7 +17,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir como o sistema Fluir da Vida será testado antes, durante e depois do desenvolvimento.
+   Definir como o sistema Fluir da Vida será testado antes, durante e depois do desenvolvimento.
 
 O objetivo é garantir:
 
@@ -37,27 +37,22 @@ Uma funcionalidade não será considerada pronta apenas porque:
 
 Ela somente será considerada pronta quando:
 
-  INTERFACE
-  +
-  BACKEND
-  +
-  BANCO
-  +
-  PERMISSÕES
-  +
-  VALIDAÇÕES
-  +
-  TRATAMENTO DE ERROS
+INTERFACE +
+BACKEND +
+BANCO +
+PERMISSÕES +
+VALIDAÇÕES +
+TRATAMENTO DE ERROS
 
                                                   1
 
-  +
-  TESTES
++
+TESTES
 
 estiverem funcionando corretamente.
 
 3. PERFIS DE TESTE
-Criar usuários específicos para testes:
+   Criar usuários específicos para testes:
 
 ADMIN_TESTE
 
@@ -78,32 +73,32 @@ Perfil:
 Cliente.
 
 4. DADOS DE TESTE
-Criar ambiente separado dos dados reais.
+   Criar ambiente separado dos dados reais.
 
 Exemplo:
 
-  Cliente:
-  Maria Teste
+Cliente:
+Maria Teste
 
-  Profissional:
-  Ana Teste
+Profissional:
+Ana Teste
 
-  Serviço:
-  Serviço Teste
+Serviço:
+Serviço Teste
 
-  Macas:
-  Maca 01
-  Maca 02
+Macas:
+Maca 01
+Maca 02
 
                                            2
 
-  Maca 03
-  Maca 04
-  Maca 05
+Maca 03
+Maca 04
+Maca 05
 
 5. TESTE DE LOGIN
-CT-001
-Login correto.
+   CT-001
+   Login correto.
 
 Esperado:
 
@@ -155,8 +150,8 @@ Esperado:
 Acesso permitido.
 
 7. TESTE DE ISOLAMENTO
-CT-008
-Cliente tenta visualizar dados de outro cliente.
+   CT-008
+   Cliente tenta visualizar dados de outro cliente.
 
 Esperado:
 
@@ -172,8 +167,8 @@ Esperado:
 Acesso negado.
 
 8. CADASTRO DE CLIENTE
-CT-010
-Cadastrar cliente válido.
+   CT-010
+   Cadastrar cliente válido.
 
 Esperado:
 
@@ -219,8 +214,8 @@ Profissional não aparece para novos agendamentos.
 Agendamentos existentes permanecem preservados.
 
 10. SERVIÇOS
-CT-017
-Criar serviço.
+    CT-017
+    Criar serviço.
 
 CT-018
 Alterar duração.
@@ -251,8 +246,8 @@ Esperado:
 Maca não pode ser utilizada durante o bloqueio.
 
 12. TESTE CRÍTICO — CAPACIDADE DAS MACAS
-CT-023
-Criar cinco atendimentos presenciais simultâneos.
+    CT-023
+    Criar cinco atendimentos presenciais simultâneos.
 
 Esperado:
 
@@ -286,8 +281,8 @@ Somente um agendamento é confirmado.
 O outro recebe conflito.
 
 14. AGENDA
-CT-026
-Criar agendamento válido.
+    CT-026
+    Criar agendamento válido.
 
 CT-027
 Alterar agendamento.
@@ -299,8 +294,8 @@ CT-029
 Remanejar agendamento.
 
 15. CONFLITO DE PROFISSIONAL
-CT-030
-Tentar agendar profissional já ocupado.
+    CT-030
+    Tentar agendar profissional já ocupado.
 
                                                8
 
@@ -309,24 +304,24 @@ Esperado:
 Sistema rejeita.
 
 16. CONFLITO DE MACA
-CT-031
-Tentar utilizar maca ocupada.
+    CT-031
+    Tentar utilizar maca ocupada.
 
 Esperado:
 
 Sistema rejeita.
 
 17. CONFLITO DE HORÁRIO
-CT-032
-Criar dois atendimentos incompatíveis para o mesmo profissional.
+    CT-032
+    Criar dois atendimentos incompatíveis para o mesmo profissional.
 
 Esperado:
 
 Bloqueado.
 
 18. HOME CARE
-CT-033
-Criar Home Care válido.
+    CT-033
+    Criar Home Care válido.
 
 CT-034
 Sem endereço.
@@ -344,8 +339,8 @@ CT-036
 Cancelar Home Care.
 
 19. DIFERENCIAÇÃO DE MODALIDADE
-CT-037
-Presencial.
+    CT-037
+    Presencial.
 
 Esperado:
 
@@ -359,41 +354,41 @@ Esperado:
 Não consome maca presencial.
 
 20. CLIENTE — AGENDAMENTO
-Testar fluxo completo:
+    Testar fluxo completo:
 
-  Login
-  ↓
-  Serviço
-  ↓
-  Modalidade
-  ↓
-  Profissional
-  ↓
-  Data
-  ↓
-  Horário
+Login
+↓
+Serviço
+↓
+Modalidade
+↓
+Profissional
+↓
+Data
+↓
+Horário
 
                                  10
 
-  ↓
-  Confirmação
+↓
+Confirmação
 
 21. PROFISSIONAL — AGENDAMENTO
-Testar:
+    Testar:
 
-      • cliente;
-      • serviço;
-      • horário;
-      • modalidade;
-      • conflito;
-      • confirmação.
+    • cliente;
+    • serviço;
+    • horário;
+    • modalidade;
+    • conflito;
+    • confirmação.
 
 22. ADMINISTRADOR — AGENDAMENTO
-Testar criação completa e capacidade de intervenção.
+    Testar criação completa e capacidade de intervenção.
 
 23. CANCELAMENTO
-CT-039
-Cliente cancela dentro das regras.
+    CT-039
+    Cliente cancela dentro das regras.
 
 CT-040
 Profissional cancela.
@@ -402,9 +397,9 @@ CT-041
 Administrador cancela.
 
 24. STATUS
-Testar transições:
+    Testar transições:
 
-```text id="s6xjbx" PENDENTE ↓ CONFIRMADO ↓ EM ATENDIMENTO ↓ CONCLUÍDO
+````text id="s6xjbx" PENDENTE ↓ CONFIRMADO ↓ EM ATENDIMENTO ↓ CONCLUÍDO
 
                                                  11
 
@@ -920,3 +915,4 @@ O usuário deverá confiar que:
         Confiabilidade é mais importante que quantidade de funcionalidades.
 
                                                   22
+````

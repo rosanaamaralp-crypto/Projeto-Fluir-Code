@@ -18,7 +18,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir como o frontend, backend e banco de dados irão se comunicar.
+   Definir como o frontend, backend e banco de dados irão se comunicar.
 
 Este documento estabelece:
 
@@ -38,7 +38,7 @@ A interface não deverá acessar diretamente o banco.
 
 Fluxo:
 
-```text id="v2cr31" FRONTEND ↓ API ↓ REGRAS DE NEGÓCIO ↓ BANCO
+````text id="v2cr31" FRONTEND ↓ API ↓ REGRAS DE NEGÓCIO ↓ BANCO
 
   ---
 
@@ -763,3 +763,4 @@ O domínio decide.
 O banco preserva.
 
                         19
+````

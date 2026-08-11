@@ -18,7 +18,7 @@ Status: Documento oficial para desenvolvimento
 Prioridade: CRÍTICA
 
 1. OBJETIVO
-Definir exatamente o que deverá ser desenvolvido na primeira versão funcional do sistema.
+   Definir exatamente o que deverá ser desenvolvido na primeira versão funcional do sistema.
 
 O MVP não significa construir um sistema incompleto.
 
@@ -46,7 +46,7 @@ O MVP deverá ser:
 Não devemos colocar funcionalidades avançadas antes de validar o núcleo da operação.
 
 3. CLASSIFICAÇÃO
-Utilizaremos três categorias.
+   Utilizaremos três categorias.
 
                                                   1
 
@@ -63,14 +63,14 @@ Importante, mas pode ser implementado depois que o núcleo estiver funcionando.
 Funcionalidades avançadas ou expansões.
 
 4. MÓDULO — AUTENTICAÇÃO
-🔴 MVP
+   🔴 MVP
 
-      • login;
-      • logout;
-      • recuperação de senha;
-      • controle de sessão;
-      • identificação de perfil;
-      • proteção de rotas.
+   • login;
+   • logout;
+   • recuperação de senha;
+   • controle de sessão;
+   • identificação de perfil;
+   • proteção de rotas.
 
 🟡 FASE 2
 
@@ -207,7 +207,7 @@ Implementar:
 
 Cadastrar:
 
-```text id="h5ehqv" Maca 01 Maca 02 Maca 03 Maca 04 Maca 05
+````text id="h5ehqv" Maca 01 Maca 02 Maca 03 Maca 04 Maca 05
 
   Implementar:
 
@@ -759,3 +759,4 @@ Deve ser avaliado pela capacidade de realizar a operação real.
        consegue controlar tudo com segurança, o MVP cumpriu seu objetivo.
 
                                                   15
+````
