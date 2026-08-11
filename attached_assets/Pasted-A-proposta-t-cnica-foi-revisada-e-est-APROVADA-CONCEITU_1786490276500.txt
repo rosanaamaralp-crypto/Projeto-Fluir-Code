@@ -1,0 +1,139 @@
+A proposta técnica foi revisada e está APROVADA CONCEITUALMENTE, porém ainda NÃO está autorizada a criação das migrations.
+
+Foram identificados os seguintes ajustes obrigatórios antes de congelar o modelo físico:
+
+### 1. CONFLITO DE CLIENTE — OBRIGATÓRIO
+
+A documentação exige que um cliente não possa possuir dois atendimentos simultâneos.
+
+A proposta atualmente protege:
+
+* profissional;
+* recurso/maca.
+
+Mas não possui EXCLUDE constraint para cliente.
+
+Adicione uma estratégia equivalente:
+
+client_id + tstzrange(start_datetime, end_datetime)
+
+com EXCLUDE USING GIST, considerando somente os status ativos/conflitantes:
+
+CONFIRMED
+IN_PROGRESS
+
+e excluindo:
+
+CANCELLED
+COMPLETED
+NO_SHOW
+
+Além da constraint, mantenha a validação explícita na transação.
+
+### 2. HISTÓRICO DE REMARCAÇÃO — OBRIGATÓRIO
+
+A proposta afirma que a remarcação será rastreável, mas appointment_status_history atualmente armazena somente status, usuário, motivo e timestamp.
+
+Isso não é suficiente para rastrear o antes/depois da remarcação.
+
+Adicionar ao modelo:
+
+old_start_datetime
+old_end_datetime
+new_start_datetime
+new_end_datetime
+
+Avalie também a necessidade de:
+
+old_resource_id
+new_resource_id
+old_address_id
+new_address_id
+
+para permitir rastreamento completo quando houver alteração de recurso/endereço.
+
+Não crie uma tabela adicional se esses campos puderem ser mantidos de forma adequada em appointment_status_history.
+
+### 3. ENDEREÇO — MVP
+
+A regra do MVP é um único endereço principal por cliente.
+
+Portanto, o banco também deve garantir essa regra.
+
+Adicionar:
+
+UNIQUE (client_id)
+
+em addresses.
+
+A futura Fase 2 poderá remover essa restrição quando múltiplos endereços forem implementados.
+
+### 4. EMAIL — CASE INSENSITIVE
+
+A unicidade de email deve ser lógica e não depender de diferença entre maiúsculas/minúsculas.
+
+Garantir:
+
+* normalização para lowercase na aplicação;
+* índice UNIQUE baseado em lower(email), ou mecanismo equivalente no PostgreSQL.
+
+O sistema não deve permitir:
+
+[Maria@exemplo.com](mailto:Maria@exemplo.com)
+e
+[maria@exemplo.com](mailto:maria@exemplo.com)
+
+como dois usuários diferentes.
+
+### 5. REMARCAÇÃO
+
+A decisão está APROVADA:
+
+A remarcação deve manter o mesmo appointment_id/UUID e atualizar o agendamento existente.
+
+Não cancelar o agendamento antigo e criar outro.
+
+O histórico deve registrar a alteração.
+
+### 6. NÃO ALTERAR O QUE JÁ FOI APROVADO
+
+Mantenha:
+
+* status inicial CONFIRMED;
+* autenticação própria;
+* timezone America/Sao_Paulo;
+* cinco macas em resources;
+* Home Care sem maca;
+* Presencial com maca;
+* um endereço no MVP;
+* preço congelado em price_at_booking;
+* EXCLUDE de profissional;
+* EXCLUDE de recurso;
+* transação atômica;
+* btree_gist;
+* histórico append-only;
+* audit_logs separado de appointment_status_history.
+
+### 7. NOVA ENTREGA
+
+Antes de criar migrations, apresente SOMENTE a versão revisada do modelo, mostrando:
+
+1. alterações realizadas;
+2. campos novos;
+3. constraints novas;
+4. índices novos;
+5. estratégia final de conflito de cliente;
+6. estrutura final de appointment_status_history;
+7. estrutura final de addresses;
+8. estratégia final de email;
+9. confirmação de que nenhum outro item foi alterado.
+
+Ainda NÃO:
+
+* criar migrations;
+* executar SQL;
+* criar tabelas;
+* criar seed;
+* implementar endpoints.
+
+Aguarde nova aprovação após apresentar o modelo revisado.
