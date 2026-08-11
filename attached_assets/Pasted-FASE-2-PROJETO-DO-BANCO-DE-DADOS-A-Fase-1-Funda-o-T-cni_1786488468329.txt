@@ -1,0 +1,419 @@
+FASE 2 — PROJETO DO BANCO DE DADOS
+
+A Fase 1 — Fundação Técnica foi concluída e aprovada.
+
+Agora vamos iniciar exclusivamente o DESENHO DO BANCO DE DADOS.
+
+IMPORTANTE: nesta fase você NÃO está autorizado a criar migrations, executar alterações no banco, criar dados de produção ou implementar regras de negócio.
+
+Seu objetivo é produzir uma PROPOSTA TÉCNICA DO MODELO DE DADOS para revisão e aprovação.
+
+## 1. DECISÕES OFICIAIS JÁ APROVADAS
+
+Considere as seguintes decisões como parte das regras oficiais do projeto:
+
+### Autenticação
+
+* Não utilizar Clerk.
+* A autenticação será inicialmente própria.
+* A arquitetura deve permanecer preparada para futuro provider externo.
+* A entidade interna `users` permanece como identidade principal do sistema.
+* Senhas nunca podem ser armazenadas em texto puro.
+* A autorização deve continuar sendo responsabilidade do backend.
+
+### Timezone
+
+Timezone operacional inicial:
+
+America/Sao_Paulo
+
+A arquitetura deve permitir futuramente diferentes unidades/timezones.
+
+### Agendamento
+
+O status inicial de um novo agendamento será:
+
+CONFIRMED
+
+Não introduzir PENDING sem justificativa documental.
+
+Fluxo principal:
+
+CONFIRMED
+→ IN_PROGRESS
+→ COMPLETED
+
+Também deve existir suporte ao estado NO_SHOW conforme documentação.
+
+### Endereço
+
+No MVP:
+
+* um endereço principal por cliente.
+
+A arquitetura deve permitir evolução futura para múltiplos endereços.
+
+Não implementar múltiplos endereços nesta fase.
+
+### Modalidade
+
+Um serviço poderá permitir:
+
+* PRESENCIAL;
+* HOME_CARE;
+* ou ambos.
+
+Presencial utiliza recurso/maca.
+
+Home Care não utiliza maca.
+
+Home Care exige endereço.
+
+### Pagamento
+
+No MVP:
+
+* o serviço possui preço;
+* o preço pode ser utilizado no agendamento;
+* não existe pagamento online;
+* não integrar gateway de pagamento.
+
+### Recursos
+
+O sistema deverá possuir exatamente cinco macas:
+
+Maca 01
+Maca 02
+Maca 03
+Maca 04
+Maca 05
+
+Não criar capacidade diferente da documentação.
+
+### Cancelamento
+
+Para o MVP:
+
+* Cliente pode cancelar.
+* Profissional pode cancelar.
+* Administrador pode cancelar.
+* Motivo do cliente é opcional.
+* Motivo do profissional é obrigatório.
+* Motivo do administrador é obrigatório.
+* Agendamento `IN_PROGRESS` não deve ser cancelado pelo fluxo normal.
+* Remarcação somente antes do início do atendimento.
+* Uma remarcação deve passar novamente por todas as validações de disponibilidade/conflito.
+
+Não inventar prazo comercial de antecedência para cancelamento, pois essa regra não está definida nos documentos oficiais.
+
+---
+
+# 2. DOCUMENTAÇÃO COMO FONTE DE VERDADE
+
+Os arquivos existentes em `/docs` continuam sendo a fonte oficial do projeto.
+
+Antes de propor o modelo, consulte especialmente:
+
+* documentos de arquitetura;
+* modelo de dados;
+* regras de negócio;
+* API e contratos;
+* plano de implementação;
+* pacote mestre do Replit.
+
+Não invente entidades ou regras que não estejam justificadas pela documentação ou pelas decisões acima.
+
+Quando existir divergência real entre documentos, NÃO resolva sozinho.
+
+Apresente a divergência claramente.
+
+---
+
+# 3. ENTIDADES A SEREM ANALISADAS
+
+Parta das entidades já previstas na documentação e avalie os relacionamentos entre elas.
+
+Entre elas estão:
+
+* USERS
+* ROLES
+* CLIENTS
+* PROFESSIONALS
+* SERVICES
+* PROFESSIONAL_SERVICES
+* AVAILABILITY
+* AVAILABILITY_BLOCKS
+* RESOURCES
+* APPOINTMENTS
+* APPOINTMENT_HISTORY
+* NOTIFICATIONS
+* AUDIT_LOGS
+
+Também avalie outras entidades somente se forem necessárias e estiverem justificadas pela documentação.
+
+Não crie tabelas desnecessárias.
+
+---
+
+# 4. PARA CADA ENTIDADE
+
+Apresente:
+
+* nome da tabela;
+* finalidade;
+* campos;
+* tipo de cada campo;
+* obrigatório/opcional;
+* valor padrão quando aplicável;
+* chave primária;
+* chaves estrangeiras;
+* índices;
+* constraints;
+* enums relacionados;
+* relacionamentos;
+* regras de integridade.
+
+Não crie migrations ainda.
+
+---
+
+# 5. RELACIONAMENTOS
+
+Apresente claramente os relacionamentos, por exemplo:
+
+USERS
+↓
+CLIENTS
+
+USERS
+↓
+PROFESSIONALS
+
+PROFESSIONALS
+↔
+SERVICES
+
+CLIENTS
+↓
+APPOINTMENTS
+
+PROFESSIONALS
+↓
+APPOINTMENTS
+
+SERVICES
+↓
+APPOINTMENTS
+
+APPOINTMENTS
+↓
+APPOINTMENT_HISTORY
+
+APPOINTMENTS
+↓
+NOTIFICATIONS
+
+Também explique cardinalidade:
+
+1:1
+1:N
+N:N
+
+quando aplicável.
+
+---
+
+# 6. AGENDAMENTOS
+
+Esta é uma área crítica.
+
+Explique exatamente como o banco deverá representar:
+
+* cliente;
+* profissional;
+* serviço;
+* modalidade;
+* data;
+* horário inicial;
+* horário final;
+* duração;
+* status;
+* recurso/maca;
+* endereço Home Care;
+* preço no momento do agendamento;
+* timestamps;
+* cancelamento;
+* remarcação.
+
+Explique também como preservar o histórico das alterações.
+
+---
+
+# 7. CONFLITO DE HORÁRIOS
+
+Apresente a estratégia técnica para impedir:
+
+* dois agendamentos do mesmo profissional no mesmo horário;
+* dois agendamentos da mesma maca no mesmo horário;
+* conflito de disponibilidade;
+* conflito com bloqueios;
+* conflito decorrente de duas requisições simultâneas.
+
+Explique quais constraints, índices, transações ou mecanismos do PostgreSQL serão utilizados.
+
+Não implemente ainda.
+
+Quero apenas a proposta.
+
+---
+
+# 8. CINCO MACAS
+
+Explique como os cinco recursos serão representados no banco.
+
+Deve existir uma estrutura que permita:
+
+* identificar cada maca;
+* saber se está ativa;
+* associar uma maca a um agendamento presencial;
+* impedir dupla reserva;
+* permitir futura expansão sem alterar a regra atual.
+
+Não crie uma coluna `maca_1`, `maca_2`, etc. dentro de `appointments`.
+
+Use modelagem relacional apropriada.
+
+---
+
+# 9. HOME CARE
+
+Explique como representar:
+
+* modalidade HOME_CARE;
+* endereço utilizado;
+* ausência de maca;
+* validação de endereço;
+* profissional;
+* duração;
+* disponibilidade.
+
+O modelo deve impedir inconsistências como:
+
+HOME_CARE + resource_id preenchido
+
+ou
+
+PRESENCIAL + endereço Home Care obrigatório sem necessidade.
+
+---
+
+# 10. PREÇO
+
+O serviço possui preço.
+
+Explique se o agendamento deve armazenar uma cópia do preço no momento da reserva.
+
+Considere o problema de alteração futura do preço do serviço e preservação histórica.
+
+Não implemente ainda.
+
+Apenas proponha.
+
+---
+
+# 11. AUDITORIA
+
+Explique como `AUDIT_LOGS` deverá funcionar.
+
+Precisamos conseguir registrar operações relevantes sem misturar auditoria com histórico funcional do agendamento.
+
+Diferencie:
+
+APPOINTMENT_HISTORY
+
+de
+
+AUDIT_LOGS
+
+---
+
+# 12. NOTIFICAÇÕES
+
+Apresente a estrutura necessária para suportar notificações previstas na documentação.
+
+Não implementar envio nesta fase.
+
+Precisamos apenas do modelo de dados necessário.
+
+---
+
+# 13. ÍNDICES
+
+Apresente uma lista de índices recomendados e explique a finalidade de cada um.
+
+Dê atenção especial a consultas envolvendo:
+
+* agenda por profissional;
+* agenda por cliente;
+* agenda por período;
+* disponibilidade;
+* bloqueios;
+* recursos;
+* agendamentos ativos;
+* notificações não lidas.
+
+---
+
+# 14. SEGURANÇA
+
+Explique como o modelo ajudará a proteger:
+
+* credenciais;
+* dados pessoais;
+* integridade dos agendamentos;
+* isolamento por perfil;
+* auditoria.
+
+Não implemente autenticação ainda.
+
+---
+
+# 15. RESULTADO OBRIGATÓRIO
+
+Sua resposta deve conter exatamente estas seções:
+
+1. Visão geral do modelo
+2. Entidades
+3. Campos por entidade
+4. Relacionamentos
+5. Enums
+6. Constraints
+7. Índices
+8. Estratégia de conflitos
+9. Estratégia das cinco macas
+10. Estratégia Home Care
+11. Estratégia de preço/histórico
+12. Histórico de agendamento
+13. Auditoria
+14. Notificações
+15. Segurança
+16. Pontos de atenção
+17. Dúvidas ou conflitos ainda existentes
+
+Ao final, apresente também uma representação textual do relacionamento das tabelas.
+
+NÃO:
+
+* criar migrations;
+* executar SQL;
+* alterar schema;
+* inserir seed;
+* criar tabelas;
+* criar código de domínio;
+* implementar endpoints;
+* implementar autenticação;
+* implementar telas.
+
+Somente apresente a proposta técnica do banco para aprovação.
+
+Aguarde minha aprovação antes de qualquer alteração no banco.
