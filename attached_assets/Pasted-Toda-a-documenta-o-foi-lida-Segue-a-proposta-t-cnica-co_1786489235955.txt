@@ -1,0 +1,647 @@
+Toda a documentação foi lida. Segue a proposta técnica completa.
+
+Fase 2 — Proposta Técnica do Modelo de Dados
+1. Visão Geral do Modelo
+O modelo é composto por 14 tabelas organizadas em quatro grupos funcionais:
+
+Grupo	Tabelas
+Identidade	roles, users
+Domínio de pessoas	clients, professionals, addresses
+Serviços e disponibilidade	services, professional_services, availability, blocked_periods, resources
+Agendamentos	appointments, appointment_status_history
+Transversais	notifications, audit_logs
+Princípio central: dados históricos nunca são apagados. Cancelamentos alteram status; desativações alteram status; registros com histórico não são deletados. Toda timestamp é timestamptz (UTC interno, exibição em America/Sao_Paulo).
+
+2. Entidades
+Tabela	Finalidade
+roles	Perfis imutáveis do sistema (ADMIN, PROFESSIONAL, CLIENT)
+users	Identidade e autenticação de todos os usuários
+clients	Dados específicos do cliente — extensão de users
+professionals	Dados específicos do profissional — extensão de users
+addresses	Endereços dos clientes (MVP: 1 por cliente; arquitetura suporta N)
+services	Serviços oferecidos pelo Fluir da Vida
+professional_services	Habilitação N:N entre profissionais e serviços
+availability	Disponibilidade recorrente semanal do profissional
+blocked_periods	Períodos específicos de indisponibilidade do profissional
+resources	Recursos físicos — cinco macas no MVP
+appointments	Agendamentos e atendimentos
+appointment_status_history	Histórico de mudanças de status de cada agendamento
+notifications	Notificações internas por usuário
+audit_logs	Registro de ações administrativas auditáveis
+3. Campos por Entidade
+3.1 roles
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	smallint	Sim	—	PK
+name	varchar(20)	Sim	—	ADMIN, PROFESSIONAL, CLIENT
+Tabela estática de seed. Sem created_at / updated_at.
+
+3.2 users
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+role_id	smallint	Sim	—	FK → roles.id
+name	varchar(255)	Sim	—	Nome completo
+email	varchar(255)	Sim	—	Login; UNIQUE
+password_hash	varchar(255)	Sim	—	bcrypt/argon2; jamais exposto pela API
+phone	varchar(20)	Não	NULL	Telefone
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, INACTIVE
+last_login_at	timestamptz	Não	NULL	Última autenticação
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+3.3 clients
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+user_id	uuid	Sim	—	FK → users.id; UNIQUE
+birth_date	date	Não	NULL	Data de nascimento
+notes	text	Não	NULL	Observações internas
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, INACTIVE
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+3.4 professionals
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+user_id	uuid	Sim	—	FK → users.id; UNIQUE
+specialty	varchar(255)	Não	NULL	Especialidade descritiva
+bio	text	Não	NULL	Apresentação pública
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, INACTIVE
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+3.5 addresses
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+client_id	uuid	Sim	—	FK → clients.id
+street	varchar(255)	Sim	—	Logradouro
+number	varchar(20)	Sim	—	Número
+complement	varchar(100)	Não	NULL	Complemento
+neighborhood	varchar(100)	Sim	—	Bairro
+city	varchar(100)	Sim	—	Cidade
+state	char(2)	Sim	—	UF (ex: SP)
+postal_code	varchar(10)	Sim	—	CEP
+reference	varchar(255)	Não	NULL	Ponto de referência
+latitude	numeric(10,7)	Não	NULL	Preparado para mapas futuros
+longitude	numeric(10,7)	Não	NULL	Preparado para mapas futuros
+is_default	boolean	Sim	false	Endereço padrão do cliente
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+MVP: a camada de serviço limita a criação a um endereço por cliente. A arquitetura não impõe essa restrição no banco para permitir evolução futura sem migration.
+
+3.6 services
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+name	varchar(255)	Sim	—	Nome do serviço
+description	text	Não	NULL	Descrição
+duration_minutes	integer	Sim	—	Duração em minutos; CHECK > 0
+price	numeric(10,2)	Sim	—	Preço atual; CHECK ≥ 0
+allowed_modalities	varchar(10)	Sim	'BOTH'	IN_PERSON, HOME_CARE, BOTH (ver seção 17.3)
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, INACTIVE
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+3.7 professional_services
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+professional_id	uuid	Sim	—	FK → professionals.id
+service_id	uuid	Sim	—	FK → services.id
+active	boolean	Sim	true	Habilitação atual
+created_at	timestamptz	Sim	now()	—
+Constraint: UNIQUE (professional_id, service_id).
+
+3.8 availability
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+professional_id	uuid	Sim	—	FK → professionals.id
+weekday	smallint	Sim	—	0=Dom … 6=Sáb
+start_time	time	Sim	—	Início do período (horário local)
+end_time	time	Sim	—	Fim do período (horário local)
+active	boolean	Sim	true	Disponibilidade ativa
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+time sem timezone — representa horários locais recorrentes, interpretados sempre em America/Sao_Paulo. Constraints: CHECK (weekday BETWEEN 0 AND 6), CHECK (end_time > start_time).
+
+3.9 blocked_periods
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+professional_id	uuid	Sim	—	FK → professionals.id
+start_datetime	timestamptz	Sim	—	Início do bloqueio
+end_datetime	timestamptz	Sim	—	Fim do bloqueio
+reason	text	Não	NULL	Motivo
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, CANCELLED
+created_by	uuid	Sim	—	FK → users.id
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+Constraint: CHECK (end_datetime > start_datetime).
+
+3.10 resources
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+name	varchar(100)	Sim	—	Ex: "Maca 01"; UNIQUE
+type	varchar(20)	Sim	'MASSAGE_TABLE'	MASSAGE_TABLE, ROOM, EQUIPMENT, OTHER
+status	varchar(10)	Sim	'ACTIVE'	ACTIVE, INACTIVE
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+Seed com exatamente 5 linhas (Maca 01–05, tipo MASSAGE_TABLE, status ACTIVE).
+
+3.11 appointments
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+client_id	uuid	Sim	—	FK → clients.id
+professional_id	uuid	Sim	—	FK → professionals.id
+service_id	uuid	Sim	—	FK → services.id
+modality	varchar(10)	Sim	—	IN_PERSON, HOME_CARE
+resource_id	uuid	Não	NULL	FK → resources.id; obrigatório se IN_PERSON
+address_id	uuid	Não	NULL	FK → addresses.id; obrigatório se HOME_CARE
+start_datetime	timestamptz	Sim	—	Início — definido pelo backend
+end_datetime	timestamptz	Sim	—	Calculado: start + duration_minutes do serviço
+status	varchar(15)	Sim	'CONFIRMED'	CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+price_at_booking	numeric(10,2)	Sim	—	Cópia do preço do serviço na criação; imutável
+notes	text	Não	NULL	Observações
+created_by	uuid	Sim	—	FK → users.id (admin ou próprio cliente)
+created_at	timestamptz	Sim	now()	—
+updated_at	timestamptz	Sim	now()	—
+Constraint crítica de consistência de modalidade:
+
+CHECK (
+  (modality = 'HOME_CARE'  AND resource_id IS NULL     AND address_id IS NOT NULL)
+  OR
+  (modality = 'IN_PERSON'  AND resource_id IS NOT NULL AND address_id IS NULL)
+)
+
+Constraints adicionais: CHECK (end_datetime > start_datetime), CHECK (price_at_booking >= 0).
+
+3.12 appointment_status_history
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+appointment_id	uuid	Sim	—	FK → appointments.id
+old_status	varchar(15)	Não	NULL	Status anterior (NULL na criação)
+new_status	varchar(15)	Sim	—	Status novo
+changed_by	uuid	Sim	—	FK → users.id
+reason	text	Não	NULL	Obrigatório para profissional e admin ao cancelar
+changed_at	timestamptz	Sim	now()	—
+Tabela append-only: nunca atualizada nem excluída.
+
+3.13 notifications
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+user_id	uuid	Sim	—	FK → users.id
+type	varchar(50)	Sim	—	Enum de tipos (seção 5)
+title	varchar(255)	Sim	—	Título
+message	text	Sim	—	Corpo
+appointment_id	uuid	Não	NULL	FK → appointments.id (quando aplicável)
+read_at	timestamptz	Não	NULL	NULL = não lida
+created_at	timestamptz	Sim	now()	—
+3.14 audit_logs
+Campo	Tipo	Obrigatório	Padrão	Descrição
+id	uuid	Sim	gen_random_uuid()	PK
+user_id	uuid	Sim	—	FK → users.id (quem executou)
+action	varchar(50)	Sim	—	CREATE, UPDATE, CANCEL, DEACTIVATE, etc.
+entity_type	varchar(50)	Sim	—	Nome da tabela afetada
+entity_id	uuid	Sim	—	ID do registro afetado
+old_data	jsonb	Não	NULL	Snapshot anterior (sem campos sensíveis)
+new_data	jsonb	Não	NULL	Snapshot novo (sem campos sensíveis)
+ip_address	inet	Não	NULL	IP da requisição
+created_at	timestamptz	Sim	now()	—
+Tabela append-only. password_hash e tokens nunca aparecem nos snapshots.
+
+4. Relacionamentos
+roles (1)
+  └── users (N)
+        ├── clients (1:1)
+        │     └── addresses (1:N)   ← MVP: limite de 1 na camada de serviço
+        └── professionals (1:1)
+              ├── professional_services (1:N)
+              ├── availability (1:N)
+              └── blocked_periods (1:N)
+services (1)
+  └── professional_services (N)   ← professional ↔ service = N:N
+clients (1) ────────────────────────┐
+professionals (1) ──────────────────┤
+services (1) ───────────────────────┤──► appointments (N)
+resources (1) ──────────────────────┤   (IN_PERSON usa resource_id)
+addresses (1) ──────────────────────┘   (HOME_CARE usa address_id)
+appointments (1)
+  ├── appointment_status_history (N)   ← append-only
+  └── notifications (N)
+users (1)
+  ├── notifications (N)
+  ├── appointment_status_history (N)   ← campo changed_by
+  ├── blocked_periods (N)              ← campo created_by
+  ├── appointments (N)                 ← campo created_by
+  └── audit_logs (N)
+
+Cardinalidades
+Relação	Cardinalidade
+user → client	1:1
+user → professional	1:1
+client → addresses	1:N (MVP limitado a 1 por regra)
+professional → availability	1:N
+professional → blocked_periods	1:N
+professional ↔ service (via professional_services)	N:N
+client → appointments	1:N
+professional → appointments	1:N
+service → appointments	1:N
+resource → appointments	1:N
+address → appointments	1:N
+appointment → appointment_status_history	1:N
+appointment → notifications	1:N
+user → notifications	1:N
+user → audit_logs	1:N
+5. Enums
+Implementados como varchar com CHECK constraint — mais fácil de estender sem recriar tipos nativos do PostgreSQL.
+
+Enum	Valores
+user_status	ACTIVE, INACTIVE
+appointment_status	CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+appointment_modality	IN_PERSON, HOME_CARE
+service_allowed_modalities	IN_PERSON, HOME_CARE, BOTH
+service_status	ACTIVE, INACTIVE
+professional_status	ACTIVE, INACTIVE
+client_status	ACTIVE, INACTIVE
+resource_type	MASSAGE_TABLE, ROOM, EQUIPMENT, OTHER
+resource_status	ACTIVE, INACTIVE
+blocked_period_status	ACTIVE, CANCELLED
+notification_type	APPOINTMENT_CONFIRMED, APPOINTMENT_CANCELLED, APPOINTMENT_RESCHEDULED, APPOINTMENT_REMINDER, APPOINTMENT_STARTED, APPOINTMENT_COMPLETED, APPOINTMENT_NO_SHOW
+audit_action	CREATE, UPDATE, DELETE, CANCEL, START, COMPLETE, NO_SHOW, ACTIVATE, DEACTIVATE
+Nota sobre PENDING: O enum de appointment_status não inclui PENDING pois a decisão aprovada define CONFIRMED como status inicial e não há fluxo que exija PENDING no MVP. Ver seção 17.2.
+
+6. Constraints
+Por tabela
+users
+
+UNIQUE (email) — RN-002
+professional_services
+
+UNIQUE (professional_id, service_id)
+resources
+
+UNIQUE (name)
+availability
+
+CHECK (weekday BETWEEN 0 AND 6)
+CHECK (end_time > start_time)
+blocked_periods
+
+CHECK (end_datetime > start_datetime)
+services
+
+CHECK (duration_minutes > 0)
+CHECK (price >= 0)
+CHECK (allowed_modalities IN ('IN_PERSON', 'HOME_CARE', 'BOTH'))
+appointments — as mais críticas do sistema
+
+CHECK (end_datetime > start_datetime)
+CHECK (price_at_booking >= 0)
+CHECK (status IN ('CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'))
+CHECK (modality IN ('IN_PERSON', 'HOME_CARE'))
+CHECK de modalidade (impede inconsistências HOME_CARE + maca e IN_PERSON sem endereço):
+CHECK (
+  (modality = 'HOME_CARE'  AND resource_id IS NULL     AND address_id IS NOT NULL)
+  OR
+  (modality = 'IN_PERSON'  AND resource_id IS NOT NULL AND address_id IS NULL)
+)
+
+Todas as FKs com ON DELETE RESTRICT
+Nenhum registro referenciado pode ser deletado enquanto existir uma referência. Isso garante integridade histórica e impede orphans acidentais.
+
+7. Índices
+users
+Índice	Campos	Finalidade
+idx_users_email (UNIQUE)	email	Login por email
+idx_users_role_id	role_id	Filtros por perfil
+idx_users_status	status	Usuários ativos
+appointments — os mais críticos
+Índice	Campos	Finalidade
+idx_appt_professional_time	(professional_id, start_datetime, end_datetime)	Verificar conflito de profissional
+idx_appt_resource_time	(resource_id, start_datetime, end_datetime)	Verificar conflito de maca
+idx_appt_client_id	client_id	Agenda do cliente
+idx_appt_start_datetime	start_datetime	Consultas por período
+idx_appt_professional_status	(professional_id, status, start_datetime)	Agenda ativa do profissional
+idx_appt_status	status	Agendamentos por status
+availability
+Índice	Campos	Finalidade
+idx_availability_prof_weekday	(professional_id, weekday)	Disponibilidade semanal do profissional
+blocked_periods
+Índice	Campos	Finalidade
+idx_blocked_prof_time	(professional_id, start_datetime, end_datetime)	Verificar bloqueios antes de agendar
+idx_blocked_status	status	Filtrar períodos ativos
+notifications
+Índice	Campos	Finalidade
+idx_notif_user_unread (parcial: WHERE read_at IS NULL)	(user_id, created_at DESC)	Contagem e listagem de não lidas
+idx_notif_user_all	(user_id, created_at DESC)	Lista completa paginada
+audit_logs
+Índice	Campos	Finalidade
+idx_audit_entity	(entity_type, entity_id)	Auditoria de um registro específico
+idx_audit_user_id	user_id	Ações de um usuário
+idx_audit_created_at	created_at DESC	Consultas recentes
+appointment_status_history
+Índice	Campos	Finalidade
+idx_appt_history_appt_id	appointment_id	Histórico de um agendamento
+8. Estratégia de Conflitos
+Definição de sobreposição
+Dois períodos [A_start, A_end) e [B_start, B_end) se sobrepõem quando:
+
+novo_start < existente_end  AND  novo_end > existente_start
+
+Três camadas de proteção
+Camada 1 — Verificação explícita dentro da transação (aplicação)
+
+Dentro de uma transação com SELECT ... FOR UPDATE, antes de criar o agendamento:
+
+-- Conflito de profissional
+SELECT id FROM appointments
+WHERE professional_id = $prof_id
+  AND status NOT IN ('CANCELLED', 'COMPLETED', 'NO_SHOW')
+  AND start_datetime < $novo_end
+  AND end_datetime   > $novo_start
+FOR UPDATE;
+-- Conflito de recurso (apenas IN_PERSON)
+SELECT id FROM appointments
+WHERE resource_id = $resource_id
+  AND status NOT IN ('CANCELLED', 'COMPLETED', 'NO_SHOW')
+  AND start_datetime < $novo_end
+  AND end_datetime   > $novo_start
+FOR UPDATE;
+
+Qualquer linha retornada → HTTP 409 APPOINTMENT_CONFLICT.
+
+Camada 2 — EXCLUDE constraint no banco (btree_gist)
+
+Garantia no nível do banco mesmo em caso de bug na aplicação:
+
+-- Requer: CREATE EXTENSION IF NOT EXISTS btree_gist;
+ALTER TABLE appointments ADD CONSTRAINT excl_professional_no_overlap
+  EXCLUDE USING gist (
+    professional_id WITH =,
+    tstzrange(start_datetime, end_datetime) WITH &&
+  )
+  WHERE (status NOT IN ('CANCELLED', 'COMPLETED', 'NO_SHOW'));
+ALTER TABLE appointments ADD CONSTRAINT excl_resource_no_overlap
+  EXCLUDE USING gist (
+    resource_id WITH =,
+    tstzrange(start_datetime, end_datetime) WITH &&
+  )
+  WHERE (status NOT IN ('CANCELLED', 'COMPLETED', 'NO_SHOW')
+         AND resource_id IS NOT NULL);
+
+Camada 3 — Transação atômica completa
+
+Todo o fluxo de criação ocorre dentro de uma única transação:
+
+BEGIN
+  1. Verificar profissional: ativo + habilitado para o serviço
+  2. Verificar serviço: ativo + modalidade compatível
+  3. Verificar disponibilidade semanal (availability)
+  4. Verificar bloqueios (blocked_periods)
+  5. SELECT ... FOR UPDATE no profissional e recurso
+  6. Verificar sobreposição explícita (profissional + recurso)
+  7. INSERT appointments
+  8. INSERT appointment_status_history (criação)
+COMMIT
+
+Se qualquer etapa falhar → ROLLBACK libera todos os locks.
+
+Conflito com bloqueios
+SELECT id FROM blocked_periods
+WHERE professional_id = $prof_id
+  AND status = 'ACTIVE'
+  AND start_datetime < $novo_end
+  AND end_datetime   > $novo_start;
+
+Resultado → HTTP 409 PROFESSIONAL_UNAVAILABLE.
+
+9. Estratégia das Cinco Macas
+Representação no banco
+Cinco linhas fixas na tabela resources:
+
+name	type	status
+Maca 01	MASSAGE_TABLE	ACTIVE
+Maca 02	MASSAGE_TABLE	ACTIVE
+Maca 03	MASSAGE_TABLE	ACTIVE
+Maca 04	MASSAGE_TABLE	ACTIVE
+Maca 05	MASSAGE_TABLE	ACTIVE
+Cada maca é entidade independente com UUID próprio. O campo appointments.resource_id aponta para exatamente uma maca. Nunca haverá colunas maca_1, maca_2, etc. em appointments.
+
+Seleção de maca disponível
+O AppointmentService seleciona a primeira maca livre dentro da transação:
+
+SELECT r.id FROM resources r
+WHERE r.type   = 'MASSAGE_TABLE'
+  AND r.status = 'ACTIVE'
+  AND NOT EXISTS (
+    SELECT 1 FROM appointments a
+    WHERE a.resource_id = r.id
+      AND a.status NOT IN ('CANCELLED', 'COMPLETED', 'NO_SHOW')
+      AND a.start_datetime < $novo_end
+      AND a.end_datetime   > $novo_start
+  )
+ORDER BY r.name
+LIMIT 1
+FOR UPDATE OF r;
+
+Zero linhas retornadas → nenhuma maca disponível → HTTP 409 RESOURCE_UNAVAILABLE (implementa RN-037).
+
+Garantia de não duplicação
+A EXCLUDE constraint excl_resource_no_overlap impede dupla reserva mesmo sob concorrência máxima.
+
+Escalabilidade futura
+Adicionar "Maca 06" = INSERT de uma linha em resources. Nenhuma coluna de appointments precisa mudar.
+
+10. Estratégia Home Care
+Regras do modelo
+Regra	Como é garantida
+modality = 'HOME_CARE' armazenado no agendamento	Campo appointments.modality
+resource_id não pode existir em HOME_CARE	CHECK constraint de modalidade
+address_id é obrigatório em HOME_CARE	CHECK constraint de modalidade
+O endereço pertence ao cliente do agendamento	Validado na camada de serviço
+Nenhuma maca é reservada	Sem INSERT em resource_id; EXCLUDE constraint não afeta
+Profissional disponível no horário	Mesma verificação de conflito do presencial
+Validação do endereço na camada de serviço
+SELECT id FROM addresses
+WHERE id        = $address_id
+  AND client_id = $client_id;
+
+Zero linhas → endereço inválido ou não pertence ao cliente → HTTP 422 VALIDATION_ERROR.
+
+Prevenção de inconsistências no banco
+A CHECK constraint bloqueia silenciosamente qualquer INSERT inconsistente:
+
+HOME_CARE + resource_id preenchido → erro de banco
+HOME_CARE + address_id NULL → erro de banco
+IN_PERSON + address_id preenchido → erro de banco
+IN_PERSON + resource_id NULL → erro de banco
+11. Estratégia de Preço e Histórico
+Problema
+O preço de um serviço pode mudar ao longo do tempo. Agendamentos históricos devem registrar o preço no momento da reserva — não o preço atual.
+
+Dois campos distintos
+Tabela	Campo	Significado
+services	price	Preço vigente — base para novos agendamentos
+appointments	price_at_booking	Cópia do preço no momento da criação — imutável
+No momento da criação do agendamento, o backend copia services.price → appointments.price_at_booking. Este campo nunca é atualizado depois, mesmo que o preço do serviço mude.
+
+Preparação para pagamentos futuros
+A futura tabela payments pode referenciar appointment_id e usar price_at_booking como base. Nenhuma alteração estrutural em appointments será necessária.
+
+12. Histórico de Agendamento
+Fluxo de status e registros em appointment_status_history
+Ação	old_status	new_status	Quem pode	reason
+Criação	NULL	CONFIRMED	qualquer perfil autorizado	—
+Início	CONFIRMED	IN_PROGRESS	PROFESSIONAL	—
+Conclusão	IN_PROGRESS	COMPLETED	PROFESSIONAL	—
+Cancelamento	CONFIRMED	CANCELLED	CLIENT / PROFESSIONAL / ADMIN	Opcional (cliente), Obrigatório (prof/admin)
+Ausência	CONFIRMED	NO_SHOW	PROFESSIONAL / ADMIN	—
+Remarcação	CONFIRMED	CONFIRMED	qualquer perfil autorizado	Texto indicando "remarcação"
+Nota sobre IN_PROGRESS e cancelamento: agendamento IN_PROGRESS não pode ser cancelado pelo fluxo normal (RN do cancelamento aprovado). Qualquer tentativa de cancelar um agendamento nesse status é rejeitada pela camada de serviço com erro adequado.
+
+Nota sobre remarcação: o status permanece CONFIRMED após remarcação. Um novo registro em appointment_status_history é inserido com reason descritivo e os dados novos de data/horário, permitindo rastrear todas as remarcações.
+
+A tabela é append-only — nenhum registro é atualizado ou excluído.
+
+13. Auditoria
+Diferença fundamental
+Aspecto	appointment_status_history	audit_logs
+Escopo	Apenas agendamentos	Qualquer entidade do sistema
+Propósito	Histórico funcional/operacional	Rastreabilidade administrativa
+Usuário-final acessa?	Sim (seu próprio histórico)	Apenas ADMIN autorizado
+Disparado por	Qualquer mudança de status de um agendamento	Ações administrativas relevantes
+Dados armazenados	Status anterior/novo, responsável, motivo	Snapshots JSON completos (sem campos sensíveis)
+O que deve gerar audit_logs
+Criação, edição e desativação de profissional
+Criação, edição e desativação de cliente
+Criação, edição e desativação de serviço
+Criação e cancelamento de bloqueios por admin
+Cancelamento administrativo de agendamento
+Alteração de perfil ou status de usuário
+O que não gera audit_logs (coberto pelo histórico funcional ou volume muito alto)
+Transições normais de status (IN_PROGRESS → COMPLETED pelo profissional)
+Leituras de dados
+Criação de agendamento pelo próprio cliente (coberta por appointment_status_history)
+Campos sensíveis nunca aparecem nos snapshots
+password_hash, tokens de sessão e dados de autenticação são excluídos de old_data / new_data antes de qualquer gravação em audit_logs.
+
+14. Notificações
+O modelo atual suporta apenas notificações IN_APP. Canais futuros (EMAIL, WHATSAPP, SMS) podem ser adicionados sem alterar a estrutura da tabela — o campo type já distingue o evento; o canal de entrega é responsabilidade da camada de serviço.
+
+Tipos e destinatários
+Tipo	Evento	Notifica
+APPOINTMENT_CONFIRMED	Agendamento criado	Cliente + Profissional
+APPOINTMENT_CANCELLED	Cancelamento pelo cliente	Profissional
+APPOINTMENT_CANCELLED	Cancelamento pelo profissional	Cliente
+APPOINTMENT_CANCELLED	Cancelamento pelo admin	Cliente + Profissional
+APPOINTMENT_RESCHEDULED	Remarcação	Cliente + Profissional
+APPOINTMENT_STARTED	Atendimento iniciado	— (interno)
+APPOINTMENT_COMPLETED	Atendimento concluído	Cliente
+APPOINTMENT_NO_SHOW	Ausência registrada	Cliente
+APPOINTMENT_REMINDER	Lembrete antecipado	Cliente + Profissional
+O campo appointment_id vincula a notificação ao agendamento. O campo read_at NULL identifica notificações não lidas. O índice parcial WHERE read_at IS NULL torna a consulta de não lidas muito eficiente.
+
+15. Segurança
+Credenciais
+password_hash nunca retornado pela API em nenhuma resposta — excluído nos DTOs de saída
+Hashing com bcrypt (custo mínimo 12) ou argon2id
+Tokens de sessão não armazenados em texto puro
+Dados pessoais
+A camada de serviço verifica propriedade antes de qualquer retorno: client_id do token de sessão deve coincidir com o client_id do recurso solicitado
+Nenhum endpoint retorna dados de outro usuário sem verificação de role
+password_hash e snapshots internos são excluídos de qualquer log
+Integridade dos agendamentos
+CHECK constraints garantem consistência mesmo com bug na aplicação
+EXCLUDE constraints (btree_gist) impedem dupla reserva sob concorrência
+Transações ACID garantem atomicidade da criação
+price_at_booking e appointment_status_history são imutáveis após criação
+Isolamento por perfil
+Perfil	Acesso permitido
+CLIENT	Somente seus dados, agendamentos e endereços
+PROFESSIONAL	Seus atendimentos; dados de clientes apenas no contexto do atendimento
+ADMIN	Dados administrativos conforme permissões — nunca acesso irrestrito por padrão
+A autorização é sempre verificada no backend. Ocultar menus no frontend é apenas UX — não é segurança.
+
+Auditoria como segurança
+audit_logs garante rastreabilidade de todas as ações administrativas. Isso protege contra uso indevido interno e fornece base para investigação de incidentes.
+
+16. Pontos de Atenção
+UNIQUE (email) em users: A constraint é simples e permanente. Se um usuário for inativado e outra pessoa quiser usar o mesmo email, o banco bloqueará. Decisão necessária: liberar o email de usuários inativos ou impedir o reuso? Aguarda definição antes da migration.
+
+btree_gist: As EXCLUDE constraints exigem CREATE EXTENSION IF NOT EXISTS btree_gist. Deve estar no script de setup do ambiente de desenvolvimento e na migration inicial.
+
+availability.start_time / end_time sem timezone: Intencional — representa horários locais recorrentes. A aplicação deve sempre interpretar esses valores no timezone America/Sao_Paulo. Qualquer cálculo de slot disponível deve converter start_datetime do agendamento para horário local antes de comparar com os campos de availability.
+
+Remarcação como UPDATE vs. novo agendamento: A proposta trata remarcação como UPDATE no agendamento existente (preserva o mesmo UUID, mantido o histórico na tabela de histórico). Outra abordagem seria cancelar e criar novo — mas isso quebraria a continuidade do histórico para o cliente. Proposta adota UPDATE; aguarda confirmação.
+
+Idempotência de criação: Para o MVP, a EXCLUDE constraint + debounce no frontend é suficiente. Se necessário no futuro, pode-se adicionar idempotency_key uuid em appointments com UNIQUE constraint e TTL gerenciado pela aplicação.
+
+Serviço sem preço: O campo price em services é obrigatório e CHECK (price >= 0). Serviços gratuitos têm price = 0 — válido.
+
+17. Dúvidas ou Conflitos Existentes
+17.1 blocked_periods vs. AVAILABILITY_BLOCKS
+O prompt da Fase 2 lista AVAILABILITY_BLOCKS, mas os Documentos 13 e 18 usam blocked_periods. São a mesma entidade. A proposta adota blocked_periods, alinhado com os documentos oficiais. Nenhuma divergência real.
+
+17.2 Status PENDING no Documento 14 (RN-051)
+O Documento 14 menciona PENDING como status inicial possível. A decisão aprovada da Fase 2 define CONFIRMED. A decisão aprovada prevalece. A proposta omite PENDING do enum de appointment_status para evitar estados órfãos. Se o fluxo mudar futuramente, adicionar PENDING requer apenas uma migration de enum — baixo custo.
+
+17.3 Campo allowed_modalities em services
+O Documento 13 não lista explicitamente um campo de modalidade em services, mas as RNs exigem verificação de compatibilidade de modalidade entre serviço e agendamento ("serviço compatível com a modalidade escolhida"). A proposta adiciona allowed_modalities (IN_PERSON, HOME_CARE, BOTH). Aguarda confirmação antes de incluir na migration.
+
+17.4 IN_PERSON sempre exige maca?
+O Documento 13 (seção 21) diz "quando necessário" e "quando a operação exigir o recurso". Isso abre espaço para um atendimento presencial sem maca. A proposta assume que no MVP, todo IN_PERSON exige maca — simplifica o modelo e está alinhado com as 5 macas como capacidade total do espaço. Se houver exceção prevista, a CHECK constraint e o fluxo de seleção de maca precisam ser ajustados antes da implementação.
+
+17.5 Motivo de cancelamento pelo cliente
+A decisão aprovada define motivo como opcional para o cliente. Isso é implementado com reason TEXT NULL em appointment_status_history + validação na camada de serviço (que exige reason para profissional e admin, não para cliente). Não há conflito, apenas confirmação de implementação.
+
+Mapa de Relacionamentos das Tabelas
+┌──────────┐
+│  roles   │◄────────────────────────────┐
+│ id · name│                             │
+└────┬─────┘                             │
+     │1:N                                │
+┌────▼─────────────────────────────────────────────────────────┐
+│                           users                               │
+│  id (PK) · role_id (FK) · email (UQ) · password_hash · status│
+└──┬──────────────────────────────────────────────┬────────────┘
+   │1:1                                           │1:1
+┌──▼──────────────┐                    ┌──────────▼──────────────────────────┐
+│    clients      │                    │            professionals              │
+│  id · user_id   │                    │  id · user_id · specialty · status   │
+│  birth_date     │                    └──┬────────────┬──────────┬───────────┘
+│  status         │                       │1:N         │1:N       │1:N
+└──┬──────────────┘         ┌─────────────▼──┐  ┌──────▼──────┐ ┌▼─────────────────┐
+   │1:N                     │ professional   │  │availability │ │ blocked_periods  │
+┌──▼──────────────┐         │   _services   │  │ id·prof_id  │ │ id·prof_id       │
+│   addresses     │         │ id·prof_id    │  │ weekday     │ │ start/end_dtime  │
+│  id · client_id │         │ service_id    │  │ start/end   │ │ status·reason    │
+│  street·city... │         └───────┬────────┘  └─────────────┘ └──────────────────┘
+│  is_default     │                 │1:N
+└──────┬──────────┘        ┌────────▼─────────────────────────┐
+       │                   │            services               │
+       │                   │  id · name · duration_minutes     │
+       │                   │  price · allowed_modalities       │
+       │                   │  status                           │
+       │                   └──────────────────────────────────-┘
+       │                               │1:N
+       │         ┌─────────────────────▼──────────────────────────────────────┐
+       │         │                   appointments                               │
+       │         │  id (PK)                                                    │
+       └────────►│  client_id (FK→clients)      professional_id (FK→profs)    │
+address_id       │  service_id (FK→services)    modality [IN_PERSON|HOME_CARE] │
+(HOME_CARE only) │  resource_id (FK→resources)  ◄── NULL se HOME_CARE         │
+                 │  address_id  (FK→addresses)  ◄── NULL se IN_PERSON         │
+                 │  start_datetime · end_datetime                               │
+                 │  status · price_at_booking · created_by (FK→users)         │
+                 └──────────────────────────────┬──────────────────────────────┘
+                                                │1:N                    │1:N
+                          ┌─────────────────────▼─────────┐   ┌────────▼────────────────┐
+                          │  appointment_status_history    │   │      notifications      │
+                          │  id · appointment_id           │   │  id · user_id · type   │
+                          │  old_status · new_status       │   │  title · message       │
+                          │  changed_by (FK→users)         │   │  appointment_id · read_at│
+                          │  reason · changed_at           │   └─────────────────────────┘
+                          │  [append-only]                 │
+                          └────────────────────────────────┘
+┌──────────────────────┐      ┌─────────────────────────────────────────┐
+│       resources      │      │               audit_logs                 │
+│  id · name · type   │      │  id · user_id · action                  │
+│  status              │      │  entity_type · entity_id                │
+│  (Maca 01 … Maca 05)│      │  old_data · new_data (jsonb)            │
+└──────────────────────┘      │  ip_address · created_at [append-only] │
+                               └─────────────────────────────────────────┘
+
+Esta é a proposta técnica completa do modelo de dados da Fase 2. Nenhuma migration, SQL de criação, seed, schema Drizzle, código de domínio, endpoint ou tela foi criado ou alterado.
+
+Aguardo sua aprovação — ou os pontos que deseja revisar — antes de qualquer implementação.
