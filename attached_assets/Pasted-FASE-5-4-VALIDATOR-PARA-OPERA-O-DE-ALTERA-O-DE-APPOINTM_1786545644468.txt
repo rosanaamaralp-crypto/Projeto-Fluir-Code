@@ -1,0 +1,184 @@
+FASE 5.4 — VALIDATOR PARA OPERAÇÃO DE ALTERAÇÃO DE APPOINTMENT
+
+A Fase 5.3 foi concluída e APROVADA.
+
+Baseline atual:
+- Typecheck: 0 erros
+- Testes: 248/248
+- Build api-server: OK
+- Tabelas: 16
+- Triggers: 14
+- EXCLUDE constraints: 3
+- Migrations: 1
+
+IMPLEMENTAR EXCLUSIVAMENTE A FASE 5.4.
+
+Não implementar F5.5.
+Não implementar F5.6.
+Não implementar F5.7.
+Não implementar F5.8.
+Não alterar frontend.
+Não criar migration.
+Não alterar banco.
+Não alterar service de produção.
+Não alterar repository.
+Não alterar controller.
+
+OBJETIVO
+
+Criar/ajustar o validator necessário para a nova operação de ALTERAÇÃO de appointment, conforme a documentação oficial da Fase 5.
+
+Antes de modificar qualquer arquivo:
+
+1. Ler integralmente:
+   - src/validators/appointments.validator.ts
+   - src/controllers/appointments.controller.ts
+   - src/services/appointments.service.ts
+   - tests/integration/appointments.test.ts
+   - documentação oficial que define a operação de alteração:
+     Doc 7
+     Doc 14
+     Doc 16
+     e demais documentos relevantes já localizados no projeto.
+
+2. Identificar exatamente como funciona atualmente o discriminated union/schema do PATCH.
+
+3. Identificar quais campos já são aceitos para:
+   - alteração de status;
+   - reschedule;
+   - demais operações existentes.
+
+4. Não substituir nem quebrar os schemas existentes.
+
+A NOVA OPERAÇÃO
+
+A documentação da Fase 5 define alteração in-place envolvendo principalmente:
+
+- professionalId
+- modality
+- addressId
+
+O validator deve refletir somente o contrato documental confirmado.
+
+IMPORTANTE:
+
+Não inventar campos.
+
+Não adicionar serviceId se a documentação da Fase 5 não exigir troca de serviço.
+
+Não adicionar resourceId como campo livre da alteração se o fluxo documental determinar que o resource é resolvido pelo sistema.
+
+Não permitir alteração de status através deste novo schema.
+
+Não permitir campos desconhecidos caso o padrão atual do projeto seja Zod strip/strict conforme estabelecido anteriormente.
+
+REGRAS DE VALIDAÇÃO
+
+O schema deve validar:
+
+- UUID para professionalId quando presente;
+- modality somente para valores suportados pelo schema atual;
+- UUID para addressId quando presente;
+- payload não vazio, se essa for a regra apropriada do contrato;
+- compatibilidade com o padrão atual de validação do projeto.
+
+IMPORTANTE:
+
+A validação de autorização/RBAC NÃO pertence ao validator.
+
+A validação de disponibilidade do profissional NÃO pertence ao validator.
+
+A validação de resource/maca NÃO pertence ao validator.
+
+A validação de endereço pertencente ao cliente NÃO pertence ao validator.
+
+Essas regras serão tratadas posteriormente no Service (F5.6).
+
+O validator deve somente validar a estrutura e os tipos do payload.
+
+INTEGRAÇÃO COM PATCH
+
+Se o PATCH atual utiliza uma união discriminada ou union de schemas, adicionar a nova variante de maneira compatível, sem modificar o comportamento dos casos existentes.
+
+Antes de alterar, documentar qual estratégia de discriminação está sendo utilizada atualmente.
+
+TESTES
+
+Adicionar somente testes unitários/validator necessários para comprovar:
+
+1. professionalId UUID válido é aceito.
+2. professionalId inválido é rejeitado.
+3. modality válida é aceita.
+4. modality inválida é rejeitada.
+5. addressId UUID válido é aceito.
+6. addressId inválido é rejeitado.
+7. payload de alteração válido é aceito.
+8. campos proibidos/desconhecidos seguem exatamente o comportamento atual do projeto.
+9. schemas existentes de status/reschedule continuam aceitando seus payloads válidos.
+10. payload inválido não é confundido com os schemas existentes.
+
+Não criar testes de service ou integração que dependam da implementação F5.6.
+
+Não alterar testes existentes sem necessidade.
+
+GATES
+
+Executar:
+
+1. Typecheck
+2. Testes específicos dos validators
+3. Suite completa
+4. Build api-server
+5. git diff --name-only
+
+Baseline:
+248 testes.
+
+Se novos testes forem adicionados, informar exatamente quantos.
+
+BANCO
+
+Confirmar:
+
+- 16 tabelas
+- 14 triggers
+- 3 EXCLUDE constraints
+- 1 migration
+
+Nenhuma alteração deve ocorrer no banco.
+
+ESCOPO
+
+Idealmente somente:
+
+- src/validators/appointments.validator.ts
+- teste correspondente de validator
+
+Não modificar produção fora do validator.
+
+Se for necessário modificar outro arquivo para completar a F5.4, PARE antes de modificar e explique por quê.
+
+NÃO AVANCE PARA F5.5.
+
+RELATÓRIO FINAL OBRIGATÓRIO
+
+Entregar:
+
+A. Arquivos lidos
+B. Contrato documental utilizado
+C. Estrutura anterior do PATCH
+D. Alteração realizada no validator
+E. Testes adicionados
+F. Testes existentes preservados
+G. Arquivos modificados
+H. Typecheck
+I. Testes específicos
+J. Suite completa
+K. Build api-server
+L. git diff
+M. Integridade do banco
+N. Confirmação de nenhuma migration/schema alterado
+O. Ressalvas
+P. GATE F5.4 — APROVADO ou REPROVADO
+
+Não iniciar F5.5 automaticamente.
