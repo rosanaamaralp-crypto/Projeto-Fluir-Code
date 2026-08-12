@@ -4,12 +4,7 @@ import { ServicesRepository } from "../repositories/services.repository.js";
 import { AuditLogsRepository } from "../repositories/audit-logs.repository.js";
 import { NotFoundError } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 export const ServicesController = {
   /** GET /api/services */
@@ -59,7 +54,7 @@ export const ServicesController = {
           entityType: "services",
           entityId: svc.id,
           newData: svc,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return svc;
       });
@@ -112,7 +107,7 @@ export const ServicesController = {
           entityId: id,
           oldData: old,
           newData: updated,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return updated;
       });
@@ -139,7 +134,7 @@ export const ServicesController = {
           entityType: "services",
           entityId: id,
           oldData: old,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
       });
 

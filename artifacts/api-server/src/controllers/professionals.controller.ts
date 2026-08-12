@@ -13,12 +13,7 @@ import { AuthService } from "../services/auth.service.js";
 import { NotFoundError, ForbiddenError } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
 import type { UpdateProfessionalInput } from "../validators/professionals.validator.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 async function assertOwnership(req: Request, profId: string): Promise<void> {
   const session = req.session.user!;
@@ -90,7 +85,7 @@ export const ProfessionalsController = {
           entityType: "professionals",
           entityId: professional.id,
           newData: { user, professional },
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
 
         return { user, professional };
@@ -154,7 +149,7 @@ export const ProfessionalsController = {
           entityId: id,
           oldData: prof,
           newData: updated,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
 
         return updated;

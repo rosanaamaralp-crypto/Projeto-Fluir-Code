@@ -10,12 +10,7 @@ import { ProfessionalsRepository } from "../repositories/professionals.repositor
 import { AuditLogsRepository } from "../repositories/audit-logs.repository.js";
 import { NotFoundError, ForbiddenError } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 async function assertProfOwnership(req: Request, profId: string): Promise<void> {
   const session = req.session.user!;
@@ -69,7 +64,7 @@ export const BlockedPeriodsController = {
           entityType: "blocked_periods",
           entityId: bp.id,
           newData: bp,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return bp;
       });
@@ -103,7 +98,7 @@ export const BlockedPeriodsController = {
           entityId: id,
           oldData: old,
           newData: updated,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return updated;
       });

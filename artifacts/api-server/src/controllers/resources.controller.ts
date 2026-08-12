@@ -4,12 +4,7 @@ import { ResourcesRepository } from "../repositories/resources.repository.js";
 import { AuditLogsRepository } from "../repositories/audit-logs.repository.js";
 import { NotFoundError } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 export const ResourcesController = {
   /** GET /api/resources */
@@ -50,7 +45,7 @@ export const ResourcesController = {
           entityType: "resources",
           entityId: resource.id,
           newData: resource,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return resource;
       });
@@ -84,7 +79,7 @@ export const ResourcesController = {
           entityId: id,
           oldData: old,
           newData: updated,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return updated;
       });
@@ -111,7 +106,7 @@ export const ResourcesController = {
           entityType: "resources",
           entityId: id,
           oldData: old,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
       });
 

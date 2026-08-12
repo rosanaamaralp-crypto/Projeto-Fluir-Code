@@ -2,12 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { db } from "../lib/db.js";
 import { AuthService } from "../services/auth.service.js";
 import { logger } from "../lib/logger.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 export const AuthController = {
   /** POST /api/auth/login */
@@ -30,7 +25,7 @@ export const AuthController = {
       };
 
       // Registrar login e atualizar last_login_at (fora da session — não bloqueia resposta)
-      AuthService.recordLogin(db, user.id, getIp(req)).catch((err) =>
+      AuthService.recordLogin(db, user.id, getClientIp(req)).catch((err) =>
         logger.error({ err }, "Failed to record login audit"),
       );
 
@@ -52,7 +47,7 @@ export const AuthController = {
       res.clearCookie("connect.sid");
 
       if (userId) {
-        AuthService.recordLogout(db, userId, getIp(req)).catch((err) =>
+        AuthService.recordLogout(db, userId, getClientIp(req)).catch((err) =>
           logger.error({ err }, "Failed to record logout audit"),
         );
       }

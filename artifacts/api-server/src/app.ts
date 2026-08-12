@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import pinoHttp from "pino-http";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
@@ -7,6 +8,11 @@ import { sessionMiddleware } from "./lib/session.js";
 import { AppError, mapDbError } from "./lib/errors.js";
 
 const app: Express = express();
+
+// Trust proxy — 1 hop (Replit reverse proxy).
+// Necessário para que req.ip e o rate limiter leiam o IP correto
+// a partir do x-forwarded-for sem permitir spoofing de múltiplos hops.
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -28,9 +34,26 @@ app.use(
   }),
 );
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security headers — helmet sem CSP (API JSON pura, sem conteúdo HTML/scripts).
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// CORS restritivo: usa CORS_ORIGIN env var em produção;
+// em desenvolvimento (sem a variável), aceita qualquer subdomínio *.replit.dev.
+const corsOrigin: cors.CorsOptions["origin"] = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN
+  : /\.replit\.dev$/;
+
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+  }),
+);
+
+// Limite explícito de 50 kb para payloads JSON e urlencoded.
+// Payloads legítimos da API ficam abaixo de 1 kb; 50 kb bloqueia ataques de DoS.
+app.use(express.json({ limit: "50kb" }));
+app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 
 // Session middleware — deve vir ANTES dos routers protegidos
 app.use(sessionMiddleware);
@@ -63,6 +86,26 @@ app.use(
         },
       });
       return;
+    }
+
+    // Erros do body-parser (entity.too.large → 413, etc.)
+    // Esses erros têm uma propriedade `type` definida pelo pacote body-parser.
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "type" in err &&
+      "status" in err
+    ) {
+      const bpErr = err as { type: string; status: number };
+      if (bpErr.type === "entity.too.large") {
+        res.status(413).json({
+          error: {
+            code: "PAYLOAD_TOO_LARGE",
+            message: "O corpo da requisição excede o limite permitido (50 kb).",
+          },
+        });
+        return;
+      }
     }
 
     // Tentar mapear erros de banco (DrizzleQueryError, pg DatabaseError)

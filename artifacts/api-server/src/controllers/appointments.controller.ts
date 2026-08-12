@@ -11,12 +11,7 @@ import type { CreateAppointmentInput, ListAppointmentsQuery } from "../validator
 import { formatZodError } from "../middlewares/validate.js";
 import { PatchAppointmentSchema, type AlterAppointmentInput } from "../validators/appointments.validator.js";
 import { ValidationError } from "../lib/errors.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 export const AppointmentsController = {
   /** POST /api/appointments */
@@ -29,7 +24,7 @@ export const AppointmentsController = {
         input,
         sessionUserId: session.userId,
         sessionRoleId: session.roleId,
-        ipAddress: getIp(req),
+        ipAddress: getClientIp(req),
       });
 
       res.status(201).json({ appointment });
@@ -112,7 +107,7 @@ export const AppointmentsController = {
     try {
       const session = req.session.user!;
       const { id } = req.params as { id: string };
-      const ipAddress = getIp(req);
+      const ipAddress = getClientIp(req);
 
       // Validar payload dinamicamente
       const parseResult = PatchAppointmentSchema.safeParse(req.body);

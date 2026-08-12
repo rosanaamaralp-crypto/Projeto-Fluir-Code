@@ -17,12 +17,7 @@ import {
   UpdateClientSchemaAdmin,
 } from "../validators/clients.validator.js";
 import { formatZodError } from "../middlewares/validate.js";
-
-function getIp(req: Request): string | null {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0]?.trim() ?? null;
-  return req.socket?.remoteAddress ?? null;
-}
+import { getClientIp } from "../lib/ip.js";
 
 async function assertOwnership(req: Request, clientId: string): Promise<void> {
   const session = req.session.user!;
@@ -100,7 +95,7 @@ export const ClientsController = {
           entityType: "clients",
           entityId: client.id,
           newData: { user, client },
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
 
         return { user, client };
@@ -163,7 +158,7 @@ export const ClientsController = {
           entityId: id,
           oldData: client,
           newData: updated,
-          ipAddress: getIp(req),
+          ipAddress: getClientIp(req),
         });
         return updated;
       });
