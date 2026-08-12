@@ -1,0 +1,128 @@
+FASE 2 — APROVAÇÃO E PLANEJAMENTO DA FASE 3
+
+A auditoria final da Fase 2 foi concluída e está APROVADA.
+
+Não altere mais nada da Fase 2 neste momento.
+
+Correção documental obrigatória:
+
+* O mecanismo de migration é o runner customizado em `lib/db/src/migrate.ts`.
+* O controle é feito exclusivamente pela tabela `schema_migrations`.
+* NÃO utilizamos `drizzle-orm/migrator`.
+* NÃO existe `drizzle.__drizzle_migrations`.
+* Corrija apenas a documentação que afirmar incorretamente que o Drizzle migrator é utilizado.
+
+Agora quero APENAS o PLANO COMPLETO da Fase 3.
+
+Não crie arquivos.
+Não altere código.
+Não execute migrations.
+Não altere banco.
+Não implemente endpoints.
+Não instale dependências.
+
+O plano deve avaliar e propor, nesta ordem:
+
+1. CAMADA DE ACESSO AO BANCO
+
+   * integração Drizzle ↔ PostgreSQL existente;
+   * conexão;
+   * organização de repositories/queries;
+   * transações;
+   * tratamento de erros;
+   * reutilização dos schemas já existentes;
+   * compatibilidade com o runner customizado de migrations.
+
+2. AUTENTICAÇÃO
+
+   * estratégia de sessão;
+   * armazenamento da sessão;
+   * login;
+   * logout;
+   * expiração;
+   * renovação;
+   * hash/verificação de senha;
+   * cookies seguros;
+   * proteção contra ataques comuns;
+   * nunca retornar password_hash.
+
+3. AUTORIZAÇÃO
+
+   * ADMIN;
+   * PROFESSIONAL;
+   * CLIENT;
+   * RBAC;
+   * autorização por recurso;
+   * isolamento dos dados do cliente;
+   * isolamento dos dados do profissional;
+   * operações exclusivas do administrador.
+
+4. CRUD INICIAL
+   Avaliar a ordem e dependências para:
+
+   * users;
+   * clients;
+   * professionals;
+   * services;
+   * professional_services;
+   * availability;
+   * blocked_periods;
+   * resources;
+   * addresses.
+
+5. DISPONIBILIDADE E SLOTS
+   Antes de implementar, definir:
+
+   * cálculo dos horários disponíveis;
+   * duração do serviço;
+   * disponibilidade semanal;
+   * blocked_periods;
+   * conflitos de profissional;
+   * conflitos de cliente;
+   * conflitos de recurso;
+   * status dos appointments;
+   * timezone;
+   * limites de antecedência;
+   * intervalo mínimo entre agendamentos, se aplicável;
+   * regras de remarcação.
+
+6. AGENDAMENTOS
+   NÃO implementar ainda.
+   Apenas especificar o fluxo transacional futuro, incluindo:
+
+   * validações;
+   * SELECT FOR UPDATE quando necessário;
+   * EXCLUDE constraints;
+   * criação do appointment;
+   * price_at_booking;
+   * appointment_status_history;
+   * notificações;
+   * tratamento de concorrência;
+   * rollback.
+
+7. TESTES
+   Propor estratégia de testes unitários, integração e concorrência para a Fase 3.
+
+8. SEGURANÇA
+   Identificar riscos e controles necessários antes da implementação.
+
+9. ARQUIVOS
+   Listar exatamente quais arquivos serão criados/modificados na Fase 3, mas NÃO criá-los ainda.
+
+10. DEPENDÊNCIAS
+    Listar dependências novas necessárias e justificar cada uma.
+
+11. DECISÕES PENDENTES
+    Separar claramente:
+
+* decisões já definidas;
+* decisões que precisam da minha aprovação;
+* decisões que podem ficar para fases posteriores.
+
+12. ORDEM DE IMPLEMENTAÇÃO
+    Apresentar a sequência exata das etapas para minimizar retrabalho e preservar a integridade da Fase 2.
+
+IMPORTANTE:
+O objetivo desta etapa é somente produzir o plano técnico da Fase 3 para minha revisão.
+
+Ao final, aguarde minha aprovação explícita antes de criar ou modificar qualquer arquivo.
