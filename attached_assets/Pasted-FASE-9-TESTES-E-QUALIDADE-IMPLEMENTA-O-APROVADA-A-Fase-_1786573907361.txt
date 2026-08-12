@@ -1,0 +1,643 @@
+FASE 9 — TESTES E QUALIDADE
+IMPLEMENTAÇÃO APROVADA
+
+A Fase 9 está aprovada para implementação.
+
+IMPORTANTE:
+- Não altere nenhuma regra de negócio.
+- Não altere código de produção.
+- Não crie migrations.
+- Não corrija problemas de produção nesta fase.
+- O objetivo desta fase é EXCLUSIVAMENTE aumentar a cobertura de testes e validar a integridade atual do sistema.
+- Preserve todos os 431 testes existentes.
+- Não reescreva testes que já passam; apenas complemente onde houver lacunas.
+- Faça um único commit ao final.
+- Antes de implementar, verifique as decisões pendentes abaixo diretamente no código e na documentação.
+
+==================================================
+1. AUTORIDADE DOS DOCUMENTOS
+==================================================
+
+Utilize como base:
+
+1. docs/18-DOCUMENTO-18-PACOTE-MESTRE-PARA-O.md
+2. docs/17-DOCUMENTO-17-PLANO-OFICIAL-DE-IMPLEMENTA-O-NO.md
+3. docs/16-DOCUMENTO-16-ESPECIFICA-O-DE-API-E-CONTRATOS-DE.md
+4. docs/12-DOCUMENTO-12-PLANO-DE-TESTES-E-QUALIDADE.md
+5. docs/00-INDICE-E-HIERARQUIA-DOS-DOCUMENTOS.md
+
+Respeite a hierarquia documental já definida:
+
+Doc 18 > Doc 17 > Doc 16 > demais documentos.
+
+Antes de codificar, leia também:
+- routes existentes;
+- controllers;
+- validators;
+- repositories;
+- services;
+- schema do banco;
+- helpers de seed;
+- testes existentes relacionados aos módulos.
+
+Não faça suposições quando o código puder responder.
+
+==================================================
+2. BASELINE OBRIGATÓRIO
+==================================================
+
+O estado aprovado antes da Fase 9 é:
+
+- 431 testes passando;
+- F1–F8 implementadas;
+- commit F8: d3a20b5;
+- 16 tabelas;
+- 14 triggers;
+- 3 EXCLUDE constraints;
+- 1 migration;
+- build OK;
+- typecheck OK.
+
+Antes de alterar qualquer teste:
+
+1. confirme o estado atual;
+2. execute a suite existente;
+3. confirme 431/431 ou registre exatamente qualquer divergência pré-existente.
+
+Não prossiga mascarando falhas pré-existentes.
+
+==================================================
+3. DECISÕES PENDENTES — VERIFICAR ANTES DE IMPLEMENTAR
+==================================================
+
+DP-01 — DASHBOARD CLIENT
+
+Verifique routes/index.ts e as rotas do dashboard.
+
+Se existir:
+
+GET /api/dashboard/client
+
+implemente os testes:
+
+- CLIENT autenticado → 200;
+- ADMIN → 403;
+- PROFESSIONAL → 403.
+
+Se NÃO existir:
+
+- NÃO crie o endpoint;
+- NÃO altere código de produção;
+- NÃO invente comportamento;
+- simplesmente registre no relatório final que o endpoint não existe e que os testes correspondentes foram omitidos.
+
+DP-02 — PROFESSIONAL EM GET /api/clients
+
+A proposta aprovada é:
+
+PROFESSIONAL → 403.
+
+Confirme o comportamento da implementação atual antes de escrever o teste.
+
+Se o código/documentação indicar outro comportamento claramente definido, NÃO altere produção. Adapte o teste ao contrato existente e registre a divergência no relatório.
+
+Se não houver definição e o comportamento atual for 403, teste 403.
+
+DP-03 — STATUS CHANGE DE APPOINTMENTS
+
+Verifique diretamente as rotas existentes.
+
+Determine se existem:
+
+POST /api/appointments/:id/cancel
+POST /api/appointments/:id/start
+POST /api/appointments/:id/complete
+POST /api/appointments/:id/no-show
+
+ou se essas operações são feitas exclusivamente via:
+
+PATCH /api/appointments/:id
+
+NÃO crie rotas.
+
+Teste somente os endpoints que realmente existem.
+
+==================================================
+4. GAPS QUE DEVEM SER FECHADOS
+==================================================
+
+Implemente os testes para fechar os seguintes gaps identificados.
+
+------------------------------------------
+GAP 01 / GAP 10 — UUID PARAMETERS
+------------------------------------------
+
+Arquivo:
+
+tests/integration/uuid-params.test.ts
+
+Adicionar testes para os endpoints realmente existentes:
+
+- GET /api/appointments/:id/history
+- POST /api/appointments/:id/cancel
+- POST /api/appointments/:id/start
+- POST /api/appointments/:id/complete
+- POST /api/appointments/:id/no-show
+- POST /api/notifications/:id/read
+
+UUID inválido deve retornar:
+
+400
+
+Não crie endpoints inexistentes.
+
+------------------------------------------
+GAP 02 — RESOURCES
+------------------------------------------
+
+Criar:
+
+tests/integration/resources.test.ts
+
+Cobrir:
+
+1. GET /api/resources → ADMIN → 200
+2. GET /api/resources → PROFESSIONAL → 200
+3. GET /api/resources → CLIENT → 200
+4. GET /api/resources → anônimo → 401
+5. GET /api/resources/:id → 200
+6. GET /api/resources/:id → ID inexistente → 404
+7. GET /api/resources/status → ADMIN → 200
+8. GET /api/resources/status → anônimo → 401
+9. POST /api/resources → ADMIN → 201
+10. POST /api/resources → CLIENT → 403
+11. POST /api/resources → PROFESSIONAL → 403
+
+Use payloads e fixtures compatíveis com o schema atual.
+
+Não invente campos.
+
+------------------------------------------
+GAP 03 — PROFESSIONALS SUB-RESOURCES
+------------------------------------------
+
+Complementar:
+
+tests/integration/professionals.test.ts
+
+Cobrir funcionalmente:
+
+- GET /api/professionals/:id/services → 200
+- GET /api/professionals/:id/availability → 200
+- GET /api/professionals/:id/blocked-periods → 200
+- criação/edição de blocked periods, caso as rotas existam e os padrões atuais permitam testar sem alterar produção.
+
+Os testes devem seguir o comportamento real da implementação atual.
+
+------------------------------------------
+GAP 04 — ADDRESSES
+------------------------------------------
+
+Criar:
+
+tests/integration/addresses.test.ts
+
+Cobrir:
+
+1. CLIENT cria endereço próprio → 201
+2. CLIENT lista seus endereços → 200
+3. CLIENT não acessa endereço de outro CLIENT → 403
+4. ADMIN acessa endereço de qualquer CLIENT → 200
+5. PROFESSIONAL acessa endereço de CLIENT → 403
+6. anônimo → 401
+7. payload inválido → 400
+8. CLIENT atualiza endereço próprio → 200
+9. CLIENT não atualiza endereço de outro CLIENT → 403
+10. CLIENT deleta endereço próprio → 204
+
+Antes dos testes, leia controller/service/repository de addresses para respeitar exatamente os contratos existentes.
+
+Não altere produção para fazer os testes passarem.
+
+------------------------------------------
+GAP 05 — CLIENTS
+------------------------------------------
+
+Complementar:
+
+tests/integration/clients.test.ts
+
+Testar:
+
+PROFESSIONAL → GET /api/clients
+
+Esperado, conforme decisão:
+
+403
+
+Caso a implementação atual/documentação determine explicitamente outro comportamento, não altere produção; registre e siga o contrato real.
+
+------------------------------------------
+GAP 06 — CLIENT LOGIN
+------------------------------------------
+
+Complementar:
+
+tests/integration/auth.test.ts
+
+Adicionar:
+
+CLIENT com credenciais válidas → 200
+
+Utilize os mesmos fixtures/padrões de autenticação existentes.
+
+------------------------------------------
+GAP 07 — SERVICES/:id
+------------------------------------------
+
+Complementar:
+
+tests/integration/services.test.ts
+
+Adicionar:
+
+GET /api/services/:id → ADMIN → 200
+
+Validar os campos principais da resposta.
+
+Adicionar:
+
+GET /api/services/:id → ID inexistente → 404
+
+------------------------------------------
+GAP 08 — DATABASE INTEGRITY
+------------------------------------------
+
+Criar:
+
+tests/integration/db-integrity.test.ts
+
+Validar diretamente no PostgreSQL:
+
+1. 16 tabelas no schema public;
+2. 14 triggers;
+3. EXCLUDE constraint:
+   - excl_professional_no_overlap
+   - excl_client_no_overlap
+   - excl_resource_no_overlap
+4. 1 migration registrada;
+5. trigger append-only de notifications, SE existir;
+6. trigger append-only de audit_logs;
+7. trigger append-only de appointment_status_history.
+
+Não crie ou altere migrations.
+
+Não aceite apenas contagens genéricas se for possível validar os nomes críticos.
+
+Para os EXCLUDE constraints, valide explicitamente os nomes.
+
+Para os triggers append-only, valide a existência e, se o padrão dos testes atuais permitir com segurança, valide que UPDATE/DELETE são bloqueados.
+
+Não destrua dados de outros testes.
+
+------------------------------------------
+GAP 09 — DASHBOARD CLIENT
+------------------------------------------
+
+Conforme DP-01:
+
+Se GET /api/dashboard/client existir:
+
+- CLIENT → 200
+- ADMIN → 403
+- PROFESSIONAL → 403
+
+Se não existir:
+
+- não criar;
+- não alterar produção;
+- registrar como endpoint ausente.
+
+------------------------------------------
+GAP 11 — RBAC CROSS-MODULE
+------------------------------------------
+
+Complementar somente onde houver lacuna real.
+
+Validar principalmente:
+
+- PROFESSIONAL → clients;
+- PROFESSIONAL → addresses;
+- CLIENT → resources;
+- PROFESSIONAL → resources;
+- CLIENT → reports/appointments;
+- outros casos identificados durante a revisão.
+
+Não duplicar testes já existentes.
+
+------------------------------------------
+GAP 12 — REPORTS
+------------------------------------------
+
+Complementar:
+
+tests/integration/reports.test.ts
+
+Adicionar explicitamente:
+
+CLIENT → GET /api/reports/appointments → 403
+
+Se esse teste já existir, NÃO duplicar.
+
+==================================================
+5. IDOR DE APPOINTMENTS
+==================================================
+
+Complementar:
+
+tests/integration/appointments.test.ts
+
+Adicionar cobertura explícita:
+
+1. PROFESSIONAL tenta acessar appointment pertencente a outro professional
+   → comportamento conforme contrato atual, normalmente 403 ou 404.
+
+2. CLIENT tenta cancelar appointment pertencente a outro CLIENT
+   → 403.
+
+Use dois usuários distintos e dados reais de seed.
+
+O objetivo é provar isolamento por usuário.
+
+Não altere controller/service para fazer o teste passar.
+
+==================================================
+6. REGRAS DE TESTES
+==================================================
+
+Todos os testes devem:
+
+- seguir o padrão existente do projeto;
+- reutilizar helpers de seed;
+- reutilizar autenticação existente;
+- limpar dados corretamente;
+- evitar dependência de ordem de execução;
+- evitar testes frágeis;
+- não usar sleeps desnecessários;
+- não depender de IDs fixos;
+- criar UUIDs reais quando necessário;
+- validar status HTTP;
+- validar estrutura relevante da resposta.
+
+Não duplique testes já existentes.
+
+Não transforme testes unitários em testes de integração.
+
+==================================================
+7. CONCORRÊNCIA
+==================================================
+
+NÃO adicionar novos testes de concorrência nesta fase.
+
+Os testes existentes em:
+
+tests/integration/concurrency/appointments.concurrent.test.ts
+
+já cobrem:
+
+- excl_client_no_overlap
+- excl_professional_no_overlap
+- excl_resource_no_overlap
+- combinação completa.
+
+Existe uma flakiness conhecida no caso:
+
+excl_client_no_overlap
+
+que ocasionalmente pode retornar 500 em vez de 409 sob carga paralela.
+
+Se ocorrer:
+
+1. execute novamente;
+2. verifique se passa;
+3. não altere o código de produção;
+4. registre no relatório se necessário.
+
+Só trate como regressão se houver evidência de aumento da frequência ou alteração causada pela Fase 9.
+
+==================================================
+8. ARQUIVOS PERMITIDOS
+==================================================
+
+A Fase 9 NÃO PODE modificar arquivos de produção.
+
+Permitido modificar/criar SOMENTE:
+
+tests/**
+
+Arquivos esperados:
+
+NOVOS:
+
+tests/integration/db-integrity.test.ts
+tests/integration/addresses.test.ts
+tests/integration/resources.test.ts
+
+MODIFICAR:
+
+tests/integration/uuid-params.test.ts
+tests/integration/appointments.test.ts
+tests/integration/auth.test.ts
+tests/integration/clients.test.ts
+tests/integration/professionals.test.ts
+tests/integration/services.test.ts
+tests/integration/dashboard.test.ts
+tests/integration/reports.test.ts
+
+Se durante a implementação descobrir que algum arquivo não precisa ser modificado, não o altere.
+
+NÃO MODIFICAR:
+
+src/**
+db/**
+drizzle/**
+migrations/**
+package.json
+configurações de produção
+
+==================================================
+9. ORDEM DE EXECUÇÃO
+==================================================
+
+Execute nesta ordem:
+
+ETAPA 1
+Reconfirmar baseline:
+
+pnpm test
+
+Esperado:
+
+431/431
+
+ETAPA 2
+Verificar as três decisões pendentes diretamente no código.
+
+ETAPA 3
+Implementar os novos testes.
+
+ETAPA 4
+Rodar somente os testes novos/modificados.
+
+ETAPA 5
+Corrigir APENAS testes, fixtures ou helpers de teste quando necessário.
+
+IMPORTANTE:
+Não corrigir código de produção para fazer teste passar.
+
+ETAPA 6
+Executar typecheck.
+
+ETAPA 7
+Executar suite completa.
+
+ETAPA 8
+Executar build.
+
+ETAPA 9
+Executar:
+
+git diff --name-only
+
+Garantir que SOMENTE tests/** foi alterado.
+
+ETAPA 10
+Executar novamente a suite completa se houver qualquer instabilidade.
+
+==================================================
+10. GATES OBRIGATÓRIOS
+==================================================
+
+A fase somente pode ser considerada concluída se:
+
+TYPECHECK
+→ 0 erros
+
+BUILD
+→ OK
+
+TESTES
+→ todos passando
+
+REGRESSÃO
+→ os 431 testes anteriores continuam passando
+
+NOVOS TESTES
+→ todos passando
+
+BANCO
+→ 16 tabelas
+→ 14 triggers
+→ 3 EXCLUDE constraints
+→ 1 migration
+
+PRODUÇÃO
+→ nenhum arquivo fora de tests/** alterado
+
+MIGRATIONS
+→ nenhuma migration nova
+
+==================================================
+11. QUANTIDADE ESPERADA
+==================================================
+
+Estimativa aproximada:
+
+~53 novos testes.
+
+A suite deverá ficar aproximadamente em:
+
+431 + ~53 = ~484 testes.
+
+Não trate 484 como número rígido.
+
+Se alguns testes planejados forem redundantes porque já existem, NÃO duplique.
+
+O critério é cobertura real dos gaps, não quantidade artificial de testes.
+
+==================================================
+12. REGRA ABSOLUTA DE NÃO REGRESSÃO
+==================================================
+
+NÃO altere:
+
+- services;
+- controllers;
+- repositories;
+- validators de produção;
+- routes;
+- schema;
+- migrations;
+- regras de negócio.
+
+Se um teste revelar comportamento diferente do plano:
+
+1. investigue documentação;
+2. investigue implementação;
+3. determine o contrato real;
+4. adapte o teste se o comportamento atual estiver correto;
+5. registre a divergência.
+
+Nunca altere produção simplesmente para satisfazer o plano de testes.
+
+==================================================
+13. RELATÓRIO FINAL OBRIGATÓRIO
+==================================================
+
+Ao terminar, apresente:
+
+FASE 9 — RELATÓRIO FINAL
+
+1. Arquivos criados
+2. Arquivos modificados
+3. Quantidade de novos testes
+4. Total final de testes
+5. Resultado dos testes
+6. Typecheck
+7. Build
+8. Verificação das 16 tabelas
+9. Verificação dos 14 triggers
+10. Verificação das 3 EXCLUDE constraints
+11. Verificação da migration
+12. Confirmação de que nenhum arquivo de produção foi alterado
+13. Gaps fechados
+14. Gaps eventualmente não implementados e motivo
+15. Flakiness encontrada, se houver
+16. Commit SHA
+17. Mensagem do commit
+
+Mensagem sugerida:
+
+test(F9): expand integration coverage and database integrity
+
+==================================================
+14. CRITÉRIO FINAL
+==================================================
+
+A Fase 9 só está CONCLUÍDA quando:
+
+- todos os testes passam;
+- nenhum código de produção foi alterado;
+- não existe migration nova;
+- os gaps relevantes foram fechados;
+- integridade do banco foi validada;
+- typecheck passa;
+- build passa;
+- os 431 testes anteriores continuam passando;
+- commit único foi realizado.
+
+COMECE AGORA.
+
+Primeiro faça a verificação do baseline e das três decisões pendentes.
+Depois implemente os testes.
+Não peça nova aprovação no meio do processo, pois a Fase 9 já está aprovada.
