@@ -1,0 +1,212 @@
+FASE 8 — PRÓXIMA FEATURE | PLANEJAMENTO SOMENTE
+
+A Fase 7 — Relatórios foi concluída e commitada.
+
+Estado confirmado:
+- F1–F5.7: concluídas
+- F6 — Dashboards: concluída, commit 717a741
+- F7 — Relatórios: concluída, commit 1d57dac
+- Testes: 394/394 passando
+- Typecheck: 0 erros
+- Build: OK
+- Banco: 16 tabelas
+- Triggers: 14
+- EXCLUDE constraints: 3
+- Migrations: 1
+- Nenhuma migration nova na F7
+- Working tree deve ser tratado como baseline da F7
+
+NÃO implemente código ainda.
+
+OBJETIVO DESTA ETAPA:
+Identificar qual é a próxima fase oficial após a F7 e produzir um PLANO TÉCNICO completo para aprovação antes de qualquer implementação.
+
+IMPORTANTE:
+Não invente a próxima feature.
+Não escolha a próxima fase por conveniência técnica.
+Use a documentação oficial do projeto como fonte da verdade.
+
+ORDEM DE AUTORIDADE DA DOCUMENTAÇÃO:
+Doc 18 > Doc 17 > Doc 16 > Doc 14 > demais documentos.
+
+TAREFA 1 — VALIDAR A PRÓXIMA FASE
+
+Leia primeiro:
+- docs/00-*
+- docs/10-*
+- docs/14-*
+- docs/16-*
+- docs/17-*
+- docs/18-*
+
+Também leia os arquivos atuais relevantes do código para entender o baseline:
+- src/routes/index.ts
+- repositories/controllers/validators relacionados à F7
+- appointments
+- dashboards
+- audit-logs
+- testes de integração relevantes
+- schema atual do DB
+
+Determine explicitamente:
+1. Qual é a próxima fase oficial após F7.
+2. Qual é o nome oficial da fase.
+3. Qual é o objetivo.
+4. Quais endpoints/funcionalidades estão previstos.
+5. Quais regras de negócio se aplicam.
+6. Quais documentos sustentam cada decisão.
+
+TAREFA 2 — PRODUZIR O PLANO TÉCNICO
+
+Entregue um documento no seguinte formato:
+
+PLANO TÉCNICO — FASE X: [NOME]
+
+A. Documentos oficiais utilizados
+- Documento
+- Localização
+- Seção relevante
+
+B. Objetivo da fase
+
+C. Regras de negócio aplicáveis
+- Código da RN
+- Regra
+- Impacto técnico
+
+D. Estado atual do sistema
+- O que já existe
+- O que ainda não existe
+- O que pode ser reutilizado
+
+E. Contrato/API esperado
+Para cada endpoint:
+- método
+- rota
+- autenticação
+- autorização/RBAC
+- query params
+- request body, se houver
+- response
+- códigos HTTP
+- regras de negócio
+
+F. Fluxo técnico de implementação
+Detalhar, sem implementar:
+- validators
+- repositories
+- services, se necessários
+- controllers
+- routes
+- registro em routes/index.ts
+- integrações com componentes existentes
+
+G. RBAC
+Criar uma matriz:
+Endpoint | ADMIN | PROFESSIONAL | CLIENT | Anônimo
+
+H. Validações
+Listar todos os casos:
+- parâmetros inválidos
+- IDs inexistentes
+- conflitos
+- regras de negócio
+- erros esperados
+
+I. Tratamento de erros
+Mapear:
+- 400
+- 401
+- 403
+- 404
+- 409
+- 500
+conforme aplicável.
+
+J. Banco de dados
+Determinar:
+- haverá migration?
+- novas tabelas?
+- novas colunas?
+- índices?
+- triggers?
+- constraints?
+- ou somente leitura/escrita sobre estrutura existente?
+
+Se NÃO houver mudança no schema, declarar explicitamente:
+"Nenhuma migration prevista."
+
+K. Concorrência / transações
+Avaliar se existem operações de escrita, transações, rollback, race conditions ou constraints relevantes.
+
+L. Audit logs
+Informar quais operações devem ou não gerar audit log, de acordo com as regras existentes.
+
+M. Arquivos a criar/modificar
+Listar exatamente:
+- arquivos novos
+- arquivos modificados
+- arquivos de teste
+
+Não crie arquivos ainda.
+
+N. Plano de testes de integração
+Detalhar testes necessários por grupo:
+- RBAC
+- happy path
+- regras de negócio
+- validações
+- erros
+- IDOR/privacidade
+- concorrência, se aplicável
+- regressão
+
+Informar uma estimativa de quantidade de testes.
+
+O. Gates obrigatórios
+Usar como baseline:
+- Typecheck = 0 erros
+- testes anteriores = 394/394 intactos
+- novos testes = todos verdes
+- suite completa = todos verdes
+- Build = OK
+- integridade do DB preservada, salvo mudança documentalmente autorizada
+- migration somente se oficialmente necessária
+- git diff limitado ao escopo aprovado
+
+P. Riscos e decisões pendentes
+Criar uma tabela:
+ID | Tipo | Descrição | Proposta
+
+IMPORTANTE:
+Se houver decisões que dependam de interpretação da documentação, NÃO implemente nem escolha silenciosamente.
+Marque como "DECISÃO PENDENTE" e apresente uma proposta.
+
+Q. GATE DE PLANEJAMENTO
+
+Terminar exatamente com:
+
+GATE DE PLANEJAMENTO
+Status: AGUARDANDO APROVAÇÃO
+
+Próxima feature: FASE X — [NOME]
+Escopo: ...
+Arquivos novos: ...
+Arquivos alterados: ...
+Migration: SIM/NÃO
+Risco de regressão: BAIXO/MÉDIO/ALTO
+Decisões pendentes: ...
+
+REGRAS IMPORTANTES:
+1. NÃO escrever código.
+2. NÃO alterar arquivos.
+3. NÃO criar migration.
+4. NÃO executar git commit.
+5. Não alterar o banco.
+6. Não assumir que uma fase é necessária apenas porque tecnicamente parece útil.
+7. A documentação oficial é a fonte da verdade.
+8. Preserve os contratos existentes de F1–F7.
+9. Se houver divergência entre documentos, registre a divergência e aplique a hierarquia Doc 18 > Doc 17 > Doc 16 > Doc 14.
+10. Antes de concluir, confirme o estado atual do git e certifique-se de que nenhuma alteração foi feita.
+
+Entregue somente o PLANO TÉCNICO e o GATE DE PLANEJAMENTO.
