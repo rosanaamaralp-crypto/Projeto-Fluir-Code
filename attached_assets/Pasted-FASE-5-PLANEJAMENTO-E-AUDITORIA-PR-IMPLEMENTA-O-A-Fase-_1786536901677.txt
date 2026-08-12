@@ -1,0 +1,234 @@
+FASE 5 — PLANEJAMENTO E AUDITORIA PRÉ-IMPLEMENTAÇÃO
+
+A Fase 4.2 está oficialmente encerrada.
+
+GATE FINAL DA FASE 4:
+- Typecheck: 0 erros
+- Testes: 231/231
+- Build: OK
+- Schema: íntegro
+- Migrations: 1
+- Tabelas: 16
+- Triggers: 14
+- Índices: 43
+- FKs: 20
+- EXCLUDE constraints: 3
+- RBAC: aprovado
+- IDOR: aprovado
+- Concorrência: aprovada
+- Transactions: aprovadas
+- Audit logs: aprovados
+- Reschedule: aprovado
+- GATE: LIMPO
+
+NÃO alterar código nesta etapa.
+
+NÃO criar migration.
+
+NÃO implementar funcionalidades.
+
+Quero somente preparar tecnicamente a Fase 5.
+
+==================================================
+ETAPA 1 — DESCOBRIR O ESTADO ATUAL
+==================================================
+
+Faça uma leitura completa da estrutura atual do projeto:
+
+- packages/db
+- schema
+- migrations
+- repositories
+- services
+- controllers
+- routes
+- validators
+- middlewares
+- testes
+- seed
+- documentação
+- replit.md
+
+Consulte também o banco diretamente.
+
+Não assuma que algo existe apenas porque está documentado.
+
+==================================================
+ETAPA 2 — MAPEAR O QUE JÁ EXISTE
+==================================================
+
+Produza um inventário de:
+
+1. Entidades existentes
+2. Tabelas
+3. Relacionamentos
+4. Endpoints
+5. Roles/RBAC
+6. Services
+7. Repositories
+8. Validators
+9. Middlewares
+10. Testes
+11. Constraints
+12. Triggers
+13. Audit logs
+14. Migrations
+15. Seeds
+
+Para cada item, indique:
+
+- existe;
+- parcialmente implementado;
+- não existe;
+- ou precisa ser alterado para suportar a Fase 5.
+
+==================================================
+ETAPA 3 — IDENTIFICAR DEPENDÊNCIAS DA FASE 5
+==================================================
+
+Antes de propor qualquer código, identificar:
+
+- quais tabelas existentes serão reutilizadas;
+- quais novas tabelas seriam necessárias;
+- quais entidades precisam ser alteradas;
+- quais endpoints existentes serão afetados;
+- quais regras de RBAC serão afetadas;
+- quais fluxos da Fase 4 dependem dessas entidades;
+- quais constraints precisam permanecer intactas;
+- quais novas constraints seriam necessárias;
+- quais transações serão necessárias;
+- quais problemas de concorrência podem existir;
+- quais novos audit logs serão necessários;
+- quais riscos de IDOR existem;
+- quais novos testes de integração serão necessários.
+
+IMPORTANTE:
+
+Não criar migrations nesta etapa.
+
+Se uma mudança de schema parecer necessária, apenas especificar a mudança proposta.
+
+==================================================
+ETAPA 4 — NÃO INVENTAR REQUISITOS
+==================================================
+
+Não inventar funcionalidades para a Fase 5.
+
+Se a especificação da Fase 5 não estiver disponível no projeto, declarar explicitamente:
+
+"Não existe especificação suficiente da Fase 5 disponível no código/documentação atual."
+
+Nesse caso, NÃO implementar nada.
+
+Em vez disso, apresentar:
+
+- informações que já temos;
+- lacunas;
+- decisões que precisam ser definidas;
+- dependências técnicas;
+- riscos.
+
+==================================================
+ETAPA 5 — ANÁLISE DE IMPACTO
+==================================================
+
+Para cada possível mudança da Fase 5, informar:
+
+Arquivo/módulo:
+Mudança proposta:
+Dependências:
+Impacto no banco:
+Impacto no RBAC:
+Impacto nos endpoints:
+Impacto na Fase 4:
+Novos testes:
+Risco:
+Prioridade:
+
+Classificar risco como:
+
+- BAIXO
+- MÉDIO
+- ALTO
+- CRÍTICO
+
+==================================================
+ETAPA 6 — PLANO DE IMPLEMENTAÇÃO
+==================================================
+
+Somente depois da análise, apresentar uma proposta de implementação dividida em etapas pequenas.
+
+Exemplo:
+
+FASE 5.1
+Schema / migration
+
+FASE 5.2
+Repository
+
+FASE 5.3
+Validator
+
+FASE 5.4
+Service
+
+FASE 5.5
+Controller / routes
+
+FASE 5.6
+Testes
+
+FASE 5.7
+Auditoria
+
+Mas NÃO implementar nenhuma dessas etapas ainda.
+
+==================================================
+ETAPA 7 — GATES PROPOSTOS
+==================================================
+
+Definir os gates que deverão ser obrigatórios durante a Fase 5:
+
+- typecheck
+- testes existentes
+- novos testes
+- build
+- migration integrity
+- schema integrity
+- RBAC
+- IDOR
+- concurrency
+- transaction/rollback
+- audit
+- regressão da Fase 4
+
+==================================================
+ETAPA 8 — RELATÓRIO FINAL
+==================================================
+
+Entregar:
+
+A. Estado atual do sistema
+B. O que já existe para a Fase 5
+C. O que falta
+D. Dependências
+E. Impacto na Fase 4
+F. Riscos
+G. Plano recomendado da Fase 5
+H. Gates obrigatórios
+I. Informações que faltam para iniciar
+J. GATE DE PLANEJAMENTO
+
+O resultado deve terminar em uma destas classificações:
+
+PLANO PRONTO PARA IMPLEMENTAÇÃO
+
+ou
+
+BLOQUEADO — FALTA ESPECIFICAÇÃO
+
+ou
+
+BLOQUEADO — DEPENDÊNCIA TÉCNICA
+
+NÃO modificar nenhum arquivo nesta etapa.
