@@ -2,3 +2,4 @@
 - [Fase 3.1 corrections](fase31-corrections.md) — 9 audit fixes applied; response format, seed FK order, DrizzleDB type
 - [Fase 4 — Appointments module](fase4-appointments.md) — concurrency strategy, slot test rules, modality rules, addressId order, status transitions
 - [Fase 5.6 — ALTER in-place](fase56-alter.md) — update() no service; AlterAppointmentSchema integrado ao union; resolveResource com excludeAppointmentId; resourceId em UpdateAppointmentFieldsData
+- [Fase 8 — Notificações](fase8-notifications.md) — session.userId (não .id); seed FK order; concurrency test flaky pré-existente

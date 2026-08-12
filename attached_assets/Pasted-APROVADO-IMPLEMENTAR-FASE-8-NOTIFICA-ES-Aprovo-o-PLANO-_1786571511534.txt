@@ -1,0 +1,262 @@
+APROVADO — IMPLEMENTAR FASE 8: NOTIFICAÇÕES
+
+Aprovo o PLANO TÉCNICO da Fase 8 com as seguintes decisões definitivas:
+
+D1 — DESTINATÁRIOS
+- Appointment criado:
+  - CLIENT → APPOINTMENT_CONFIRMED
+  - PROFESSIONAL → NEW_APPOINTMENT_RECEIVED
+- Appointment alterado:
+  - CLIENT → APPOINTMENT_ALTERED
+  - PROFESSIONAL → APPOINTMENT_ALTERED
+- Appointment cancelado:
+  - CLIENT → APPOINTMENT_CANCELLED
+  - PROFESSIONAL → APPOINTMENT_CANCELLED
+- Appointment concluído:
+  - CLIENT → APPOINTMENT_COMPLETED
+  - PROFESSIONAL → nenhuma notificação
+- Lembretes NÃO serão implementados nesta fase.
+
+D2 — TYPES DEFINITIVOS
+Usar exatamente:
+- APPOINTMENT_CONFIRMED
+- NEW_APPOINTMENT_RECEIVED
+- APPOINTMENT_ALTERED
+- APPOINTMENT_CANCELLED
+- APPOINTMENT_COMPLETED
+
+D3 — PAGINAÇÃO
+GET /api/notifications:
+- page default = 1
+- limit default = 20
+- limit máximo = 50
+
+D4 — ADMIN
+ADMIN não é destinatário de notificações de agendamento.
+O endpoint continua protegido por requireAuth e pode ser acessado por qualquer usuário autenticado, mas para ADMIN deve retornar normalmente:
+data: []
+pagination: ...
+
+Não criar notificações de agendamento para ADMIN.
+
+D5 — GERAÇÃO
+NotificationService será BEST-EFFORT.
+
+A operação principal de appointment NÃO pode falhar por causa de erro na criação da notificação.
+
+Usar try/catch isolado para notificações.
+
+Uma falha de notification:
+- NÃO deve rollbackar appointment
+- NÃO deve alterar status HTTP da operação principal
+- deve ser tratada de forma segura conforme o padrão existente do projeto
+
+D6 — LEMBRETES
+NÃO implementar lembretes nesta fase.
+Não criar cron, scheduler, worker ou infraestrutura externa.
+
+D7 — MESSAGE
+Gerar message como texto completo e legível no momento da criação.
+
+Exemplo:
+"Seu agendamento para Massagem Teste em 12/08/2026 às 10:00 foi confirmado."
+
+Não retornar apenas appointmentId como conteúdo da mensagem.
+
+ESCOPO APROVADO
+
+Implementar:
+
+NOVOS:
+src/services/notifications.service.ts
+src/validators/notifications.validator.ts
+src/repositories/notifications.repository.ts
+src/controllers/notifications.controller.ts
+src/routes/notifications.ts
+tests/integration/notifications.test.ts
+
+ALTERADOS:
+src/routes/index.ts
+src/services/appointments.service.ts
+
+ENDPOINTS:
+
+GET /api/notifications
+- requireAuth
+- unread opcional
+- page
+- limit
+- retorna SOMENTE notificações pertencentes ao usuário autenticado
+- ADMIN retorna suas próprias notificações, que neste MVP normalmente serão [] porque ADMIN não recebe notificações de appointment
+- ordenação created_at DESC
+
+POST /api/notifications/:id/read
+- requireAuth
+- id UUID
+- somente o proprietário pode marcar como lida
+- outro usuário → 403
+- inexistente → 404
+- inválido → 400
+- já lida → 200 idempotente
+- não gerar audit log
+
+PROTEÇÃO IDOR É OBRIGATÓRIA.
+
+INTEGRAÇÃO COM APPOINTMENTS
+
+Adicionar NotificationService aos fluxos existentes:
+
+create()
+- após sucesso da operação principal:
+  - CLIENT → APPOINTMENT_CONFIRMED
+  - PROFESSIONAL → NEW_APPOINTMENT_RECEIVED
+
+alter()
+- CLIENT → APPOINTMENT_ALTERED
+- PROFESSIONAL → APPOINTMENT_ALTERED
+
+cancel()
+- CLIENT → APPOINTMENT_CANCELLED
+- PROFESSIONAL → APPOINTMENT_CANCELLED
+
+updateStatus()
+- quando status passar para COMPLETED:
+  - CLIENT → APPOINTMENT_COMPLETED
+
+Não alterar o comportamento funcional existente dos endpoints.
+
+IMPORTANTE SOBRE TRANSAÇÕES:
+Antes de modificar appointments.service.ts, leia cuidadosamente o fluxo atual de transação/commit.
+
+As notificações devem ser geradas somente depois que a operação principal estiver efetivamente concluída.
+
+Não introduzir uma transação maior ou modificar constraints existentes sem necessidade.
+
+BANCO:
+- NÃO criar migration.
+- NÃO alterar schema.
+- NÃO criar tabela.
+- NÃO criar índice.
+- A tabela notifications já existe.
+- Preservar baseline:
+  16 tabelas
+  14 triggers
+  3 EXCLUDE constraints
+  1 migration
+
+TESTES:
+
+Criar tests/integration/notifications.test.ts cobrindo no mínimo:
+
+RBAC:
+- ADMIN GET → 200
+- PROFESSIONAL GET → 200
+- CLIENT GET → 200
+- anon GET → 401
+- ADMIN POST read → 200
+- PROFESSIONAL POST read → 200
+- CLIENT POST read → 200
+- anon POST read → 401
+
+IDOR:
+- CLIENT não vê notificações do PROFESSIONAL
+- PROFESSIONAL não vê notificações do CLIENT
+- CLIENT não consegue marcar notificação do PROFESSIONAL
+- PROFESSIONAL não consegue marcar notificação do CLIENT
+
+GET:
+- estrutura da resposta
+- paginação
+- unread=true
+- unread=false
+- ordenação DESC
+- readAt null/preenchido corretamente
+- limit máximo 50
+
+POST read:
+- marca como lida
+- persiste readAt
+- segunda chamada é idempotente
+- UUID inválido → 400
+- inexistente → 404
+- proprietário incorreto → 403
+
+GERAÇÃO:
+- create appointment → CLIENT recebe APPOINTMENT_CONFIRMED
+- create appointment → PROFESSIONAL recebe NEW_APPOINTMENT_RECEIVED
+- alter appointment → CLIENT recebe APPOINTMENT_ALTERED
+- alter appointment → PROFESSIONAL recebe APPOINTMENT_ALTERED
+- cancel appointment → CLIENT recebe APPOINTMENT_CANCELLED
+- cancel appointment → PROFESSIONAL recebe APPOINTMENT_CANCELLED
+- complete appointment → CLIENT recebe APPOINTMENT_COMPLETED
+- complete appointment → PROFESSIONAL NÃO recebe APPOINTMENT_COMPLETED
+- ADMIN não recebe notificações de appointment
+
+REGRESSÃO:
+- confirmar que falha na criação de notification não quebra a operação principal de appointment, se for possível testar isso sem mocks inadequados ao padrão existente.
+
+VALIDAÇÕES:
+- unread inválido → 400
+- page=0 → 400
+- limit=51 → 400
+- UUID inválido → 400
+
+GATES OBRIGATÓRIOS:
+
+1. Typecheck → 0 erros
+2. Testes anteriores → 394/394 intactos
+3. Novos testes F8 → todos verdes
+4. Suite completa → todos verdes
+5. Build → OK
+6. DB:
+   - 16 tabelas
+   - 14 triggers
+   - 3 EXCLUDE constraints
+   - 1 migration
+7. Nenhuma migration nova
+8. git diff limitado ao escopo aprovado
+9. Nenhuma regressão em appointments
+10. IDOR comprovadamente protegido
+11. Falha de notification não quebra appointment
+
+ANTES DE CODIFICAR:
+Leia novamente:
+- appointments.service.ts
+- schema notifications
+- repository pattern
+- audit-logs repository/controller/routes
+- validators existentes
+- middleware requireAuth
+- validateQuery/validateParams
+- testes de integração existentes
+- documentação oficial relevante
+
+Não invente padrões quando já existir padrão no projeto.
+
+IMPORTANTE:
+Não modificar outros arquivos fora do escopo sem justificar explicitamente.
+
+Ao terminar, entregar:
+
+RELATÓRIO FINAL — FASE 8: NOTIFICAÇÕES
+
+Incluindo:
+- arquivos criados
+- arquivos modificados
+- endpoints
+- tipos de notification
+- destinatários por evento
+- testes adicionados
+- resultado dos gates
+- número total da suite
+- typecheck
+- build
+- integridade do DB
+- migration
+- git diff
+- commit SHA
+
+Se qualquer gate falhar, NÃO declarar a Fase 8 concluída.
+Corrigir, executar novamente os gates e somente então entregar o relatório final.
+
+IMPLEMENTE AGORA.
