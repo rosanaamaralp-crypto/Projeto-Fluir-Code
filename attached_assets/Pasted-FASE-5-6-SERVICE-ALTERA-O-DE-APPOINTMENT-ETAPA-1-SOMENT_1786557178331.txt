@@ -1,0 +1,326 @@
+FASE 5.6 — SERVICE / ALTERAÇÃO DE APPOINTMENT
+ETAPA 1 — SOMENTE AUDITORIA E PLANO. NÃO MODIFIQUE NENHUM ARQUIVO.
+
+As Fases 5.2, 5.3, 5.4 e 5.5 estão aprovadas.
+
+Baseline atual:
+- 276 testes passando
+- Typecheck: 0 erros
+- Build api-server: OK
+- 16 tabelas
+- 14 triggers
+- 3 EXCLUDE constraints
+- 1 migration
+- AlterAppointmentSchema implementado
+- Repository updateFields implementado
+- Nenhuma migration/schema alterado
+
+IMPORTANTE:
+Nesta etapa NÃO escreva código.
+NÃO altere arquivos.
+NÃO crie testes.
+NÃO faça commit.
+NÃO integre ainda o AlterAppointmentSchema ao PatchAppointmentSchema.
+NÃO altere controller.
+NÃO altere validator.
+NÃO altere repository.
+
+OBJETIVO
+
+Auditar a implementação atual e produzir o plano técnico EXATO para implementar:
+
+AppointmentsService.update()
+
+responsável pela operação de ALTERAÇÃO documentada na Fase 5.
+
+LEIA INTEGRALMENTE:
+
+1. artifacts/api-server/src/services/appointments.service.ts
+2. artifacts/api-server/src/repositories/appointments.repository.ts
+3. artifacts/api-server/src/repositories/appointment-status-history.repository.ts
+4. artifacts/api-server/src/repositories/audit-logs.repository.ts
+5. artifacts/api-server/src/repositories/availability.repository.ts
+6. artifacts/api-server/src/repositories/resources.repository.ts
+7. artifacts/api-server/src/repositories/addresses.repository.ts
+8. artifacts/api-server/src/validators/appointments.validator.ts
+9. artifacts/api-server/src/controllers/appointments.controller.ts
+10. artifacts/api-server/src/routes/appointments.ts
+11. lib/db/src/schema/appointments.ts
+12. lib/db/src/schema/resources.ts
+13. lib/db/src/schema/appointment-status-history.ts
+14. lib/db/src/schema/audit-logs.ts
+
+E LEIA AS SEÇÕES RELEVANTES DOS DOCUMENTOS OFICIAIS:
+
+- Doc 7 — §§ 24–29 (ALTERAÇÃO)
+- Doc 7 — §§ 30–34 (CANCELAMENTO/REMANEJAMENTO)
+- Doc 7 — §§ 40–50 quando relevantes
+- Doc 14 — RN-055
+- Doc 14 — RN-056
+- Doc 14 — RN-057
+- Doc 14 — RN-061
+- Doc 14 — RN-063
+- Doc 16 — §40
+- Doc 17 — regras/telas relacionadas à alteração
+
+OBJETIVO DA AUDITORIA
+
+Determine exatamente como o service deverá implementar:
+
+A. Alteração de profissional
+B. Alteração de modalidade:
+   IN_PERSON → HOME_CARE
+   HOME_CARE → IN_PERSON
+C. Alteração de endereço
+D. Alteração de data/horário quando vier pelo fluxo de ALTERAÇÃO
+E. Combinações desses campos
+
+REGRAS CRÍTICAS
+
+1. RBAC
+
+Confirmar documentalmente:
+- ADMIN pode alterar profissional.
+- PROFESSIONAL não pode alterar profissional.
+- CLIENT não pode alterar profissional.
+
+Não inventar permissões.
+
+2. TERMINAL STATES
+
+Confirmar comportamento para:
+- COMPLETED
+- CANCELLED
+- NO_SHOW
+
+A alteração deve ser bloqueada nos estados terminais conforme as regras existentes.
+
+3. REVALIDAÇÃO
+
+Mapear exatamente a pipeline usada atualmente em create()/reschedule().
+
+Identificar todos os checks que precisam ser reaplicados quando houver alteração:
+
+- disponibilidade do profissional
+- disponibilidade do serviço, se aplicável
+- blocked periods
+- conflitos de agenda
+- resource/maca
+- endereço
+- modalidade
+- demais validações já existentes
+
+NÃO criar uma segunda implementação paralela dessas regras se já existir função reutilizável.
+
+Informe quais métodos existentes devem ser reutilizados.
+
+4. PROFISSIONAL
+
+Quando professionalId mudar:
+
+- usar a mesma lógica de disponibilidade já utilizada no create/reschedule;
+- confirmar que o novo profissional atende ao serviço;
+- confirmar conflitos;
+- confirmar tenant/ownership;
+- confirmar se o profissional pode executar aquele appointment.
+
+Não assumir que apenas trocar professionalId no banco é suficiente.
+
+5. IN_PERSON → HOME_CARE
+
+Confirmar a sequência correta:
+
+- liberar resource/maca atual;
+- resourceId deve ficar NULL;
+- addressId deve ser obrigatório;
+- validar endereço;
+- validar disponibilidade;
+- manter integridade da EXCLUDE constraint;
+- realizar tudo atomicamente.
+
+6. HOME_CARE → IN_PERSON
+
+Confirmar:
+
+- addressId deve deixar de ser utilizado;
+- encontrar/reservar resource/maca válido;
+- validar disponibilidade;
+- resourceId deve ser preenchido;
+- addressId deve ficar NULL;
+- respeitar EXCLUDE constraint.
+
+7. IN_PERSON → IN_PERSON
+
+Se apenas profissional/data/endereço mudar:
+
+- manter/resolver resource conforme as regras existentes;
+- não liberar indevidamente a maca atual antes da nova disponibilidade ser validada.
+
+8. HOME_CARE → HOME_CARE
+
+Se mudar profissional/data/endereço:
+
+- revalidar disponibilidade;
+- manter resourceId NULL;
+- manter addressId válido.
+
+9. HORÁRIO
+
+Se startDatetime mudar:
+
+- descobrir durationMinutes do appointment;
+- calcular endDatetime;
+- NÃO permitir que o caller controle livremente endDatetime;
+- enviar startDatetime + endDatetime ao repository.
+
+10. TRANSAÇÃO
+
+Mapear exatamente onde deve começar a transação.
+
+A operação precisa ser atomicamente:
+
+validar estado atual
+→ validar permissões
+→ carregar dados necessários
+→ validar nova configuração
+→ validar disponibilidade
+→ determinar/liberar/reservar recurso
+→ atualizar appointment
+→ registrar histórico
+→ registrar audit log
+→ commit
+
+Em caso de qualquer erro:
+
+→ rollback completo
+
+IMPORTANTE:
+Não aceitar uma arquitetura em que a maca antiga seja liberada definitivamente antes da nova configuração estar validada.
+
+11. HISTÓRICO
+
+Determinar exatamente quais campos old/new precisam ser registrados em:
+
+appointment_status_history
+
+Para alteração:
+
+- oldStartDatetime
+- newStartDatetime
+- oldEndDatetime
+- newEndDatetime
+- oldResourceId
+- newResourceId
+- oldAddressId
+- newAddressId
+
+E verificar como o repository existente deve ser chamado.
+
+Não inventar campos que não existem.
+
+12. AUDIT LOG
+
+Determinar:
+
+- action que deve ser utilizada;
+- oldData;
+- newData;
+- entityType;
+- entityId.
+
+Verificar se já existe constante/enum para a ação de alteração.
+
+NÃO inventar um nome sem verificar o código/documentação.
+
+13. PRICE_AT_BOOKING
+
+Confirmar que a alteração NÃO modifica priceAtBooking.
+
+14. SERVICE
+
+Confirmar que serviceId NÃO faz parte desta operação.
+
+15. CONCORRÊNCIA
+
+Analisar como o fluxo atual de create/reschedule protege contra double-booking.
+
+Explicar como o novo update deve se beneficiar das EXCLUDE constraints e da transação.
+
+16. IDEMPOTÊNCIA
+
+Determinar o comportamento quando o usuário envia os mesmos valores atuais.
+
+Não inventar regra.
+Se a documentação não definir, registrar como decisão a ser tomada.
+
+17. ERROS
+
+Mapear os erros existentes que devem ser reutilizados.
+
+Não criar novos erros genéricos se já existirem erros específicos.
+
+18. RESOURCE / MACA
+
+Mapear exatamente:
+- como o resource atual é identificado;
+- como uma nova maca é escolhida;
+- qual repository resolve resource;
+- como disponibilidade é verificada;
+- se existe lock/constraint/transação relevante.
+
+19. CONTROLLER
+
+NÃO modificar agora.
+
+Somente explicar como o controller deverá chamar futuramente:
+
+AppointmentsService.update()
+
+20. VALIDATOR
+
+NÃO modificar agora.
+
+Somente explicar como AlterAppointmentSchema será integrado posteriormente.
+
+ENTREGAR UM PLANO DETALHADO
+
+O relatório deve conter:
+
+A. Arquivos lidos
+B. Métodos existentes reutilizáveis
+C. Pipeline atual de create/reschedule
+D. Regras documentais aplicáveis
+E. Fluxo proposto para update()
+F. RBAC
+G. Matriz IN_PERSON/HOME_CARE
+H. Tratamento de resource/maca
+I. Tratamento de endereço
+J. Tratamento de horário
+K. Cálculo de endDatetime
+L. Histórico
+M. Audit log
+N. Transação
+O. Rollback
+P. Concorrência
+Q. Estados terminais
+R. Erros existentes reutilizáveis
+S. Campos que podem ser alterados
+T. Campos protegidos
+U. Arquivos que serão modificados na implementação
+V. Testes que deverão ser adicionados na F5.6/F5.8
+W. Riscos
+X. GATE DE PLANEJAMENTO F5.6
+
+NO FINAL:
+
+Se tudo estiver claramente suportado pelo código/documentação:
+
+"F5.6 PLAN — APROVADO PARA IMPLEMENTAÇÃO"
+
+Se houver qualquer ambiguidade documental ou técnica relevante:
+
+"F5.6 PLAN — BLOQUEADO"
+
+e explique exatamente o que precisa ser decidido.
+
+NÃO IMPLEMENTE NADA NESTA ETAPA.
