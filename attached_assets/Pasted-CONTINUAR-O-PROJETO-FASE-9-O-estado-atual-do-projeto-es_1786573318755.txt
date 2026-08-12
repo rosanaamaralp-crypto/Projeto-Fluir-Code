@@ -1,0 +1,150 @@
+CONTINUAR O PROJETO — FASE 9
+
+O estado atual do projeto está confirmado:
+
+F1–F7: concluídas
+F8 — NOTIFICAÇÕES: concluída e commitada
+Commit F8: d3a20b5
+
+Gates atuais:
+- Typecheck: 0 erros
+- Build: OK
+- Testes: 431/431 passando
+- Banco: 16 tabelas
+- Triggers: 14
+- EXCLUDE constraints: 3
+- Migrations: 1
+- Nenhuma migration nova na F8
+- IDOR de notificações protegido e testado
+
+NÃO implemente código ainda.
+
+A próxima etapa é a FASE 9 — TESTES.
+
+Antes de qualquer alteração no código:
+
+1. Leia toda a documentação oficial disponível no projeto, respeitando a hierarquia documental definida anteriormente.
+2. Leia especificamente as partes relacionadas à Fase 9, testes, qualidade, segurança, RBAC, IDOR, integração, regressão e gates.
+3. Verifique o estado REAL do repositório atual.
+4. Verifique os testes existentes de F1–F8.
+5. Verifique se existem gaps de cobertura que a Fase 9 deve resolver.
+6. Não presuma que o plano anterior está correto se o código/documentação atual mostrar algo diferente.
+7. Não altere nenhum arquivo nesta etapa.
+8. Não crie migration.
+9. Não faça commit.
+
+Depois produza SOMENTE um:
+
+PLANO TÉCNICO — FASE 9: TESTES
+
+O plano deve conter obrigatoriamente:
+
+A. Documentos oficiais utilizados
+- arquivo
+- seção
+- regra/contrato relevante
+
+B. Objetivo da Fase 9
+
+C. Estado atual dos testes
+- quantidade atual
+- distribuição por fase, se possível
+- typecheck
+- build
+- integração
+- RBAC
+- IDOR
+- validações
+- casos de erro
+- concorrência
+- regressão
+
+D. Gaps encontrados
+Identifique claramente o que já está coberto e o que ainda não está.
+
+E. Escopo exato da Fase 9
+
+F. Plano de testes por módulo/fase
+Inclua, quando aplicável:
+- F1
+- F2
+- F3
+- F4
+- F5
+- F5.7
+- F6
+- F7
+- F8
+
+G. Testes de segurança
+- autenticação
+- autorização
+- RBAC
+- IDOR
+- isolamento entre usuários
+- isolamento entre CLIENT / PROFESSIONAL / ADMIN
+
+H. Testes de validação
+- UUID
+- enums
+- datas
+- paginação
+- limites
+- parâmetros inválidos
+- payloads inválidos
+
+I. Testes de concorrência
+Identifique os testes existentes de concorrência e qualquer flakiness conhecido.
+Não classifique como regressão algo que já seja pré-existente sem evidência.
+
+J. Testes de integridade do banco
+Verificar:
+- foreign keys
+- constraints
+- EXCLUDE constraints
+- triggers
+- status history
+- audit logs
+- notifications
+
+K. Testes de regressão
+A Fase 9 deve preservar integralmente o comportamento de F1–F8.
+
+L. Arquivos que serão criados/modificados
+Liste exatamente cada arquivo.
+
+M. Quantidade estimada de novos testes
+
+N. Gates obrigatórios
+Defina critérios objetivos para:
+- typecheck
+- build
+- suite completa
+- cobertura relevante
+- RBAC
+- IDOR
+- banco
+- migrations
+- regressão
+- git diff
+
+O. Riscos
+Incluindo especificamente flakiness/race conditions já conhecidos.
+
+P. Decisões pendentes
+Liste qualquer decisão que precise da minha aprovação ANTES da implementação.
+
+Q. GATE DE PLANEJAMENTO
+
+Finalize exatamente com:
+
+STATUS: AGUARDANDO APROVAÇÃO
+PRÓXIMA FEATURE: FASE 9 — TESTES
+
+IMPORTANTE:
+- Não implemente nada nesta etapa.
+- Não modifique arquivos.
+- Não faça commit.
+- Não invente requisitos que não estejam sustentados pela documentação ou pelo código.
+- Se houver divergência entre documentos, mostre a divergência e aplique a hierarquia documental já definida.
+- Se uma decisão não estiver documentada, marque como DECISÃO PENDENTE e proponha uma opção, sem executá-la.
