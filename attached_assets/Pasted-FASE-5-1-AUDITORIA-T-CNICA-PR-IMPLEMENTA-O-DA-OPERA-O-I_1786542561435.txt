@@ -1,0 +1,242 @@
+FASE 5.1 — AUDITORIA TÉCNICA PRÉ-IMPLEMENTAÇÃO DA OPERAÇÃO
+
+IMPORTANTE:
+Não modificar nenhum arquivo.
+Não criar migration.
+Não alterar schema.
+Não alterar código de produção.
+Não alterar testes.
+Não instalar dependências.
+Esta tarefa é SOMENTE LEITURA E ANÁLISE.
+
+CONTEXTO
+
+O projeto Fluir da Vida concluiu a Fase 4.2 com gate aprovado.
+
+Baseline obrigatório:
+- Typecheck: 0 erros
+- Testes: 231/231 passando
+- Build: OK
+- 16 tabelas
+- 14 triggers
+- 43 índices
+- 20 FKs
+- 3 EXCLUDE constraints
+- 1 migration
+- Fase 4.2 aprovada sem ressalvas
+
+A Fase 5 oficial é:
+
+FASE 5 — OPERAÇÃO / SPRINT 05
+- alteração
+- cancelamento
+- remanejamento
+- início
+- conclusão
+- ausência
+- histórico
+
+DOCUMENTAÇÃO OFICIAL
+
+Use os documentos oficiais existentes no projeto como fonte de verdade,
+especialmente:
+- Documento 10 — Definição do MVP e Ordem de Desenvolvimento
+- Documento 14 — Regras de Negócio
+- Documento 16 — Especificação de API e Contratos de Dados
+- Documento 17 — Plano Oficial de Implementação no Replit
+- Documento 7 — Fluxos do Sistema
+- Documento 15 — Mapa de Telas
+- documentos/protótipos existentes da Agenda
+
+OBJETIVO
+
+Realizar uma auditoria somente leitura para determinar exatamente
+o que da Fase 5:
+
+1. já está implementado;
+2. está parcialmente implementado;
+3. está implementado no backend mas sem interface;
+4. está previsto na interface mas sem backend;
+5. ainda não existe;
+6. precisa de alteração de banco;
+7. precisa somente de testes;
+8. possui divergência entre documentação e implementação.
+
+NÃO assumir que algo está faltando apenas porque a documentação menciona.
+Verificar o código real.
+
+ANALISAR
+
+A. ALTERAÇÃO
+- alteração de data
+- alteração de horário
+- alteração de profissional, se permitido
+- alteração de serviço, se permitido
+- alteração de modalidade, se permitido
+- alteração de recurso/maca
+- alteração de endereço Home Care
+- revalidação completa de disponibilidade
+- histórico da alteração
+
+B. CANCELAMENTO
+- permissões por role
+- motivo
+- status
+- liberação de recurso
+- liberação lógica do horário
+- histórico
+- audit log
+
+C. REMANEJAMENTO
+- horário antigo
+- novo horário
+- recurso antigo
+- novo recurso
+- endereço
+- modalidade
+- ordem transacional
+- rollback
+- histórico
+- audit log
+
+D. INÍCIO
+- CONFIRMED → IN_PROGRESS
+- permissões
+- histórico
+- audit log
+
+E. CONCLUSÃO
+- IN_PROGRESS → COMPLETED
+- permissões
+- horário de conclusão, se previsto
+- histórico
+- audit log
+
+F. AUSÊNCIA
+- IN_PROGRESS → NO_SHOW
+- quem pode executar
+- histórico
+- audit log
+
+G. HISTÓRICO
+- endpoint existente
+- dados retornados
+- ownership
+- eventos registrados
+- informações de remanejamento
+- append-only
+- interface existente ou ausente
+
+PARA CADA ITEM
+
+Informar:
+
+- arquivo(s)
+- função/método
+- endpoint
+- schema/validator
+- repository
+- service
+- controller
+- route
+- teste relacionado
+- estado atual
+- documentação que suporta a conclusão
+
+ATENÇÃO ESPECIAL
+
+Não alterar a máquina de estados existente sem evidência documental.
+
+Não criar novos status somente porque a documentação usa nomes de negócio
+diferentes.
+
+Verificar especificamente a diferença entre:
+- EM_ATENDIMENTO vs IN_PROGRESS
+- CONCLUÍDO vs COMPLETED
+- NO_SHOW
+
+Verificar também a diferença entre:
+- "remanejamento"
+- "alteração"
+- cancelamento + nova criação
+
+Não assumir equivalência sem evidência.
+
+IMPORTANTE SOBRE MODALIDADE
+
+A documentação descreve fluxos:
+- Presencial → Home Care
+- Home Care → Presencial
+- troca de maca
+
+Verificar se isso é compatível com a implementação atual.
+
+Se houver divergência, NÃO corrigir.
+Apenas registrar a divergência e indicar o impacto.
+
+BANCO
+
+Verificar se a Fase 5 realmente exige migration.
+
+Não criar migration apenas por precaução.
+
+Preservar obrigatoriamente:
+- EXCLUDE constraints
+- triggers
+- FKs
+- append-only history
+- price_at_booking
+- integridade das transactions
+
+SEGURANÇA
+
+Verificar:
+- RBAC
+- IDOR
+- ownership
+- mass assignment
+- manipulação de IDs
+- autorização por role
+- proteção de dados
+
+TESTES
+
+Mapear os testes existentes para cada requisito da Fase 5.
+
+Identificar:
+- testes existentes suficientes;
+- testes existentes insuficientes;
+- testes ausentes.
+
+NÃO criar testes nesta etapa.
+
+ENTREGA
+
+Produzir um relatório:
+
+FASE 5.1 — AUDITORIA PRÉ-IMPLEMENTAÇÃO
+
+1. Estado atual
+2. Matriz Documento × Código × Banco × Testes × Interface
+3. Funcionalidades já implementadas
+4. Funcionalidades parcialmente implementadas
+5. Funcionalidades ausentes
+6. Divergências documentais
+7. Impacto no schema
+8. Impacto no backend
+9. Impacto no frontend
+10. Testes necessários
+11. Riscos
+12. Ordem recomendada de implementação
+13. Arquivos que serão modificados em cada etapa
+
+GATE
+
+No final informar:
+
+F5.1 GATE:
+- BLOQUEADO — se houver decisões de negócio/documentação pendentes
+ou
+- APROVADO PARA F5.2 — se houver informação suficiente para implementar.
+
+NÃO FAZER QUALQUER ALTERAÇÃO NO PROJETO NESTA TAREFA.
