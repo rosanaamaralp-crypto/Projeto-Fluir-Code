@@ -1,0 +1,593 @@
+# AUDITORIA TÉCNICA INDEPENDENTE — FASE 4.1
+
+Você é o auditor técnico independente do projeto **Fluir da Vida**.
+
+A Fase 4.1 acabou de ser implementada e apresentou os seguintes gates:
+
+* Typecheck: 0 erros
+* Testes: 231/231 passando
+* Build: OK
+* Tabelas: 16
+* Triggers: 14
+* Índices: 43
+* Foreign Keys: 20
+* EXCLUDE constraints: 3
+* Migrations aplicadas: 1
+* Nenhuma migration nova
+* OBS-A, OBS-C, OBS-D e OBS-E foram corrigidas
+* OBS-B foi considerada sem ação necessária porque `addresses` não possui coluna `status`
+
+## REGRA PRINCIPAL
+
+**NÃO ALTERE NENHUM ARQUIVO.**
+
+Esta etapa é exclusivamente de auditoria, leitura e verificação.
+
+Não faça refactor.
+Não corrija código.
+Não crie testes.
+Não altere schema.
+Não altere migrations.
+Não altere seed.
+Não altere documentação.
+
+Primeiro leia e audite tudo. Ao final, entregue somente o relatório.
+
+---
+
+# 1. ESCOPO DA AUDITORIA
+
+Audite integralmente:
+
+* `appointments`
+* `appointment_status_history`
+* `appointments.service`
+* `appointments.repository`
+* `appointments.controller`
+* routes de appointments
+* validators relacionados
+* slots
+* resources
+* availability
+* blocked_periods
+* clients
+* professionals
+* services
+* addresses
+* audit_logs
+* auth/session/RBAC
+* error handling
+* transações
+* testes da Fase 4 e 4.1
+* seed/helpers usados pelos testes
+* schema real do PostgreSQL
+* constraints e triggers reais do banco
+
+Também faça regressão da Fase 2 e Fase 3.1.
+
+---
+
+# 2. BANCO DE DADOS
+
+Consulte diretamente o banco e confirme:
+
+* tabelas existentes
+* migrations aplicadas
+* ausência de migrations indevidas
+* FKs
+* CHECK constraints
+* EXCLUDE constraints
+* índices
+* triggers
+* funções utilizadas pelos triggers
+* `appointments`
+* `appointment_status_history`
+* `audit_logs`
+
+Confirme especialmente:
+
+### appointments
+
+* `modality`
+* `resource_id`
+* `address_id`
+* `price_at_booking`
+* `status`
+* `start_datetime`
+* `end_datetime`
+* FKs
+* `ON DELETE`
+* constraints de modalidade
+
+Confirme que:
+
+```text
+IN_PERSON
+→ resource_id NOT NULL
+→ address_id NULL
+
+HOME_CARE
+→ resource_id NULL
+→ address_id NOT NULL
+```
+
+Não presuma que a documentação está correta: compare com o schema real.
+
+---
+
+# 3. CONCORRÊNCIA / DOUBLE BOOKING
+
+Audite as três EXCLUDE constraints:
+
+1. `excl_client_no_overlap`
+2. `excl_professional_no_overlap`
+3. `excl_resource_no_overlap`
+
+Confirme:
+
+* expressão usada
+* condição WHERE
+* status excluídos
+* tratamento de NULL
+* intervalo temporal
+* uso de `&&`
+* mapeamento de PostgreSQL `23P01` para HTTP 409
+
+Verifique se os pre-checks do service são apenas auxiliares e se a proteção definitiva está realmente no banco.
+
+Também audite os testes de concorrência:
+
+* Caso A — mesmo client
+* Caso B — mesmo professional
+* Caso C — mesmo resource
+* Caso D — mesma combinação completa
+
+Confirme que os testes realmente executam requests concorrentes com `Promise.all` e que verificam `[201, 409]`.
+
+---
+
+# 4. REAGENDAMENTO
+
+Faça uma auditoria profunda do fluxo:
+
+```text
+PATCH /api/appointments/:id
+{
+  "reschedule": {
+    "startDatetime": "..."
+  }
+}
+```
+
+Verifique:
+
+* apenas appointments elegíveis podem ser reagendados
+* CLIENT só pode reagendar o próprio
+* ADMIN pode reagendar
+* PROFESSIONAL não pode reagendar
+* novo horário passa novamente por todas as regras de disponibilidade
+* resource é resolvido novamente quando IN_PERSON
+* address é validado novamente quando HOME_CARE
+* conflito gera 409
+* original é cancelado somente dentro da transação
+* novo appointment é criado dentro da mesma transação
+* status history original é criado
+* status history novo é criado
+* audit do reschedule é criado
+* audit do cancelamento original é criado
+* qualquer falha causa rollback completo
+* original permanece CONFIRMED se a criação do novo appointment falhar
+
+Confirme especificamente a correção da OBS-A:
+
+`APPOINTMENT_CANCELLED` deve existir para o appointment original durante o reschedule.
+
+---
+
+# 5. TESTES DE REAGENDAMENTO
+
+Audite os testes adicionados na Fase 4.1.
+
+Confirme a existência e qualidade dos testes para:
+
+1. CLIENT happy path
+2. ADMIN happy path
+3. PROFESSIONAL → 403
+4. appointment não CONFIRMED → 400
+5. conflito no novo horário → 409
+6. rollback completo
+7. falha de disponibilidade
+8. original permanece inalterado quando ocorre falha
+
+Não aceite apenas que o teste "passa".
+
+Verifique se o teste realmente prova o comportamento esperado.
+
+---
+
+# 6. SLOTS × APPOINTMENTS
+
+Compare matematicamente e funcionalmente:
+
+`slots.service.ts`
+
+versus
+
+`appointments.service.ts`
+
+Verifique se ambos usam exatamente as mesmas regras para:
+
+* minimum notice
+* maximum advance
+* timezone
+* UTC
+* weekdays
+* availability
+* blocked periods
+* appointments existentes
+* statuses bloqueantes
+* resource
+* overlaps
+* client conflicts
+
+Audite também a OBS-D.
+
+Confirme que CLIENT:
+
+* não consegue injetar outro `clientId`
+* tem o clientId derivado da sessão
+* recebe slots filtrados pelos próprios appointments
+
+Confirme através do controller + schema + service + testes.
+
+---
+
+# 7. STATUS MACHINE
+
+Reconstrua a máquina de estados diretamente do código.
+
+Tabela esperada:
+
+| Atual       | Novo        | ADMIN | PROFESSIONAL | CLIENT |
+| ----------- | ----------- | ----- | ------------ | ------ |
+| CONFIRMED   | CANCELLED   | ?     | ?            | ?      |
+| CONFIRMED   | IN_PROGRESS | ?     | ?            | ?      |
+| CONFIRMED   | COMPLETED   | ?     | ?            | ?      |
+| CONFIRMED   | NO_SHOW     | ?     | ?            | ?      |
+| IN_PROGRESS | COMPLETED   | ?     | ?            | ?      |
+| IN_PROGRESS | NO_SHOW     | ?     | ?            | ?      |
+| IN_PROGRESS | CANCELLED   | ?     | ?            | ?      |
+| COMPLETED   | qualquer    | ?     | ?            | ?      |
+| CANCELLED   | qualquer    | ?     | ?            | ?      |
+| NO_SHOW     | qualquer    | ?     | ?            | ?      |
+
+Preencha com o comportamento real encontrado no código.
+
+Verifique também:
+
+* Zod
+* service
+* controller
+* route
+* terminal states
+* impossibilidade de "desfazer" cancelamento
+
+---
+
+# 8. RBAC / IDOR
+
+Audite cada endpoint de appointments:
+
+* POST
+* GET
+* GET /:id
+* GET /:id/history
+* PATCH
+
+Para cada um confirme:
+
+* autenticação
+* role
+* ownership
+* possibilidade de manipular `clientId`
+* possibilidade de manipular `professionalId`
+* possibilidade de manipular `resourceId`
+* possibilidade de usar address de outro cliente
+* possibilidade de acessar appointment de outro cliente
+* possibilidade de acessar appointment de outro profissional
+
+Faça testes mentais/código para:
+
+CLIENT A → appointment de CLIENT B
+
+PROFESSIONAL A → appointment de PROFESSIONAL B
+
+CLIENT → `clientId` de outro cliente
+
+PROFESSIONAL → tentativa de criação
+
+PROFESSIONAL → tentativa de reschedule
+
+---
+
+# 9. MASS ASSIGNMENT
+
+Audite todos os payloads de:
+
+* create appointment
+* update appointment
+* reschedule
+
+Verifique se campos inesperados podem ser injetados.
+
+Especial atenção:
+
+* `status`
+* `clientId`
+* `professionalId`
+* `resourceId`
+* `priceAtBooking`
+* timestamps
+* IDs internos
+
+Confirme se o Zod realmente remove/rejeita campos extras e se o service constrói objetos explicitamente.
+
+---
+
+# 10. PRICE AT BOOKING
+
+Confirme:
+
+* preço capturado no momento da criação
+* preço não pode ser enviado pelo CLIENT
+* preço não pode ser alterado via PATCH
+* preço não pode ser alterado via reschedule
+* trigger PostgreSQL impede alteração
+* audit não permite alteração indevida
+
+Teste conceitualmente também:
+
+```text
+service.price = 100
+appointment.price_at_booking = 100
+
+service.price = 150
+
+appointment.price_at_booking
+```
+
+deve continuar `100`.
+
+---
+
+# 11. AUDIT LOG
+
+Audite todos os eventos:
+
+* APPOINTMENT_CREATED
+* APPOINTMENT_CANCELLED
+* APPOINTMENT_STATUS_CHANGED
+* APPOINTMENT_RESCHEDULED
+
+Confirme:
+
+* action correto
+* entityId correto
+* oldData correto
+* newData correto
+* actor correto
+* dentro da transação
+
+No reschedule confirme que existem os registros necessários tanto para o appointment original quanto para o novo.
+
+Verifique se falha no audit causa rollback.
+
+---
+
+# 12. TRANSAÇÕES
+
+Para cada operação mutável, confirme atomicidade:
+
+### CREATE
+
+appointment
+
+* history
+* audit
+
+### STATUS
+
+appointment update
+
+* history
+* audit
+
+### RESCHEDULE
+
+original cancel
+
+* original history
+* original cancellation audit
+* new appointment
+* new history
+* reschedule audit
+
+Tudo deve ocorrer na mesma transação.
+
+Procure:
+
+* operações antes da transaction
+* operações depois da transaction
+* chamadas externas
+* acesso direto ao db fora do service
+* operações fire-and-forget
+
+---
+
+# 13. SEGURANÇA
+
+Procure especificamente:
+
+* `as any`
+* `@ts-ignore`
+* `new Pool()`
+* `drizzle(`
+* migration runner
+* acesso direto ao pool
+* SQL concatenado
+* dados sensíveis em logs
+* stack trace em respostas
+* detalhes PostgreSQL em respostas
+* password hash
+* session fixation
+* IDOR
+* mass assignment
+* privilege escalation
+
+Não marque código pré-existente como regressão da Fase 4.1 sem deixar isso claramente identificado.
+
+---
+
+# 14. TESTES
+
+Execute:
+
+```bash
+pnpm run typecheck
+pnpm run test
+pnpm run build
+```
+
+Depois confirme regressão do banco.
+
+O resultado esperado atual é:
+
+```text
+typecheck: 0 erros
+test: 231/231
+build: OK
+```
+
+Se qualquer resultado for diferente, investigue e reporte.
+
+**Não corrija o problema.**
+
+---
+
+# 15. REGRESSÃO FASE 2 / 3.1
+
+Confirme que continuam intactos:
+
+* 16 tabelas
+* 14 triggers
+* 43 índices
+* 20 FKs
+* 3 EXCLUDE constraints
+* 1 migration aplicada
+* schema_migrations íntegro
+* session
+* authentication
+* RBAC
+* password_hash protection
+* transactions
+* error mapping
+* UUID validation
+* bootstrap-admin
+* typecheck
+
+---
+
+# 16. DOCUMENTAÇÃO
+
+Compare:
+
+* `replit.md`
+* `docs/FASE-3-ARQUITETURA.md`
+* documentação da Fase 4/4.1
+
+contra a implementação real.
+
+Identifique divergências.
+
+---
+
+# 17. CLASSIFICAÇÃO
+
+Classifique qualquer problema encontrado:
+
+🔴 CRÍTICO
+🟥 ALTO
+🟠 MÉDIO
+🟡 BAIXO
+🟢 OBSERVAÇÃO
+
+Não transforme diferenças puramente documentais em problemas funcionais.
+
+Não invente requisitos que não estejam sustentados pelo schema ou pelo código.
+
+---
+
+# 18. RELATÓRIO FINAL
+
+Entregue um relatório estruturado exatamente nesta ordem:
+
+## AUDITORIA INDEPENDENTE — FASE 4.1
+
+### A. Resumo Executivo
+
+### B. Resultado dos Testes
+
+### C. Integridade do Banco
+
+### D. Arquitetura
+
+### E. RBAC
+
+### F. Ownership / IDOR
+
+### G. Status Machine
+
+### H. Concorrência
+
+### I. Resource / IN_PERSON
+
+### J. HOME_CARE
+
+### K. Slots
+
+### L. Transactions
+
+### M. Audit
+
+### N. Segurança
+
+### O. Problemas Encontrados
+
+### P. Pontos Não Verificáveis
+
+### Q. Riscos para Próxima Fase
+
+### R. Checklist Final
+
+### GATE
+
+No final classifique:
+
+* APROVADA
+* APROVADA COM RESSALVAS
+* REPROVADA
+
+## REGRA FINAL
+
+**Não altere absolutamente nada durante esta auditoria.**
+
+Se encontrar problemas, apenas documente:
+
+* arquivo
+* linha
+* evidência
+* impacto
+* severidade
+* correção recomendada
+
+A implementação das correções será feita somente em uma etapa posterior, após minha autorização explícita.
