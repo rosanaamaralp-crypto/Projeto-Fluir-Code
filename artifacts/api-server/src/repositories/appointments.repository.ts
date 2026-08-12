@@ -1,9 +1,6 @@
 import { and, eq, gte, lte, notInArray } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@workspace/db/schema";
+import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { appointments } from "@workspace/db";
-
-type DB = NodePgDatabase<typeof schema>;
 
 // Status que NÃO bloqueiam disponibilidade
 const NON_BLOCKING_STATUSES = ["CANCELLED", "COMPLETED", "NO_SHOW"] as const;

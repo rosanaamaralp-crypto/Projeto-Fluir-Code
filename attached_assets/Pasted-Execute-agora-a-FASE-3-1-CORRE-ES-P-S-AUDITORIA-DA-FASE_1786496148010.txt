@@ -1,0 +1,517 @@
+Execute agora a **FASE 3.1 — CORREÇÕES PÓS-AUDITORIA DA FASE 3**.
+
+A auditoria técnica independente da Fase 3 encontrou 1 problema ALTO, 4 MÉDIOS e 4 BAIXOS. Quero que você corrija **todos os 9 problemas abaixo antes de iniciar qualquer implementação da Fase 4**.
+
+## REGRA PRINCIPAL
+
+**NÃO criar nem alterar nenhuma funcionalidade da Fase 4.**
+
+Não implementar:
+
+* appointments CRUD
+* criação de agendamentos
+* cancelamento de agendamentos
+* remarcação
+* notificações
+* pagamentos
+* frontend
+
+O objetivo desta tarefa é exclusivamente corrigir a Fase 3 e deixá-la tecnicamente pronta para a Fase 4.
+
+---
+
+# 1. P1 — ALTO — IMPLEMENTAR BOOTSTRAP DO PRIMEIRO ADMIN
+
+Criar:
+
+`artifacts/api-server/scripts/bootstrap-admin.ts`
+
+O script deve permitir criar o primeiro usuário ADMIN de forma segura, sem endpoint público.
+
+Requisitos:
+
+* Usar o mesmo `getDatabaseClient()` já existente.
+* Usar o mesmo schema Drizzle existente.
+* Usar bcrypt com `saltRounds = 12`.
+* Nunca armazenar senha em plaintext.
+* Nunca imprimir a senha ou password_hash nos logs.
+* Validar:
+
+  * nome
+  * email
+  * senha
+* Normalizar email com lowercase.
+* Verificar se já existe usuário ADMIN.
+* Se já existir ADMIN, abortar com mensagem clara e não criar outro.
+* Criar o usuário com `role_id = 1`.
+* `status = ACTIVE`.
+* Registrar `created_at` / `updated_at` conforme schema existente.
+* Executar criação dentro de transaction.
+* Não alterar nenhuma migration existente.
+* Não alterar `schema_migrations`.
+* Não criar endpoint `/api/auth/bootstrap`.
+
+Criar também um script no `package.json`, por exemplo:
+
+`pnpm --filter @workspace/api-server run bootstrap:admin`
+
+O script deve aceitar os dados de forma segura, preferencialmente por variáveis de ambiente ou argumentos que não exponham senha em logs.
+
+Não deixar senha padrão hardcoded no código.
+
+Depois testar:
+
+1. criar primeiro ADMIN;
+2. executar novamente;
+3. confirmar que o segundo ADMIN não é criado;
+4. confirmar que login com o ADMIN criado funciona;
+5. confirmar que password_hash nunca aparece na resposta.
+
+---
+
+# 2. P2 — MÉDIO — CORRIGIR TRANSAÇÃO DO PROFESSIONAL PATCH
+
+Arquivo:
+
+`artifacts/api-server/src/controllers/professionals.controller.ts`
+
+Atualmente:
+
+`UsersRepository.update(...)`
+
+está sendo executado fora da transaction que atualiza `professionals` e grava `audit_logs`.
+
+Corrigir.
+
+A operação completa deve ficar dentro de uma única:
+
+`db.transaction(async (tx) => { ... })`
+
+Dentro da mesma transaction devem ocorrer:
+
+1. atualização de `users`;
+2. atualização de `professionals`;
+3. inserção do `audit_logs`.
+
+Nenhuma dessas operações pode permanecer fora da transaction.
+
+Não alterar o comportamento funcional existente além da correção de atomicidade.
+
+---
+
+# 3. P3 — MÉDIO — CORRIGIR VALIDAÇÃO DO PATCH DE PROFESSIONAL
+
+Arquivo:
+
+`src/validators/professionals.validator.ts`
+
+O `UpdateProfessionalSchema` atualmente não valida `name` e `phone`, enquanto o controller lê esses campos diretamente de `req.body`.
+
+Corrigir.
+
+Adicionar ao schema os campos:
+
+* `name`
+* `phone`
+
+Usar os mesmos limites e regras definidos no `CreateProfessionalSchema`.
+
+Depois:
+
+* o controller deve utilizar exclusivamente os dados já validados pelo Zod;
+* remover casts manuais de `req.body` para obter `name` e `phone`;
+* não permitir campos arbitrários;
+* manter as regras de autorização existentes.
+
+Criar testes para:
+
+* name válido;
+* name acima do limite;
+* phone válido;
+* payload com campo inesperado;
+* PROFESSIONAL alterando seus próprios dados;
+* CLIENT tentando alterar professional.
+
+---
+
+# 4. P4 — MÉDIO — CORRIGIR REGRA DE RESOURCE PARA IN_PERSON
+
+Arquivo:
+
+`src/services/slots.service.ts`
+
+Atualmente existe:
+
+`if (modality === "IN_PERSON" && allResources.length > 0)`
+
+Isso permite que slots IN_PERSON sejam retornados quando não existe nenhum resource ativo.
+
+Considerar a regra já existente no banco:
+
+IN_PERSON exige `resource_id`.
+
+Portanto, a regra deve ser:
+
+* se `modality = IN_PERSON`;
+* e não existir nenhum resource ACTIVE;
+* então nenhum slot IN_PERSON deve ser retornado.
+
+Implementar de forma explícita e documentada.
+
+Também garantir que a lógica considere somente resources ACTIVE.
+
+Criar testes para:
+
+1. IN_PERSON + resources disponíveis → retorna slots;
+2. IN_PERSON + todos resources ocupados → não retorna slots;
+3. IN_PERSON + nenhum resource ACTIVE → não retorna slots;
+4. HOME_CARE não depende de resource.
+
+Não alterar as constraints existentes da Fase 2.
+
+---
+
+# 5. P5 — MÉDIO — CORRIGIR OS 76 ERROS DE TYPESCRIPT
+
+Este é um requisito obrigatório.
+
+Atualmente:
+
+`pnpm run typecheck`
+
+retorna aproximadamente 76 erros devido principalmente ao uso incorreto de:
+
+`tx as typeof db`
+
+O problema é que `PgTransaction` não implementa exatamente o tipo completo de `db`.
+
+Criar um tipo apropriado para o contexto transacional, por exemplo:
+
+`Tx`
+
+ou utilizar o tipo oficial `NodePgTransaction` disponível na versão atual do Drizzle.
+
+Os repositories devem aceitar corretamente:
+
+* database normal;
+* transaction context.
+
+Não usar casts inseguros para mascarar os erros.
+
+Corrigir todos os repositories/controllers afetados.
+
+Depois executar:
+
+`pnpm run typecheck`
+
+Resultado obrigatório:
+
+**0 erros TypeScript.**
+
+Não considerar a tarefa concluída enquanto houver erros de typecheck.
+
+---
+
+# 6. P6 — BAIXO — VALIDAR UUIDS DOS PATH PARAMETERS
+
+Atualmente `validateParams()` existe, mas não está sendo usado nas rotas.
+
+Corrigir isso.
+
+Todos os parâmetros UUID de rota devem ser validados antes de chegar ao repository.
+
+Aplicar `validateParams()` nas rotas relevantes:
+
+* `:id`
+* `:profId`
+* `:clientId`
+* `:serviceId`
+* `:resourceId`
+* demais parâmetros UUID existentes.
+
+Usar Zod.
+
+UUID inválido deve retornar:
+
+HTTP `400`
+
+e não HTTP `500`.
+
+Também adicionar `22P02` ao `mapDbError()` como fallback:
+
+`22P02 → ValidationError → 400`
+
+A validação Zod deve ser o mecanismo principal; o mapeamento PostgreSQL deve permanecer como defesa adicional.
+
+Criar testes para UUID inválido em pelo menos:
+
+* clients;
+* professionals;
+* services;
+* resources;
+* addresses;
+* professional-services;
+* availability;
+* blocked-periods.
+
+---
+
+# 7. P7 — BAIXO — DEFINIR O LIMITE DE SLOT MIN_NOTICE
+
+Atualmente:
+
+`if (slot.start <= minStart) continue`
+
+Isso rejeita um slot exatamente no limite.
+
+Manter esse comportamento por enquanto, mas documentar explicitamente:
+
+**SLOT_MIN_NOTICE_HOURS = 2 significa que o horário deve estar estritamente além de 2 horas do momento atual.**
+
+Não alterar o comportamento sem necessidade.
+
+Adicionar teste de boundary para deixar a regra documentada e protegida contra regressão.
+
+Confirmar que:
+
+`SLOT_MIN_NOTICE_HOURS`
+
+continua configurável por environment variable.
+
+---
+
+# 8. P8 — BAIXO — SEPARAR SCHEMAS DE UPDATE DE CLIENT
+
+Atualmente `UpdateClientSchema` aceita `status`, embora CLIENT não possa alterar status.
+
+Corrigir a arquitetura dos validators.
+
+Criar:
+
+`UpdateClientSchemaSelf`
+
+e
+
+`UpdateClientSchemaAdmin`
+
+Regras:
+
+Self:
+
+* somente campos que o próprio CLIENT pode alterar;
+* não aceitar `status`.
+
+Admin:
+
+* pode incluir `status`;
+* manter demais regras administrativas.
+
+O controller deve selecionar o schema adequado conforme o role.
+
+Criar testes garantindo:
+
+* CLIENT não consegue alterar status;
+* ADMIN consegue alterar status;
+* campos permitidos continuam funcionando.
+
+Não depender somente de "descartar depois" no controller.
+
+---
+
+# 9. P9 — BAIXO — CORRIGIR PADRÃO DO PATCH DE BLOCKED-PERIODS
+
+Arquivo:
+
+`src/routes/blocked-periods.ts`
+
+Atualmente o PATCH usa apenas:
+
+`requireAuth`
+
+e a autorização fica parcialmente dentro do controller.
+
+Padronizar com o restante da arquitetura.
+
+Como a operação é administrativa, usar o middleware de autorização adequado na rota.
+
+Depois remover verificações redundantes do controller somente quando elas forem realmente substituídas pelo middleware.
+
+Garantir que:
+
+* ADMIN consegue;
+* PROFESSIONAL não consegue;
+* CLIENT não consegue;
+* resposta correta continua sendo 403.
+
+Criar/ajustar teste correspondente.
+
+---
+
+# 10. NÃO ALTERAR A FASE 2
+
+Antes de finalizar, confirmar:
+
+* `0001_initial_schema.sql` intacta;
+* nenhuma nova migration;
+* `schema_migrations` intacta;
+* `drizzle.__drizzle_migrations` não existe;
+* 14 triggers continuam ativos;
+* 9 `updated_at` triggers;
+* 4 append-only triggers;
+* 1 price immutable trigger;
+* 3 EXCLUDE constraints;
+* 18 CHECK constraints;
+* 20 FKs;
+* índices existentes preservados.
+
+Não modificar nenhuma constraint da Fase 2.
+
+---
+
+# 11. TESTES OBRIGATÓRIOS
+
+Após as correções, executar:
+
+### Build
+
+`pnpm run build`
+
+### Typecheck
+
+`pnpm run typecheck`
+
+Obrigatório:
+
+`0 erros`
+
+### Testes existentes
+
+Executar todos os testes atuais.
+
+Resultado obrigatório:
+
+**100% passando.**
+
+### Novos testes
+
+Adicionar cobertura para:
+
+* bootstrap ADMIN;
+* bootstrap duplicado;
+* professional PATCH transacional;
+* validação name/phone;
+* IN_PERSON sem resource;
+* UUID inválido;
+* min notice boundary;
+* client self/admin schemas;
+* blocked-period PATCH authorization.
+
+---
+
+# 12. REGRESSÃO DE SEGURANÇA
+
+Confirmar novamente:
+
+* password_hash nunca aparece em JSON;
+* password_hash nunca aparece em logs;
+* password_hash nunca aparece em audit_logs;
+* login continua protegido contra enumeração;
+* bcrypt continua com 12 rounds;
+* session fixation continua protegida;
+* rate limit continua ativo;
+* SESSION_SECRET continua vindo de env;
+* RBAC continua funcionando;
+* ownership continua funcionando;
+* nenhum CLIENT consegue criar PROFESSIONAL;
+* nenhum CLIENT consegue criar SERVICE;
+* nenhum CLIENT consegue criar RESOURCE;
+* nenhum PROFESSIONAL consegue administrar outro PROFESSIONAL;
+* nenhum usuário consegue acessar dados privados de outro usuário.
+
+---
+
+# 13. AUDITORIA FINAL AUTOMÁTICA
+
+No final, executar verificações equivalentes a:
+
+* quantidade de migrations;
+* existência de `schema_migrations`;
+* inexistência de `drizzle.__drizzle_migrations`;
+* quantidade de triggers;
+* estado `tgenabled = 'O'`;
+* quantidade de EXCLUDE constraints;
+* quantidade de CHECK constraints;
+* quantidade de FKs;
+* quantidade de índices;
+* existência da tabela sessions;
+* existência do bootstrap-admin.ts.
+
+Também procurar no código por:
+
+* `DISABLE TRIGGER`
+* `ENABLE TRIGGER`
+* `drizzle-orm/migrator`
+* `new Pool(`
+* `passwordHash` em responses
+* casts `tx as typeof db`
+
+O `DISABLE TRIGGER` deve continuar existindo somente nos scripts de testes/cleanup, nunca na aplicação normal.
+
+---
+
+# 14. DOCUMENTAÇÃO
+
+Atualizar:
+
+`docs/FASE-3-ARQUITETURA.md`
+
+e
+
+`replit.md`
+
+Documentar:
+
+* bootstrap do primeiro ADMIN;
+* tipo transacional correto;
+* validação de UUID;
+* regra IN_PERSON sem resources;
+* boundary de SLOT_MIN_NOTICE_HOURS;
+* schemas Self/Admin de Client;
+* autorização do blocked-period PATCH;
+* comando de typecheck;
+* comando de testes.
+
+---
+
+# 15. RELATÓRIO FINAL
+
+Quando terminar, NÃO avance para Fase 4.
+
+Entregar um relatório objetivo contendo:
+
+1. arquivos criados;
+2. arquivos modificados;
+3. cada P1–P9 e seu status;
+4. quantidade final de testes;
+5. resultado do build;
+6. resultado do typecheck;
+7. resultado da regressão da Fase 2;
+8. confirmação de que nenhuma migration nova foi criada;
+9. confirmação de que nenhuma constraint da Fase 2 foi alterada;
+10. pendências restantes, se houver.
+
+## CRITÉRIO DE CONCLUSÃO
+
+A Fase 3.1 somente pode ser considerada concluída se:
+
+* P1–P9 estiverem corrigidos;
+* build passar;
+* typecheck tiver **0 erros**;
+* todos os testes passarem;
+* regressão da Fase 2 passar;
+* nenhuma migration da Fase 2 for alterada;
+* nenhuma constraint/triggers da Fase 2 forem alterados;
+* bootstrap-admin existir e funcionar;
+* nenhuma nova funcionalidade da Fase 4 tiver sido implementada.
+
+**Não peça nova autorização durante a execução. Execute a correção completa, valide tudo e só então apresente o relatório final.**

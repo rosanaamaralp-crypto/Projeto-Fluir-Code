@@ -27,7 +27,8 @@ export const ServicesController = {
   /** GET /api/services/:id */
   async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const svc = await ServicesRepository.findById(db, req.params["id"]!);
+      const { id } = req.params as { id: string };
+      const svc = await ServicesRepository.findById(db, id);
       if (!svc) throw new NotFoundError("Serviço não encontrado.");
       res.json({ service: svc });
     } catch (err) {
@@ -49,10 +50,10 @@ export const ServicesController = {
         };
 
       const svc = await db.transaction(async (tx) => {
-        const svc = await ServicesRepository.create(tx as typeof db, {
+        const svc = await ServicesRepository.create(tx, {
           name, description, durationMinutes, price, allowedModalities,
         });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "SERVICE_CREATED",
           entityType: "services",
@@ -72,25 +73,39 @@ export const ServicesController = {
   /** PATCH /api/services/:id — ADMIN only */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params["id"]!;
+      const { id } = req.params as { id: string };
       const session = req.session.user!;
       const old = await ServicesRepository.findById(db, id);
       if (!old) throw new NotFoundError("Serviço não encontrado.");
 
       const { name, description, durationMinutes, price, allowedModalities, status } =
-        req.body as Record<string, unknown>;
+        req.body as Partial<{
+          name: string;
+          description: string | null;
+          durationMinutes: number;
+          price: number;
+          allowedModalities: string;
+          status: string;
+        }>;
 
-      const updateData: Record<string, unknown> = {};
-      if (name !== undefined) updateData["name"] = name;
-      if (description !== undefined) updateData["description"] = description;
-      if (durationMinutes !== undefined) updateData["durationMinutes"] = durationMinutes;
-      if (price !== undefined) updateData["price"] = String(price);
-      if (allowedModalities !== undefined) updateData["allowedModalities"] = allowedModalities;
-      if (status !== undefined) updateData["status"] = status;
+      const updateData: Partial<{
+        name: string;
+        description: string | null;
+        durationMinutes: number;
+        price: string;
+        allowedModalities: string;
+        status: string;
+      }> = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (durationMinutes !== undefined) updateData.durationMinutes = durationMinutes;
+      if (price !== undefined) updateData.price = String(price);
+      if (allowedModalities !== undefined) updateData.allowedModalities = allowedModalities;
+      if (status !== undefined) updateData.status = status;
 
       const updated = await db.transaction(async (tx) => {
-        const updated = await ServicesRepository.update(tx as typeof db, id, updateData as never);
-        await AuditLogsRepository.create(tx as typeof db, {
+        const updated = await ServicesRepository.update(tx, id, updateData);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "SERVICE_UPDATED",
           entityType: "services",
@@ -111,14 +126,14 @@ export const ServicesController = {
   /** DELETE /api/services/:id — ADMIN only (soft delete) */
   async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params["id"]!;
+      const { id } = req.params as { id: string };
       const session = req.session.user!;
       const old = await ServicesRepository.findById(db, id);
       if (!old) throw new NotFoundError("Serviço não encontrado.");
 
       await db.transaction(async (tx) => {
-        await ServicesRepository.update(tx as typeof db, id, { status: "INACTIVE" });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await ServicesRepository.update(tx, id, { status: "INACTIVE" });
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "SERVICE_DEACTIVATED",
           entityType: "services",

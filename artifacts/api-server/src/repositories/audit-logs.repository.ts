@@ -1,8 +1,5 @@
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@workspace/db/schema";
+import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { auditLogs } from "@workspace/db";
-
-type DB = NodePgDatabase<typeof schema>;
 
 // Campos sensíveis que NUNCA devem aparecer em old_data / new_data
 const SENSITIVE_FIELDS = new Set([

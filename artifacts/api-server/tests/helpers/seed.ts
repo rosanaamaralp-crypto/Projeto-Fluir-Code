@@ -100,6 +100,8 @@ export async function cleanTestData(): Promise<void> {
       "prof-criado@fluir.test",
       "outro-prof-test@fluir.test",
       "outro-prof2-rbac@fluir.test",
+      // P1: bootstrap admin test email
+      "bootstrap-admin@fluir.test",
     ];
 
     for (const email of testEmails) {
@@ -114,16 +116,32 @@ export async function cleanTestData(): Promise<void> {
       await pgClient.query("DELETE FROM audit_logs WHERE user_id = $1", [u.id]);
 
       if (u.role_id === 3) {
+        // Endereços do cliente
+        await pgClient.query(
+          "DELETE FROM addresses WHERE client_id IN (SELECT id FROM clients WHERE user_id = $1)",
+          [u.id],
+        );
         await pgClient.query("DELETE FROM clients WHERE user_id = $1", [u.id]);
       } else if (u.role_id === 2) {
-        await pgClient.query(
-          "DELETE FROM professional_services WHERE professional_id IN (SELECT id FROM professionals WHERE user_id = $1)",
+        const profResult = await pgClient.query<{ id: string }>(
+          "SELECT id FROM professionals WHERE user_id = $1",
           [u.id],
         );
-        await pgClient.query(
-          "DELETE FROM availability WHERE professional_id IN (SELECT id FROM professionals WHERE user_id = $1)",
-          [u.id],
-        );
+        for (const prof of profResult.rows) {
+          // Remover entidades que referenciam professionals (ordem importa: FK)
+          await pgClient.query(
+            "DELETE FROM blocked_periods WHERE professional_id = $1",
+            [prof.id],
+          );
+          await pgClient.query(
+            "DELETE FROM professional_services WHERE professional_id = $1",
+            [prof.id],
+          );
+          await pgClient.query(
+            "DELETE FROM availability WHERE professional_id = $1",
+            [prof.id],
+          );
+        }
         await pgClient.query("DELETE FROM professionals WHERE user_id = $1", [u.id]);
       }
 

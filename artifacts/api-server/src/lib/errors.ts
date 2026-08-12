@@ -118,6 +118,12 @@ export function mapDbError(err: unknown): AppError {
       case "P0001":
         return mapTriggerException(pgErr.message ?? "");
 
+      // Invalid UUID syntax — pg recebe UUID malformado (defesa adicional após validateParams)
+      case "22P02":
+        return new ValidationError(
+          "Identificador inválido: o valor fornecido não é um UUID válido.",
+        );
+
       default:
         break;
     }

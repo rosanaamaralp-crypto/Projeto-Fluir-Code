@@ -1,5 +1,4 @@
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@workspace/db/schema";
+import type { DrizzleDB } from "../lib/db-types.js";
 import { ServicesRepository } from "../repositories/services.repository.js";
 import { ProfessionalsRepository } from "../repositories/professionals.repository.js";
 import { ProfessionalServicesRepository } from "../repositories/professional-services.repository.js";
@@ -8,8 +7,6 @@ import { AppointmentsRepository } from "../repositories/appointments.repository.
 import { BlockedPeriodsRepository } from "../repositories/blocked-periods.repository.js";
 import { ResourcesRepository } from "../repositories/resources.repository.js";
 import { NotFoundError, ValidationError } from "../lib/errors.js";
-
-type DB = NodePgDatabase<typeof schema>;
 
 // Configuração via env vars (com defaults aprovados)
 function getMinNoticeMs(): number {
@@ -46,16 +43,25 @@ function overlaps(
  * 3. professional oferece o service (professional_services.active = true)
  * 4. availability ativa para o weekday do date em UTC
  * 5. Gera slots de durationMinutes dentro das janelas de disponibilidade
- * 6. Respeita SLOT_MIN_NOTICE_HOURS
+ * 6. Respeita SLOT_MIN_NOTICE_HOURS (boundary ESTRITO — ver P7 abaixo)
  * 7. Respeita SLOT_MAX_ADVANCE_DAYS
  * 8. Exclui slots que conflitem com appointments ativos do profissional
  * 9. Exclui slots que conflitem com blocked_periods ativos do profissional
- * 10. Se modality = IN_PERSON, verifica se existe pelo menos 1 resource ACTIVE disponível
+ * 10. Se modality = IN_PERSON: exige ao menos 1 resource ACTIVE disponível;
+ *     se não existir nenhum resource ACTIVE, nenhum slot IN_PERSON é retornado (P4)
  * 11. (clientId opcional) Exclui slots que conflitem com appointments ativos do cliente
+ *
+ * P7 — Boundary de SLOT_MIN_NOTICE_HOURS:
+ *   A comparação usa `slot.start <= minStart` (estrito).
+ *   SLOT_MIN_NOTICE_HOURS=2 significa que o horário deve estar ESTRITAMENTE
+ *   além de 2 horas do momento atual:
+ *     now + 2h00m00s000ms → REJEITADO (start <= minStart)
+ *     now + 2h00m00s001ms → ACEITO (start > minStart)
+ *   Configurável via env var SLOT_MIN_NOTICE_HOURS (padrão: 2).
  */
 export const SlotsService = {
   async getAvailableSlots(
-    db: DB,
+    db: DrizzleDB,
     params: {
       professionalId: string;
       serviceId: string;
@@ -161,7 +167,8 @@ export const SlotsService = {
         )
       : [];
 
-    // Recursos ACTIVE para checagem IN_PERSON
+    // P4: Recursos ACTIVE para checagem IN_PERSON
+    // Se modality = IN_PERSON e não houver nenhum resource ACTIVE, nenhum slot é retornado.
     const allResources = modality === "IN_PERSON"
       ? await ResourcesRepository.findAll(db, true)
       : [];
@@ -170,7 +177,8 @@ export const SlotsService = {
     const availableSlots: AvailableSlot[] = [];
 
     for (const slot of candidateSlots) {
-      // 6b. Respeitar antecedência mínima e máxima
+      // P7: Antecedência ESTRITA — slot.start <= minStart é REJEITADO.
+      // Slot em exatamente now + SLOT_MIN_NOTICE_HOURS está fora do limite.
       if (slot.start <= minStart) continue;
       if (slot.start > maxStart) continue;
 
@@ -194,9 +202,14 @@ export const SlotsService = {
         if (clientConflict) continue;
       }
 
-      // 11. Se IN_PERSON, verificar se há ao menos 1 resource disponível
-      if (modality === "IN_PERSON" && allResources.length > 0) {
-        // Para cada resource ACTIVE, verificar se está livre no slot
+      // P4: Se IN_PERSON — exige ao menos 1 resource ACTIVE disponível no slot.
+      // Se não existir nenhum resource ACTIVE, nenhum slot IN_PERSON é retornado.
+      if (modality === "IN_PERSON") {
+        if (allResources.length === 0) {
+          // Nenhum resource ativo: IN_PERSON não pode ser agendado
+          continue;
+        }
+        // Verificar se algum resource está livre no horário deste slot
         let hasAvailableResource = false;
         for (const resource of allResources) {
           const occupied = await AppointmentsRepository.findActiveByResourceInRange(

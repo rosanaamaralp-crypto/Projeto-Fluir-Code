@@ -49,11 +49,11 @@ export const ProfessionalServicesController = {
       if (!svc) throw new NotFoundError("Serviço não encontrado.");
 
       const ps = await db.transaction(async (tx) => {
-        const ps = await ProfessionalServicesRepository.upsert(tx as typeof db, {
+        const ps = await ProfessionalServicesRepository.upsert(tx, {
           professionalId: profId,
           serviceId,
         });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "PROFESSIONAL_SERVICE_ADDED",
           entityType: "professional_services",
@@ -81,8 +81,8 @@ export const ProfessionalServicesController = {
       if (!old) throw new NotFoundError("Serviço do profissional não encontrado.");
 
       await db.transaction(async (tx) => {
-        await ProfessionalServicesRepository.deactivate(tx as typeof db, profId, serviceId);
-        await AuditLogsRepository.create(tx as typeof db, {
+        await ProfessionalServicesRepository.deactivate(tx, profId, serviceId);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "PROFESSIONAL_SERVICE_DEACTIVATED",
           entityType: "professional_services",

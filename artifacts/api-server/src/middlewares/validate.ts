@@ -3,6 +3,15 @@ import { ZodSchema, ZodError } from "zod";
 import { ValidationError } from "../lib/errors.js";
 
 /**
+ * Formata erros Zod em string legível.
+ * Exportada para uso direto em controllers com seleção de schema por role.
+ */
+export function formatZodError(error: ZodError): string {
+  const messages = error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+  return `Dados inválidos: ${messages.join("; ")}`;
+}
+
+/**
  * Valida req.body contra o schema Zod fornecido.
  * Em caso de erro, passa um ValidationError para o error handler.
  */
@@ -44,6 +53,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
 
 /**
  * Valida req.params contra o schema Zod fornecido.
+ * UUID inválido retorna HTTP 400 em vez de HTTP 500 (pg error 22P02).
  */
 export function validateParams<T>(schema: ZodSchema<T>) {
   return (req: Request, _res: Response, next: NextFunction): void => {
@@ -56,9 +66,4 @@ export function validateParams<T>(schema: ZodSchema<T>) {
     req.params = result.data as any;
     next();
   };
-}
-
-function formatZodError(error: ZodError): string {
-  const messages = error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
-  return `Dados inválidos: ${messages.join("; ")}`;
 }

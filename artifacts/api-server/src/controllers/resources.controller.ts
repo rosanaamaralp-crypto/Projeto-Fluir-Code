@@ -27,7 +27,8 @@ export const ResourcesController = {
   /** GET /api/resources/:id */
   async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const res_ = await ResourcesRepository.findById(db, req.params["id"]!);
+      const { id } = req.params as { id: string };
+      const res_ = await ResourcesRepository.findById(db, id);
       if (!res_) throw new NotFoundError("Recurso não encontrado.");
       res.json({ resource: res_ });
     } catch (err) {
@@ -42,8 +43,8 @@ export const ResourcesController = {
       const { name, type } = req.body as { name: string; type: string };
 
       const resource = await db.transaction(async (tx) => {
-        const resource = await ResourcesRepository.create(tx as typeof db, { name, type });
-        await AuditLogsRepository.create(tx as typeof db, {
+        const resource = await ResourcesRepository.create(tx, { name, type });
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "RESOURCE_CREATED",
           entityType: "resources",
@@ -63,20 +64,20 @@ export const ResourcesController = {
   /** PATCH /api/resources/:id — ADMIN only */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params["id"]!;
+      const { id } = req.params as { id: string };
       const session = req.session.user!;
       const old = await ResourcesRepository.findById(db, id);
       if (!old) throw new NotFoundError("Recurso não encontrado.");
 
-      const { name, type, status } = req.body as Record<string, string | undefined>;
-      const updateData: Record<string, unknown> = {};
-      if (name !== undefined) updateData["name"] = name;
-      if (type !== undefined) updateData["type"] = type;
-      if (status !== undefined) updateData["status"] = status;
+      const { name, type, status } = req.body as Partial<{ name: string; type: string; status: string }>;
+      const updateData: Partial<{ name: string; type: string; status: string }> = {};
+      if (name !== undefined) updateData.name = name;
+      if (type !== undefined) updateData.type = type;
+      if (status !== undefined) updateData.status = status;
 
       const updated = await db.transaction(async (tx) => {
-        const updated = await ResourcesRepository.update(tx as typeof db, id, updateData as never);
-        await AuditLogsRepository.create(tx as typeof db, {
+        const updated = await ResourcesRepository.update(tx, id, updateData);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "RESOURCE_UPDATED",
           entityType: "resources",
@@ -97,14 +98,14 @@ export const ResourcesController = {
   /** DELETE /api/resources/:id — ADMIN only (soft delete) */
   async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params["id"]!;
+      const { id } = req.params as { id: string };
       const session = req.session.user!;
       const old = await ResourcesRepository.findById(db, id);
       if (!old) throw new NotFoundError("Recurso não encontrado.");
 
       await db.transaction(async (tx) => {
-        await ResourcesRepository.update(tx as typeof db, id, { status: "INACTIVE" });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await ResourcesRepository.update(tx, id, { status: "INACTIVE" });
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "RESOURCE_DEACTIVATED",
           entityType: "resources",

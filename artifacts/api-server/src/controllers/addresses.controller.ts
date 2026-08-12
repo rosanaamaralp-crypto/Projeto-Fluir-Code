@@ -33,7 +33,7 @@ export const AddressesController = {
     }
   },
 
-  /** POST /api/clients/:clientId/addresses */
+  /** POST /PUT /api/clients/:clientId/addresses */
   async upsert(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { clientId } = req.params as { clientId: string };
@@ -52,8 +52,8 @@ export const AddressesController = {
       };
 
       const address = await db.transaction(async (tx) => {
-        const address = await AddressesRepository.upsert(tx as typeof db, clientId, body);
-        await AuditLogsRepository.create(tx as typeof db, {
+        const address = await AddressesRepository.upsert(tx, clientId, body);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: old ? "ADDRESS_UPDATED" : "ADDRESS_CREATED",
           entityType: "addresses",
@@ -82,8 +82,8 @@ export const AddressesController = {
       if (!old) throw new NotFoundError("Endereço não encontrado.");
 
       await db.transaction(async (tx) => {
-        await AddressesRepository.delete(tx as typeof db, clientId);
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AddressesRepository.delete(tx, clientId);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "ADDRESS_DELETED",
           entityType: "addresses",

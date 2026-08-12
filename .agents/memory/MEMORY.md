@@ -1,1 +1,2 @@
 - [Express 5 / router@2.x quirks](express5-router2-quirks.md) — req.query readonly, Vitest 4 fileParallelism, Drizzle .cause, audit_logs FK cleanup
+- [Fase 3.1 corrections](fase31-corrections.md) — 9 audit fixes applied; response format, seed FK order, DrizzleDB type

@@ -1,3 +1,9 @@
+/**
+ * P2: UsersRepository.update (name/phone) movido para dentro da transação.
+ *     Atomicidade garantida: users + professionals + audit_logs em uma única tx.
+ * P3: Usa os dados já validados pelo UpdateProfessionalSchema (name e phone
+ *     incluídos), sem segundo cast de req.body.
+ */
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../lib/db.js";
 import { ProfessionalsRepository } from "../repositories/professionals.repository.js";
@@ -6,6 +12,7 @@ import { AuditLogsRepository } from "../repositories/audit-logs.repository.js";
 import { AuthService } from "../services/auth.service.js";
 import { NotFoundError, ForbiddenError } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
+import type { UpdateProfessionalInput } from "../validators/professionals.validator.js";
 
 function getIp(req: Request): string | null {
   const forwarded = req.headers["x-forwarded-for"];
@@ -38,7 +45,8 @@ export const ProfessionalsController = {
   /** GET /api/professionals/:id */
   async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const prof = await ProfessionalsRepository.findById(db, req.params["id"]!);
+      const { id } = req.params as { id: string };
+      const prof = await ProfessionalsRepository.findById(db, id);
       if (!prof) throw new NotFoundError("Profissional não encontrado.");
       res.json({ professional: prof });
     } catch (err) {
@@ -62,7 +70,7 @@ export const ProfessionalsController = {
       const passwordHash = await AuthService.hashPassword(password);
 
       const { user, professional } = await db.transaction(async (tx) => {
-        const user = await UsersRepository.create(tx as typeof db, {
+        const user = await UsersRepository.create(tx, {
           roleId: ROLES.PROFESSIONAL,
           name,
           email,
@@ -70,13 +78,13 @@ export const ProfessionalsController = {
           phone: phone ?? null,
         });
 
-        const professional = await ProfessionalsRepository.create(tx as typeof db, {
+        const professional = await ProfessionalsRepository.create(tx, {
           userId: user.id,
           specialty: specialty ?? null,
           bio: bio ?? null,
         });
 
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "PROFESSIONAL_CREATED",
           entityType: "professionals",
@@ -94,40 +102,52 @@ export const ProfessionalsController = {
     }
   },
 
-  /** PATCH /api/professionals/:id */
+  /**
+   * PATCH /api/professionals/:id
+   *
+   * P2: users + professionals + audit_logs dentro de uma única transação.
+   * P3: Campos name e phone validados pelo UpdateProfessionalSchema antes de chegar aqui.
+   */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = req.params["id"]!;
+      const { id } = req.params as { id: string };
       await assertOwnership(req, id);
 
       const session = req.session.user!;
+      const isAdmin = session.roleId === ROLES.ADMIN;
+
       const prof = await ProfessionalsRepository.findById(db, id);
       if (!prof) throw new NotFoundError("Profissional não encontrado.");
 
-      const { specialty, bio, status } = req.body as {
-        specialty?: string;
-        bio?: string;
-        status?: string;
-      };
+      // req.body já foi validado pelo validateBody(UpdateProfessionalSchema) na rota
+      // que inclui name, phone, specialty, bio, status com limites corretos
+      const { name, phone, specialty, bio, status } = req.body as UpdateProfessionalInput;
 
-      const isAdmin = session.roleId === ROLES.ADMIN;
-      const updateData: Record<string, unknown> = {};
-      if (specialty !== undefined) updateData["specialty"] = specialty;
-      if (bio !== undefined) updateData["bio"] = bio;
-      if (status !== undefined && isAdmin) updateData["status"] = status;
+      const profUpdateData: Partial<{ specialty: string | null; bio: string | null; status: string }> = {};
+      if (specialty !== undefined) profUpdateData.specialty = specialty;
+      if (bio !== undefined) profUpdateData.bio = bio;
+      if (status !== undefined && isAdmin) profUpdateData.status = status;
 
-      // Também atualizar nome/telefone do user (ADMIN ou próprio)
-      const { name, phone } = req.body as { name?: string; phone?: string };
-      if (name !== undefined || phone !== undefined) {
-        await UsersRepository.update(db, prof.userId, {
-          ...(name !== undefined ? { name } : {}),
-          ...(phone !== undefined ? { phone } : {}),
-        });
-      }
+      const hasUserUpdate = name !== undefined || phone !== undefined;
+      const hasProfUpdate = Object.keys(profUpdateData).length > 0;
 
+      // Executar todas as operações dentro de uma única transação (P2)
       const updated = await db.transaction(async (tx) => {
-        const updated = await ProfessionalsRepository.update(tx as typeof db, id, updateData);
-        await AuditLogsRepository.create(tx as typeof db, {
+        // 1. Atualizar users (name/phone) — dentro da mesma tx
+        if (hasUserUpdate) {
+          await UsersRepository.update(tx, prof.userId, {
+            ...(name !== undefined ? { name } : {}),
+            ...(phone !== undefined ? { phone: phone ?? null } : {}),
+          });
+        }
+
+        // 2. Atualizar professionals (specialty/bio/status)
+        const updated = hasProfUpdate
+          ? await ProfessionalsRepository.update(tx, id, profUpdateData)
+          : await ProfessionalsRepository.findById(tx, id);
+
+        // 3. Audit log — dentro da mesma tx
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "PROFESSIONAL_UPDATED",
           entityType: "professionals",
@@ -136,6 +156,7 @@ export const ProfessionalsController = {
           newData: updated,
           ipAddress: getIp(req),
         });
+
         return updated;
       });
 

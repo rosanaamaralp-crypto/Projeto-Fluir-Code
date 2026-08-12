@@ -1,9 +1,6 @@
-import { and, eq, lte, gte, or } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@workspace/db/schema";
+import { and, eq, lte, gte } from "drizzle-orm";
+import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { blockedPeriods } from "@workspace/db";
-
-type DB = NodePgDatabase<typeof schema>;
 
 export interface BlockedPeriodRow {
   id: string;

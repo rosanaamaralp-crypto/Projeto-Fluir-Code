@@ -15,9 +15,10 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 - Required env: `DATABASE_URL` — Postgres connection string
 - `pnpm run lint` — check formatting across project source files
 - `pnpm run test` — run foundation tests (lib/db)
-- `pnpm --filter @workspace/api-server run test` — run API integration tests (98 testes)
+- `pnpm --filter @workspace/api-server run test` — run API integration tests (136 testes)
 - `pnpm --filter @workspace/api-server run test:watch` — modo watch
-- `npx tsx scripts/bootstrap-admin.ts` — criar primeiro ADMIN (recusa se já existir um)
+- `pnpm --filter @workspace/api-server run typecheck` — typecheck isolado da API (deve retornar 0 erros)
+- `pnpm --filter @workspace/api-server run bootstrap:admin` — criar primeiro ADMIN (ler BOOTSTRAP_ADMIN_NAME/EMAIL/PASSWORD; recusa se já existir ADMIN)
 
 ## Stack
 
@@ -47,7 +48,8 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 
 - A Fase 1 manteve somente o health check técnico; módulos de negócio aguardam aprovação por fase.
 - **Fase 2 (concluída):** 14 tabelas criadas, seed aplicado, 21 testes de validação passando.
-- **Fase 3 (concluída):** API REST completa — autenticação, RBAC, 11 routers, slots, auditoria, 98 testes passando.
+- **Fase 3 (concluída):** API REST completa — autenticação, RBAC, 11 routers, slots, auditoria, 136 testes passando.
+- **Fase 3.1 (concluída):** 9 correções pós-auditoria (P1–P9) — bootstrap admin, transação atômica no update de profissional, schemas por role para clientes, IN_PERSON sem recursos, DrizzleDB union type, validateParams em todas as rotas, boundary documentado, schemas separados cliente, PATCH blocked_periods via requireAdmin na rota.
 - O acesso ao banco é criado sob demanda (`getDatabaseClient()`).
 - O contrato OpenAPI é a fonte de verdade para a API e seus clientes gerados.
 - O lint inicial usa Prettier; regras de ESLint ficam para quando houver código de produto.

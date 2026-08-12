@@ -49,14 +49,14 @@ export const AvailabilityController = {
       };
 
       const avail = await db.transaction(async (tx) => {
-        const avail = await AvailabilityRepository.create(tx as typeof db, {
+        const avail = await AvailabilityRepository.create(tx, {
           professionalId: profId,
           weekday,
           startTime,
           endTime,
           active: active ?? true,
         });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "AVAILABILITY_CREATED",
           entityType: "availability",
@@ -90,15 +90,15 @@ export const AvailabilityController = {
         active?: boolean;
       };
 
-      const updateData: Record<string, unknown> = {};
-      if (weekday !== undefined) updateData["weekday"] = weekday;
-      if (startTime !== undefined) updateData["startTime"] = startTime;
-      if (endTime !== undefined) updateData["endTime"] = endTime;
-      if (active !== undefined) updateData["active"] = active;
+      const updateData: Partial<{ weekday: number; startTime: string; endTime: string; active: boolean }> = {};
+      if (weekday !== undefined) updateData.weekday = weekday;
+      if (startTime !== undefined) updateData.startTime = startTime;
+      if (endTime !== undefined) updateData.endTime = endTime;
+      if (active !== undefined) updateData.active = active;
 
       const updated = await db.transaction(async (tx) => {
-        const updated = await AvailabilityRepository.update(tx as typeof db, id, updateData as never);
-        await AuditLogsRepository.create(tx as typeof db, {
+        const updated = await AvailabilityRepository.update(tx, id, updateData);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "AVAILABILITY_UPDATED",
           entityType: "availability",
@@ -127,8 +127,8 @@ export const AvailabilityController = {
       if (!old || old.professionalId !== profId) throw new NotFoundError("Disponibilidade não encontrada.");
 
       await db.transaction(async (tx) => {
-        await AvailabilityRepository.update(tx as typeof db, id, { active: false });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AvailabilityRepository.update(tx, id, { active: false });
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "AVAILABILITY_DEACTIVATED",
           entityType: "availability",

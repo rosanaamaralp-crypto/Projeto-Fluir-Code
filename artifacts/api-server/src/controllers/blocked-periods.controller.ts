@@ -1,3 +1,8 @@
+/**
+ * P9: PATCH de blocked_periods é exclusivo para ADMIN.
+ * A verificação de role foi movida para a rota (requireAdmin),
+ * removendo a verificação redundante que estava no controller.
+ */
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../lib/db.js";
 import { BlockedPeriodsRepository } from "../repositories/blocked-periods.repository.js";
@@ -51,14 +56,14 @@ export const BlockedPeriodsController = {
       };
 
       const bp = await db.transaction(async (tx) => {
-        const bp = await BlockedPeriodsRepository.create(tx as typeof db, {
+        const bp = await BlockedPeriodsRepository.create(tx, {
           professionalId: profId,
           startDatetime: new Date(startDatetime),
           endDatetime: new Date(endDatetime),
           reason: reason ?? null,
           createdBy: session.userId,
         });
-        await AuditLogsRepository.create(tx as typeof db, {
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "BLOCKED_PERIOD_CREATED",
           entityType: "blocked_periods",
@@ -75,23 +80,23 @@ export const BlockedPeriodsController = {
     }
   },
 
-  /** PATCH /api/professionals/:profId/blocked-periods/:id */
+  /**
+   * PATCH /api/professionals/:profId/blocked-periods/:id
+   * Exclusivo para ADMIN — verificação de role feita no middleware da rota (requireAdmin).
+   */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { profId, id } = req.params as { profId: string; id: string };
 
-      // Apenas ADMIN pode alterar blocked_periods
       const session = req.session.user!;
-      if (session.roleId !== ROLES.ADMIN) throw new ForbiddenError();
-
       const old = await BlockedPeriodsRepository.findById(db, id);
       if (!old || old.professionalId !== profId) throw new NotFoundError("Período bloqueado não encontrado.");
 
       const { status, reason } = req.body as { status: string; reason?: string };
 
       const updated = await db.transaction(async (tx) => {
-        const updated = await BlockedPeriodsRepository.updateStatus(tx as typeof db, id, status, reason);
-        await AuditLogsRepository.create(tx as typeof db, {
+        const updated = await BlockedPeriodsRepository.updateStatus(tx, id, status, reason);
+        await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "BLOCKED_PERIOD_UPDATED",
           entityType: "blocked_periods",

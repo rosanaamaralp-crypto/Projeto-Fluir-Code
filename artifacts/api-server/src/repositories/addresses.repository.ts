@@ -1,9 +1,6 @@
 import { eq } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@workspace/db/schema";
+import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { addresses } from "@workspace/db";
-
-type DB = NodePgDatabase<typeof schema>;
 
 export interface AddressRow {
   id: string;

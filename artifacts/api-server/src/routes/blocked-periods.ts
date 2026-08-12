@@ -1,14 +1,27 @@
+/**
+ * P9: PATCH de blocked_periods é exclusivo para ADMIN.
+ * Alterado de `requireAuth` para `requireAuth + requireAdmin` na rota,
+ * consistente com o padrão do restante da arquitetura (services, resources).
+ * A verificação redundante foi removida do controller.
+ */
 import { Router } from "express";
 import { BlockedPeriodsController } from "../controllers/blocked-periods.controller.js";
 import { requireAuth } from "../middlewares/require-auth.js";
-import { requireProfessional } from "../middlewares/require-role.js";
-import { validateBody } from "../middlewares/validate.js";
+import { requireAdmin, requireProfessional } from "../middlewares/require-role.js";
+import { validateBody, validateParams } from "../middlewares/validate.js";
 import { CreateBlockedPeriodSchema, UpdateBlockedPeriodSchema } from "../validators/blocked-periods.validator.js";
+import {
+  ParamsProfIdSchema,
+  ParamsProfIdAndIdSchema,
+} from "../validators/params.validator.js";
 
 const router = Router();
 
-router.get("/professionals/:profId/blocked-periods", requireAuth, requireProfessional, BlockedPeriodsController.list);
-router.post("/professionals/:profId/blocked-periods", requireAuth, requireProfessional, validateBody(CreateBlockedPeriodSchema), BlockedPeriodsController.create);
-router.patch("/professionals/:profId/blocked-periods/:id", requireAuth, validateBody(UpdateBlockedPeriodSchema), BlockedPeriodsController.update);
+// P6: UUIDs validados antes de chegar ao controller
+router.get("/professionals/:profId/blocked-periods", requireAuth, requireProfessional, validateParams(ParamsProfIdSchema), BlockedPeriodsController.list);
+router.post("/professionals/:profId/blocked-periods", requireAuth, requireProfessional, validateParams(ParamsProfIdSchema), validateBody(CreateBlockedPeriodSchema), BlockedPeriodsController.create);
+
+// P9: requireAdmin na rota — somente ADMIN pode alterar blocked_periods
+router.patch("/professionals/:profId/blocked-periods/:id", requireAuth, requireAdmin, validateParams(ParamsProfIdAndIdSchema), validateBody(UpdateBlockedPeriodSchema), BlockedPeriodsController.update);
 
 export default router;
