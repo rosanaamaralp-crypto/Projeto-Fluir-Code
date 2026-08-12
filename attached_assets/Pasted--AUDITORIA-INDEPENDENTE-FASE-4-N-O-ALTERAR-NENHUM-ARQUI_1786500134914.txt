@@ -1,0 +1,673 @@
+# AUDITORIA INDEPENDENTE — FASE 4
+
+## NÃO ALTERAR NENHUM ARQUIVO
+
+A Fase 4 foi declarada concluída pelo agente de implementação com:
+
+* 216/216 testes passando;
+* typecheck com 0 erros;
+* build OK;
+* teste de concorrência confirmando [201, 409];
+* EXCLUDE constraints utilizadas como proteção definitiva;
+* audit transacional;
+* reagendamento atômico.
+
+Agora quero uma AUDITORIA TÉCNICA INDEPENDENTE da Fase 4.
+
+IMPORTANTE:
+
+**NÃO MODIFIQUE NENHUM ARQUIVO.**
+
+**NÃO CORRIJA NADA.**
+
+**NÃO CRIE TESTES.**
+
+**NÃO ALTERE BANCO.**
+
+Apenas leia, execute verificações e produza o relatório.
+
+A auditoria deve comparar a implementação real com o schema e com as regras estabelecidas na Fase 4.
+
+---
+
+# 1. INTEGRIDADE DO BANCO
+
+Verifique diretamente o PostgreSQL:
+
+* quantidade total de tabelas;
+* tabelas de negócio;
+* appointments;
+* appointment_status_history;
+* audit_logs;
+* session;
+* schema_migrations.
+
+Confirmar:
+
+* nenhuma migration nova indevida;
+* `schema_migrations` preservada;
+* nenhuma alteração estrutural não autorizada.
+
+Verificar especificamente as constraints relacionadas a appointments:
+
+* CHECK de modality;
+* CHECK de status;
+* FK client;
+* FK professional;
+* FK service;
+* FK resource;
+* FK address;
+* EXCLUDE constraints;
+* constraint de price_at_booking;
+* quaisquer constraints adicionais existentes.
+
+NÃO assumir que o código está correto apenas porque os testes passam.
+
+---
+
+# 2. MODALIDADES
+
+O schema foi auditado anteriormente e estabelece:
+
+IN_PERSON:
+
+* resource_id NOT NULL
+* address_id NULL
+
+HOME_CARE:
+
+* resource_id NULL
+* address_id NOT NULL
+
+Verificar se a implementação respeita EXATAMENTE essa regra.
+
+Não aceitar:
+
+* IN_PERSON sem resource;
+* IN_PERSON com address;
+* HOME_CARE sem address;
+* HOME_CARE com resource.
+
+---
+
+# 3. APPOINTMENT CREATION
+
+Auditar profundamente:
+
+POST `/api/appointments`
+
+Verificar:
+
+* autenticação;
+* RBAC;
+* ownership;
+* client ACTIVE;
+* professional ACTIVE;
+* service ACTIVE;
+* professional_service ACTIVE;
+* disponibilidade;
+* blocked_period;
+* antecedência mínima;
+* antecedência máxima;
+* cálculo de end_datetime;
+* modality;
+* resource;
+* address;
+* preço;
+* status inicial;
+* created_by;
+* audit log;
+* status history.
+
+Confirmar que nenhuma regra importante está apenas no frontend.
+
+---
+
+# 4. CLIENT OWNERSHIP / IDOR
+
+Testar ou auditar:
+
+CLIENT A tentando:
+
+* criar appointment usando clientId de CLIENT B;
+* visualizar appointment de CLIENT B;
+* visualizar history de CLIENT B;
+* alterar appointment de CLIENT B;
+* cancelar appointment de CLIENT B;
+* reagendar appointment de CLIENT B;
+* utilizar address de CLIENT B.
+
+Cada cenário deve ser analisado.
+
+Registrar:
+
+* HTTP esperado;
+* HTTP encontrado;
+* motivo.
+
+---
+
+# 5. PROFESSIONAL OWNERSHIP / IDOR
+
+Testar:
+
+PROFESSIONAL A tentando:
+
+* visualizar appointment do PROFESSIONAL B;
+* alterar appointment do PROFESSIONAL B;
+* cancelar appointment do PROFESSIONAL B;
+* avançar status de appointment do PROFESSIONAL B;
+* reagendar appointment do PROFESSIONAL B.
+
+Verificar também se filtros GET podem ser utilizados para escapar do ownership.
+
+---
+
+# 6. ADMIN
+
+Verificar permissões administrativas.
+
+Confirmar especialmente:
+
+* criação em nome de CLIENT;
+* visualização global;
+* alteração;
+* cancelamento;
+* mudança de status;
+* reagendamento.
+
+Verificar se ADMIN consegue acessar exatamente o que deveria, sem bypass acidental de validações importantes.
+
+---
+
+# 7. STATUS MACHINE
+
+Mapear TODAS as transições permitidas.
+
+Criar uma tabela:
+
+| Estado atual | Novo estado | ADMIN | PROFESSIONAL | CLIENT |
+| ------------ | ----------- | ----- | ------------ | ------ |
+
+Verificar cada combinação existente no código.
+
+Especial atenção:
+
+* CONFIRMED → CANCELLED
+* CONFIRMED → IN_PROGRESS
+* CONFIRMED → COMPLETED
+* CONFIRMED → NO_SHOW
+* IN_PROGRESS → CANCELLED
+* IN_PROGRESS → COMPLETED
+* IN_PROGRESS → NO_SHOW
+* COMPLETED → qualquer coisa
+* CANCELLED → qualquer coisa
+* NO_SHOW → qualquer coisa
+
+Não presumir regras.
+
+Extrair as regras reais do código.
+
+Indicar se alguma transição impossível está sendo aceita.
+
+---
+
+# 8. STATUS HISTORY
+
+Verificar que TODA alteração de status gera:
+
+`appointment_status_history`
+
+Confirmar:
+
+* old_status correto;
+* new_status correto;
+* changed_by correto;
+* reason quando aplicável;
+* timestamps;
+* informações de remarcação quando aplicável.
+
+Verificar que não existe alteração de status sem histórico.
+
+---
+
+# 9. CANCELAMENTO
+
+Auditar o fluxo completo.
+
+Confirmar:
+
+BEGIN
+
+→ autorização
+→ validação do status
+→ update appointment
+→ status_history
+→ audit_log
+
+→ COMMIT
+
+Se qualquer etapa falhar:
+
+ROLLBACK.
+
+Verificar se existe qualquer possibilidade de estado parcial.
+
+---
+
+# 10. REAGENDAMENTO
+
+Este é um ponto CRÍTICO.
+
+Auditar o fluxo de reagendamento.
+
+Confirmar que:
+
+1. appointment original é validado;
+2. autorização é validada;
+3. novo horário é validado;
+4. novo appointment é criado;
+5. appointment original é cancelado;
+6. histories são criados;
+7. audit logs são criados;
+8. tudo ocorre dentro da MESMA transaction.
+
+Verificar explicitamente:
+
+### Cenário de falha na criação do novo appointment
+
+O appointment original deve permanecer inalterado.
+
+### Cenário de conflito no novo horário
+
+O appointment original não pode ser cancelado.
+
+### Cenário de erro no audit log
+
+Toda a transaction deve sofrer rollback.
+
+Não aceitar estado parcialmente aplicado.
+
+---
+
+# 11. PRICE_AT_BOOKING
+
+Auditar:
+
+No momento da criação:
+
+`price_at_booking = service.price`
+
+Depois:
+
+alterar o preço do service.
+
+Confirmar que:
+
+`appointment.price_at_booking`
+
+permanece com o preço original.
+
+Verificar também que não existe endpoint que permita modificar esse valor posteriormente.
+
+Não alterar o trigger existente.
+
+---
+
+# 12. RESOURCE
+
+Para IN_PERSON:
+
+Verificar:
+
+* resource ACTIVE;
+* resource compatível;
+* resource disponível;
+* resource não ocupado no intervalo;
+* resource escolhido corretamente;
+* resource_id persistido.
+
+Verificar também concorrência:
+
+duas criações simultâneas usando o mesmo resource e mesmo horário.
+
+Resultado esperado:
+
+* uma aprovada;
+* outra 409.
+
+---
+
+# 13. HOME_CARE
+
+Verificar:
+
+* address obrigatório;
+* address pertence ao client;
+* address ACTIVE quando aplicável;
+* resource não utilizado;
+* address_id persistido.
+
+Testar tentativa de usar address pertencente a outro client.
+
+---
+
+# 14. CONCORRÊNCIA / DOUBLE BOOKING
+
+Não confiar apenas no teste existente.
+
+Auditar:
+
+* EXCLUDE constraints;
+* código de pre-check;
+* transaction;
+* tratamento de 23P01;
+* comportamento sob concorrência.
+
+Verificar pelo menos:
+
+### Caso A
+
+Mesmo client + mesmo horário.
+
+### Caso B
+
+Mesmo professional + mesmo horário.
+
+### Caso C
+
+Mesmo resource + mesmo horário.
+
+### Caso D
+
+Mesma combinação completa.
+
+Confirmar:
+
+exatamente um sucesso e os demais 409.
+
+Confirmar diretamente no banco que não existem registros sobrepostos indevidos.
+
+---
+
+# 15. SLOTS x APPOINTMENTS
+
+Comparar:
+
+`slots.service.ts`
+
+com:
+
+`appointments.service.ts`
+
+Verificar se utilizam as mesmas regras para:
+
+* disponibilidade;
+* blocked periods;
+* appointments existentes;
+* status bloqueantes;
+* resource;
+* modality;
+* timezone;
+* antecedência mínima.
+
+Identificar qualquer divergência.
+
+Um slot exibido pelo GET `/slots` não deve ser considerado reservado até o POST `/appointments` confirmar novamente as regras.
+
+---
+
+# 16. TIMEZONE
+
+Auditar todos os pontos:
+
+* parsing de datetime;
+* comparação;
+* availability;
+* blocked_period;
+* appointment;
+* end_datetime;
+* slots.
+
+Confirmar consistência UTC.
+
+Procurar:
+
+`new Date(dateString)`
+
+ou outras conversões potencialmente ambíguas.
+
+---
+
+# 17. VALIDATION
+
+Verificar todos os validators.
+
+Testar/auditar:
+
+* UUID inválido;
+* datetime inválido;
+* status inválido;
+* modality inválida;
+* resourceId inválido;
+* addressId inválido;
+* notes acima do limite;
+* campos desconhecidos;
+* valores nulos;
+* strings vazias.
+
+Confirmar que erros de input resultam em 400, não 500.
+
+---
+
+# 18. ERROR HANDLING
+
+Verificar:
+
+* 22P02 → 400;
+* 23P01 → 409;
+* 23503;
+* 23505;
+* 23514.
+
+Confirmar que:
+
+* stack trace não vaza;
+* detalhes PostgreSQL não vazam;
+* códigos internos não são expostos indevidamente.
+
+---
+
+# 19. AUDIT LOG
+
+Verificar:
+
+APPOINTMENT_CREATED
+
+APPOINTMENT_CANCELLED
+
+APPOINTMENT_STATUS_CHANGED
+
+APPOINTMENT_RESCHEDULED
+
+quando aplicável.
+
+Confirmar:
+
+* audit dentro da transaction;
+* rollback quando audit falha;
+* nenhum password_hash;
+* nenhum dado sensível desnecessário;
+* actor correto;
+* entidade correta;
+* oldData/newData coerentes.
+
+---
+
+# 20. TESTES
+
+Executar:
+
+```bash
+pnpm run typecheck
+pnpm run test
+pnpm run build
+```
+
+Não alterar nada.
+
+Registrar resultados reais.
+
+Verificar também se existem testes:
+
+* unit;
+* integration;
+* ownership;
+* status;
+* resource;
+* home care;
+* concurrency;
+* reschedule;
+* audit.
+
+Não considerar quantidade de testes como prova suficiente de cobertura.
+
+Analisar o que efetivamente está sendo testado.
+
+---
+
+# 21. CÓDIGO
+
+Auditar:
+
+* repositories sem regra de negócio;
+* services sem acesso a req/res;
+* controllers finos;
+* transactions corretas;
+* ausência de `any` desnecessário;
+* ausência de `@ts-ignore`;
+* ausência de casts perigosos;
+* ausência de acesso direto ao pool fora de `lib/db.ts`;
+* ausência de nova conexão PostgreSQL;
+* ausência de migration runner.
+
+---
+
+# 22. SEGURANÇA
+
+Procurar especificamente:
+
+* IDOR;
+* mass assignment;
+* privilege escalation;
+* bypass de RBAC;
+* manipulação de clientId;
+* manipulação de professionalId;
+* manipulação de resourceId;
+* acesso indevido a address;
+* alteração indevida de price_at_booking;
+* alteração indevida de status.
+
+---
+
+# 23. DOCUMENTAÇÃO
+
+Verificar:
+
+`docs/FASE-4-ARQUITETURA.md`
+
+e:
+
+`replit.md`
+
+Comparar documentação com implementação real.
+
+Não considerar documentação como evidência da implementação.
+
+---
+
+# 24. CLASSIFICAÇÃO
+
+Classificar cada problema encontrado:
+
+🔴 CRÍTICO
+🟠 ALTO
+🟡 MÉDIO
+🟢 BAIXO
+
+Para cada problema informar:
+
+* ID;
+* severidade;
+* arquivo;
+* linha;
+* problema;
+* impacto;
+* evidência;
+* correção recomendada.
+
+---
+
+# 25. REGRA ABSOLUTA
+
+NÃO CORRIJA NADA.
+
+NÃO MODIFIQUE TESTES.
+
+NÃO MODIFIQUE BANCO.
+
+NÃO CRIE MIGRATION.
+
+NÃO ALTERE CÓDIGO.
+
+Esta etapa é exclusivamente de auditoria.
+
+---
+
+# 26. RELATÓRIO FINAL
+
+Entregar:
+
+## A. Resumo executivo
+
+## B. Resultado dos testes
+
+## C. Integridade do banco
+
+## D. Arquitetura
+
+## E. RBAC
+
+## F. Ownership / IDOR
+
+## G. Status machine
+
+## H. Concorrência
+
+## I. Resource / IN_PERSON
+
+## J. HOME_CARE
+
+## K. Slots
+
+## L. Transactions
+
+## M. Audit
+
+## N. Segurança
+
+## O. Problemas encontrados
+
+## P. Pontos não verificáveis
+
+## Q. Riscos para próxima fase
+
+## R. Checklist final
+
+E terminar com um GATE:
+
+* ❌ BLOQUEADA
+* ⚠️ APROVADA COM RESSALVAS
+* ✅ LIBERADA PARA PRÓXIMA FASE
+
+Não faça nenhuma correção nesta execução.
