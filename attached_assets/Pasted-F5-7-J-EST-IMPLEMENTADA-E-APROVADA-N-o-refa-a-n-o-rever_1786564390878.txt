@@ -1,0 +1,72 @@
+F5.7 JÁ ESTÁ IMPLEMENTADA E APROVADA.
+
+Não refaça, não reverta e não altere a F5.7.
+
+Estado confirmado:
+- GET /api/audit-logs implementado
+- RBAC: ADMIN 200 / PROFESSIONAL 403 / CLIENT 403 / anônimo 401
+- filtros: action, entityType, entityId, userId, startDate, endDate
+- paginação: page/limit
+- ordenação: createdAt DESC
+- validações implementadas
+- oldData/newData retornados
+- 20 testes F5.7 passando
+- suite completa: 316/316
+- typecheck: 0 erros
+- build: OK
+- DB: 16 tabelas, 14 triggers, 3 EXCLUDE constraints, 1 migration
+- nenhuma migration criada
+- working tree limpo
+- commit da F5.7 já realizado
+
+PRÓXIMA TAREFA:
+
+1. Não modificar nada ainda.
+2. Ler os documentos oficiais do projeto disponíveis no repositório/arquivos anexados.
+3. Identificar exatamente qual é a próxima funcionalidade da Fase 5 após F5.7.
+4. Comparar:
+   - documentação oficial;
+   - estado atual do código;
+   - funcionalidades já implementadas;
+   - testes existentes;
+   - migrations/schema existentes.
+5. Produzir um PLANO TÉCNICO para a próxima feature, seguindo o mesmo padrão usado na F5.7.
+
+O plano deve conter obrigatoriamente:
+
+A. Arquivos/documentos lidos
+B. Regras de negócio aplicáveis
+C. Estado atual da implementação
+D. O que já existe e pode ser reutilizado
+E. Contrato/API esperado
+F. Fluxo técnico passo a passo
+G. RBAC/permissões
+H. Validações
+I. Tratamento de erros
+J. Transações/rollback, se aplicável
+K. Concorrência e constraints do banco
+L. Histórico/status history, se aplicável
+M. Audit log, se aplicável
+N. Arquivos que serão criados/modificados
+O. Testes necessários
+P. Gates obrigatórios
+Q. Riscos e decisões pendentes
+
+IMPORTANTE:
+- NÃO implementar nada nesta etapa.
+- NÃO criar migration.
+- NÃO alterar código.
+- NÃO fazer commit.
+- Primeiro apresentar o plano completo e aguardar minha aprovação explícita.
+
+Ao final, apresentar:
+
+GATE DE PLANEJAMENTO
+Status: AGUARDANDO APROVAÇÃO
+Próxima feature: [identificada]
+Escopo: [resumo]
+Arquivos novos: [quantidade/lista]
+Arquivos alterados: [quantidade/lista]
+Migration: [sim/não]
+Risco de regressão: [baixo/médio/alto]
+Decisões pendentes: [lista]
