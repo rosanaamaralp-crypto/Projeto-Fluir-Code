@@ -1,0 +1,409 @@
+Entendido. Vou ler toda a documentação disponível e o estado atual do código antes de produzir o plano.
+
+
+4 actions
+Lendo documentação oficial e estado do código em paralelo.
+
+
+5 actions
+Continuando a leitura dos documentos restantes em paralelo.
+
+
+5 actions
+Continuando a leitura dos documentos e estado atual do código em paralelo.
+
+
+5 actions
+Continuando leitura em paralelo — appointments routes, service e validator para mapeamento completo.
+
+
+5 actions
+Lendo controller e service de appointments para mapear o que está ou não conectado.
+
+
+4 actions
+Verificando testes existentes de alter (F5.6) e estado completo do appointments.test.ts.
+
+
+4 actions
+Verificando o fim dos testes F5.6 e o índice de documentos.
+
+
+3 actions
+Os documentos 10–18 são mencionados no índice mas não estão em attached_assets. Verificando se existem em outro local.
+
+
+3 actions
+Documentos 10–18 encontrados em ./docs/. Lendo os mais relevantes em paralelo.
+
+
+4 actions
+Lendo Doc 14 e Doc 16 para entender os contratos dos dashboards.
+
+
+4 actions
+Lendo os contratos de API para dashboards e as regras de negócio da Fase 6.
+
+
+4 actions
+Tenho todas as informações necessárias. Produzindo o plano técnico completo.
+
+PLANO TÉCNICO — FASE 6: DASHBOARDS
+A. Arquivos/Documentos Lidos
+Documento	Localização
+Doc 10 — Definição do MVP e Ordem de Desenvolvimento	docs/10-...
+Doc 14 — Especificação Completa de Regras de Negócio	docs/14-...
+Doc 16 — Especificação de API e Contratos de Dados	docs/16-...
+Doc 17 — Plano Oficial de Implementação no Replit	docs/17-...
+Doc 18 — Pacote Mestre para o Replit	docs/18-...
+Doc 02 — Regras de Negócio	attached_assets/1_01-...
+Doc 03 — Perfis e Permissões	attached_assets/3_03-...
+Doc 05 — Agenda e Controle das 5 Macas	attached_assets/4_04-...
+Doc 07 — Fluxos do Sistema	attached_assets/7_07-...
+FASE-4-ARQUITETURA.md	artifacts/api-server/docs/
+src/routes/appointments.ts + appointments.validator.ts	artifacts/api-server/src/
+src/controllers/appointments.controller.ts	artifacts/api-server/src/
+tests/integration/appointments.test.ts (2016 linhas)	artifacts/api-server/tests/
+src/routes/index.ts	artifacts/api-server/src/
+B. Regras de Negócio Aplicáveis
+RN-080 (Doc 14 § 45): Indicadores dos dashboards devem ser calculados a partir dos dados reais do banco. Nunca usar números fixos ou simulados.
+
+RN-079 (Doc 14 § 44): Relatórios e dashboards consideram dados reais.
+
+Doc 07 § 44–46: Visualizações por perfil:
+
+ADMIN: filtra por profissional, cliente, serviço, data, maca, modalidade, status — visão global
+PROFESSIONAL: próximo atendimento, cliente, horário, serviço, modalidade, maca (quando presencial)
+CLIENT: próximo atendimento, meus agendamentos, histórico
+Doc 03 § 4: ADMIN tem visão completa. PROFESSIONAL vê apenas os próprios dados. CLIENT vê apenas os próprios dados.
+
+Doc 02 § 22 (Privacidade): Cliente não pode ver outros clientes, agenda interna, ocupação das macas. Profissional vê apenas o necessário para seus atendimentos.
+
+RN-085 (Doc 14 § 50): Dados históricos não apagados — cálculos sobre histórico são válidos.
+
+C. Estado Atual da Implementação
+Item	Estado
+Fase 5 completa (alter/cancel/reschedule/start/complete/no-show/history)	✅
+GET /api/audit-logs (F5.7)	✅
+Testes: 316/316	✅
+Typecheck: 0 erros	✅
+Build: OK	✅
+DB: 16 tabelas, 14 triggers, 3 EXCLUDE, 1 migration	✅
+GET /api/dashboard/admin	❌ Não existe
+GET /api/dashboard/professional	❌ Não existe
+GET /api/dashboard/client	❌ Não existe
+Rota /dashboard em src/routes/index.ts	❌ Não existe
+D. O que já existe e pode ser reutilizado
+Recurso	Reuso
+requireAuth, requireAdmin, requireRole middlewares	✅ direto
+AppointmentsRepository.findMany()	✅ base para filtros
+Tabelas: appointments, clients, professionals, resources, appointment_status_history, users	✅ queries diretas com Drizzle
+db (Drizzle client)	✅
+Padrão de controller fino (thin controller)	✅
+Padrão validator Zod + validateQuery	✅ (query params de filtro de data no admin)
+mapDbError	✅
+NotFoundError, ForbiddenError	✅ se necessário
+seed — admin, professional, client, 5 resources já existentes	✅
+E. Contrato/API Esperado (Doc 16 §48–50)
+GET /api/dashboard/admin
+Auth: ADMIN only
+Query params: nenhum (dados do dia corrente calculados pelo backend)
+
+Resposta:
+
+{
+  "dashboard": {
+    "appointmentsToday": 12,
+    "upcomingAppointments": 5,
+    "completedToday": 4,
+    "cancelledToday": 1,
+    "homeCareToday": 2,
+    "resourceOccupancy": [
+      { "resourceId": "uuid", "resourceName": "Maca 01", "appointmentsToday": 3 },
+      ...
+    ]
+  }
+}
+
+GET /api/dashboard/professional
+Auth: PROFESSIONAL (próprio) ou ADMIN (qualquer profissional via ?professionalId=uuid)
+Query params: professionalId (apenas ADMIN pode informar; PROFESSIONAL usa o próprio)
+
+Resposta:
+
+{
+  "dashboard": {
+    "appointmentsToday": 4,
+    "nextAppointment": { "id": "...", "startDatetime": "...", "clientName": "...", "serviceName": "...", "modality": "IN_PERSON", "resourceName": "Maca 03" },
+    "upcomingAppointments": [ ... ],
+    "completedToday": 2,
+    "cancelledToday": 0
+  }
+}
+
+GET /api/dashboard/client
+Auth: CLIENT (próprio) ou ADMIN (qualquer cliente via ?clientId=uuid)
+Query params: clientId (apenas ADMIN pode informar; CLIENT usa o próprio)
+
+Resposta:
+
+{
+  "dashboard": {
+    "nextAppointment": { "id": "...", "startDatetime": "...", "professionalName": "...", "serviceName": "...", "modality": "IN_PERSON" },
+    "upcomingAppointments": [ ... ],
+    "pastAppointmentsCount": 15
+  }
+}
+
+DECISÃO PENDENTE — D1: upcomingAppointments no dashboard do cliente — quantos registros retornar? Doc 16 diz "próximos agendamentos" sem especificar quantidade. Proposta: top 5 mais próximos com status CONFIRMED.
+
+DECISÃO PENDENTE — D2: Dashboard do cliente menciona "notificações relevantes" (Doc 16 §50). A tabela notifications existe no schema mas nenhum endpoint de notificações foi implementado. Proposta: omitir o campo notifications desta fase e marcá-lo como null ou omitido, pois a Fase 6 é somente dashboards, e notificações é Fase 18 (Doc 18).
+
+DECISÃO PENDENTE — D3: resourceOccupancy no dashboard admin — incluir apenas recursos com status ACTIVE ou todos? Proposta: apenas ACTIVE.
+
+DECISÃO PENDENTE — D4: upcomingAppointments no dashboard profissional — quantos? Proposta: top 10 mais próximos com status CONFIRMED ou IN_PROGRESS a partir de agora.
+
+DECISÃO PENDENTE — D5: ADMIN pode chamar GET /api/dashboard/professional?professionalId=uuid para ver dados de um profissional específico? Doc 16 não especifica. Proposta: sim (ADMIN tem visão completa), sem professionalId o ADMIN recebe 400 (ou os dados globais).
+
+F. Fluxo Técnico Passo a Passo
+F6.1 — Validator
+src/validators/dashboard.validator.ts
+DashboardProfessionalQuerySchema: professionalId (UUID, opcional — preenchido obrigatoriamente por PROFESSIONAL via session)
+DashboardClientQuerySchema: clientId (UUID, opcional — preenchido obrigatoriamente por CLIENT via session)
+Admin dashboard: sem query params
+F6.2 — Repository (queries agregadas)
+src/repositories/dashboard.repository.ts
+getAdminDashboard(db, today: Date) → todas as queries do dia via Promise.all
+getProfessionalDashboard(db, professionalId, now: Date) → queries filtradas pelo profissional
+getClientDashboard(db, clientId, now: Date) → queries filtradas pelo cliente
+F6.3 — Service
+src/services/dashboard.service.ts (ou inline no controller — TBD por simplicidade)
+Resolve RBAC: para PROFESSIONAL, extrai professionalId do professionals via userId; para CLIENT, extrai clientId via clients
+Para ADMIN chamando dashboard de profissional/cliente: valida que o professionalId/clientId existem
+F6.4 — Controller
+src/controllers/dashboard.controller.ts
+3 handlers: adminDashboard, professionalDashboard, clientDashboard
+F6.5 — Routes
+src/routes/dashboard.ts
+GET /dashboard/admin → requireAuth + requireAdmin + controller
+GET /dashboard/professional → requireAuth + requireRole(PROFESSIONAL, ADMIN) + validateQuery + controller
+GET /dashboard/client → requireAuth + requireRole(CLIENT, ADMIN) + validateQuery + controller
+Registrado em src/routes/index.ts
+F6.6 — Testes de Integração
+tests/integration/dashboard.test.ts
+G. RBAC/Permissões
+Endpoint	ADMIN	PROFESSIONAL	CLIENT	Anon
+GET /api/dashboard/admin	✅ 200	❌ 403	❌ 403	❌ 401
+GET /api/dashboard/professional	✅ 200 (requer ?professionalId)	✅ 200 (usa sessão)	❌ 403	❌ 401
+GET /api/dashboard/client	✅ 200 (requer ?clientId)	❌ 403	✅ 200 (usa sessão)	❌ 401
+PROFESSIONAL não pode injetar professionalId de outro profissional — o valor da sessão é usado e qualquer professionalId enviado por PROFESSIONAL é ignorado (mesmo padrão do clientId em GET /api/slots).
+
+CLIENT não pode injetar clientId de outro cliente — mesma proteção.
+
+H. Validações
+Regra	Detalhe
+professionalId no dashboard profissional (quando ADMIN)	UUID válido; profissional deve existir → 404 se não existir
+clientId no dashboard cliente (quando ADMIN)	UUID válido; cliente deve existir → 404 se não existir
+PROFESSIONAL sem professionals vinculado	Se o user não tiver registro em professionals → 404 (edge case de seed)
+CLIENT sem clients vinculado	Se o user não tiver registro em clients → 404 (edge case de seed)
+"Hoje" é calculado em UTC	Queries usam >= inicio_do_dia_utc e < fim_do_dia_utc
+I. Tratamento de Erros
+Situação	HTTP	Mensagem
+Não autenticado	401	padrão requireAuth
+Role errado	403	padrão requireRole
+professionalId inválido (não UUID)	400	Zod
+professionalId não encontrado	404	NotFoundError
+clientId inválido (não UUID)	400	Zod
+clientId não encontrado	404	NotFoundError
+Erro de banco	500	mapDbError
+J. Transações/Rollback
+Não aplicável. Dashboards são operações de leitura pura — nenhuma escrita, nenhuma transação necessária. Usaremos Promise.all para paralelizar as queries de agregação.
+
+K. Concorrência e Constraints do Banco
+Não aplicável. Somente SELECT. Nenhum impacto em EXCLUDE constraints, triggers ou locks. As queries são SELECT count(*)/SELECT ... WHERE simples — seguras sob qualquer carga.
+
+L. Histórico/Status History
+Não há registro de status history para dashboards — são leituras somente.
+
+M. Audit Log
+Nenhum audit log gerado ao consultar dashboards (mesmo padrão adotado para GET /api/audit-logs em F5.7 — leitura não gera audit).
+
+N. Arquivos que serão Criados/Modificados
+Arquivo	Ação
+src/validators/dashboard.validator.ts	NOVO
+src/repositories/dashboard.repository.ts	NOVO
+src/services/dashboard.service.ts	NOVO (ou inline; TBD)
+src/controllers/dashboard.controller.ts	NOVO
+src/routes/dashboard.ts	NOVO
+src/routes/index.ts	ALTERADO — registrar dashboardRouter
+tests/integration/dashboard.test.ts	NOVO
+Total: 6 novos + 1 alterado = 7 arquivos
+
+O. Testes Necessários
+RBAC (9 testes)
+Admin → 200 em /dashboard/admin
+Professional → 403 em /dashboard/admin
+Client → 403 em /dashboard/admin
+Anon → 401 em /dashboard/admin
+Professional → 200 em /dashboard/professional (usa sessão)
+Admin → 200 em /dashboard/professional?professionalId=...
+Client → 403 em /dashboard/professional
+Client → 200 em /dashboard/client (usa sessão)
+Admin → 200 em /dashboard/client?clientId=...
+Dashboard Admin — Valores calculados (4 testes)
+Campos obrigatórios presentes na resposta (appointmentsToday, upcomingAppointments, completedToday, cancelledToday, homeCareToday, resourceOccupancy)
+appointmentsToday reflete agendamentos do dia atual
+resourceOccupancy retorna array com todos os resources ACTIVE
+homeCareToday conta apenas modality = HOME_CARE
+Dashboard Professional — Valores (3 testes)
+nextAppointment é o próximo appointment CONFIRMED/IN_PROGRESS
+appointmentsToday conta apenas do próprio profissional
+PROFESSIONAL não consegue injetar professionalId de outro profissional
+Dashboard Client — Valores (3 testes)
+nextAppointment é o próximo appointment CONFIRMED
+upcomingAppointments são apenas do próprio cliente com status CONFIRMED
+CLIENT não consegue injetar clientId de outro cliente
+Validações (4 testes)
+Admin com professionalId inválido (não UUID) → 400
+Admin com professionalId inexistente → 404
+Admin com clientId inválido (não UUID) → 400
+Admin com clientId inexistente → 404
+Estimativa: ~23 testes (±2 dependendo de decisões pendentes)
+
+P. Gates Obrigatórios
+Gate	Critério
+Typecheck	0 erros
+Testes existentes	316/316 intactos
+Novos testes	todos passando
+Suite completa	316 + novos = todos verdes
+Build	OK
+DB integrity	16 tabelas, 14 triggers, 3 EXCLUDE, 1 migration — inalterados
+RBAC	ADMIN/PROFESSIONAL/CLIENT/anon verificados por endpoint
+IDOR	PROFESSIONAL não vê dashboard de outro professional; CLIENT não vê dashboard de outro client
+Migration	Nenhuma criada
+Regressão	Nenhum teste anterior quebrado
+Q. Riscos e Decisões Pendentes
+ID	Tipo	Descrição	Proposta
+D1	DECISÃO PENDENTE	Quantos upcomingAppointments retornar no dashboard do cliente?	Top 5, status CONFIRMED, ORDER BY startDatetime ASC
+D2	DECISÃO PENDENTE	Dashboard cliente menciona "notificações relevantes" — tabela notifications existe mas sem endpoint implementado	Omitir desta fase; retornar campo ausente ou notifications: []
+D3	DECISÃO PENDENTE	resourceOccupancy lista apenas resources ACTIVE ou todos?	Apenas ACTIVE
+D4	DECISÃO PENDENTE	Quantos upcomingAppointments no dashboard do profissional?	Top 10, status CONFIRMED ou IN_PROGRESS, ORDER BY startDatetime ASC
+D5	DECISÃO PENDENTE	ADMIN sem professionalId em /dashboard/professional → retorna 400 ou dados globais?	Retorna 400 ("professionalId obrigatório para ADMIN")
+R1	RISCO BAIXO	"Hoje" depende do timezone do servidor — todas as queries usarão UTC como no restante do sistema	Mitigado: padrão já estabelecido
+R2	RISCO BAIXO	nextAppointment pode ser null se não houver próximo appointment — resposta deve tratar isso explicitamente	Mitigado: retornar null quando ausente
+R3	RISCO BAIXO	Performance: dashboards fazem múltiplas queries — Promise.all paralelo mitiga; sem impacto no MVP	Aceitável para MVP
+GATE DE PLANEJAMENTO
+Status:          AGUARDANDO APROVAÇÃO
+Próxima feature: FASE 6 — DASHBOARDS
+Escopo:          3 endpoints de leitura (admin, professional, client)
+                 Sem frontend, sem migration, sem escrita no banco
+Arquivos novos:  6 (validator, repository, service, controller, route, test)
+Arquivos alter.: 1 (src/routes/index.ts)
+Migration:       NÃO
+Risco regressão: BAIXO (operação de leitura pura, sem impacto nos endpoints existentes)
+Decisões pend.:  D1 (limit upcomingAppointments client)
+                 D2 (notifications no dashboard client)
+                 D3 (resourceOccupancy — ACTIVE only?)
+                 D4 (limit upcomingAppointments professional)
+                 D5 (ADMIN sem professionalId → 400 ou dados globais?)
+
+
+Worked for 4 minutes
+
+Checkpoint made
+23 minutes ago
+
+Pasted-PLANO-FASE-6-APROVADO-AUTORIZA-O-PARA-IMPLEMENTA-O-Auto_1786564920237.txt
+18 minutes ago
+
+3 actions
+Lendo os padrões existentes antes de codificar.
+
+
+5 actions
+Lendo schema e helpers de teste antes de implementar.
+
+
+13 actions
+Verificando schema completo para construir as queries corretamente.
+
+
+3 actions
+Verificando o schema Drizzle para nomes de colunas TypeScript.
+
+
+10 actions
+Lendo helper de DB e um teste de referência para entender o padrão de imports.
+
+
+3 actions
+Verificando métodos disponíveis nos repositories existentes.
+
+
+8 actions
+Tenho tudo o que preciso. Implementando todos os 7 arquivos em paralelo.
+
+
+5 actions
+Your account currently has restrictions in place. Please reach out to support@replit.com for assistance.
+
+
+Worked for 8 minutes
+continuar a analise que estava fazendo
+
+6 minutes ago
+Implementing dashboard route registration
+
+Implementing dashboard route registration
+Continuando — faltam registrar o router e criar os testes, depois rodar todos os gates.
+
+
+2 actions
+Lendo o restante do seed para entender a estrutura do endereço antes de escrever os testes.
+
+
+9 actions
+Verificando o middleware validate para confirmar o status code em input inválido.
+
+
+2 actions
+ValidationError → 400. Agora escrevo o arquivo de testes.
+
+
+2 actions
+Rodando typecheck, build e suite completa em paralelo.
+
+
+3 actions
+Typecheck e build OK. Rodando a suite completa agora.
+
+
+2 actions
+356/356 · typecheck 0 erros · build OK. Verificando os gates finais.
+
+
+3 actions
+Todos os gates verdes. Fazendo o commit.
+
+
+2 actions
+F6 — Dashboards completa e commitada.
+
+Gates verificados:
+
+Gate	Resultado
+Typecheck	0 erros
+Testes	356/356 (+ 40 novos)
+Build	OK
+Tabelas / triggers / EXCLUDE / migration	16 / 14 / 3 / 1 — inalterados
+git diff	somente os 7 arquivos esperados
+O que foi criado:
+
+Arquivo	Conteúdo
+validators/dashboard.validator.ts	DashboardProfessionalQuerySchema, DashboardClientQuerySchema
+repositories/dashboard.repository.ts	getAdminDashboard, getProfessionalDashboard, getClientDashboard — Promise.all em todas as queries
+services/dashboard.service.ts	Resolução de RBAC + proteção IDOR (PROFESSIONAL/CLIENT nunca leem query param)
+controllers/dashboard.controller.ts	Três handlers finos
+routes/dashboard.ts	GET /admin (requireAdmin) · /professional (requireProfessional) · /client (requireClient)
+routes/index.ts	dashboardRouter registrado
+tests/integration/dashboard.test.ts	40 testes: RBAC, dados reais, ASC ordering, limites (10/5), IDOR, validações 400/404
