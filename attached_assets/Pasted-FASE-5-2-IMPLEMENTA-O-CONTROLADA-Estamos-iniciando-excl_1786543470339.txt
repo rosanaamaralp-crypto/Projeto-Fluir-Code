@@ -1,0 +1,143 @@
+FASE 5.2 — IMPLEMENTAÇÃO CONTROLADA
+
+Estamos iniciando exclusivamente a Fase 5.2 do projeto.
+
+IMPORTANTE:
+- NÃO implementar F5.3, F5.4 ou qualquer etapa posterior.
+- NÃO modificar frontend.
+- NÃO criar migrations.
+- NÃO alterar schema do banco.
+- NÃO alterar outras funcionalidades.
+- Trabalhar somente no requisito CONFIRMED → NO_SHOW.
+
+ANTES DE ALTERAR QUALQUER ARQUIVO:
+
+Leia integralmente os arquivos relevantes para esta alteração, incluindo:
+
+- src/services/appointments.service.ts
+- src/validators/appointments.validator.ts
+- src/controllers/appointments.controller.ts
+- src/repositories/appointments.repository.ts
+- tests/integration/appointments.test.ts
+- testes relacionados a status de appointments
+- schema de appointments
+- schema de appointment_status_history
+- implementação de audit_logs
+- documentação oficial da Fase 5 fornecida no projeto
+
+Depois da leitura, confirme no relatório:
+1. como a máquina de estados está implementada atualmente;
+2. onde está a função validateTransition();
+3. como histórico é registrado;
+4. como audit_log é registrado;
+5. quais testes atuais cobrem NO_SHOW.
+
+IMPLEMENTAÇÃO:
+
+Implementar somente a transição:
+
+CONFIRMED → NO_SHOW
+
+Conforme RN-054 da especificação oficial.
+
+Permitir:
+- ADMIN → CONFIRMED → NO_SHOW
+- PROFESSIONAL → CONFIRMED → NO_SHOW
+
+Continuar bloqueando:
+- CLIENT → CONFIRMED → NO_SHOW
+- qualquer alteração a partir de COMPLETED
+- qualquer alteração a partir de CANCELLED
+- qualquer alteração a partir de NO_SHOW
+
+NÃO alterar nenhuma outra transição da máquina de estados.
+
+IMPORTANTE:
+A implementação deve reutilizar a arquitetura existente de updateStatus(), histórico e audit_logs.
+
+Não criar uma implementação paralela.
+
+GARANTIAS:
+
+Ao realizar CONFIRMED → NO_SHOW:
+
+1. appointments.status deve mudar para NO_SHOW;
+2. appointment_status_history deve registrar a transição;
+3. audit_logs deve registrar APPOINTMENT_STATUS_CHANGED;
+4. a operação deve continuar dentro da transaction existente;
+5. nenhuma EXCLUDE constraint deve ser modificada;
+6. nenhum preço deve ser alterado;
+7. nenhuma migration deve ser criada;
+8. nenhuma regra existente de ownership/RBAC deve ser enfraquecida.
+
+TESTES:
+
+Adicionar somente os testes necessários para F5.2.
+
+Obrigatoriamente testar:
+
+1. PROFESSIONAL consegue CONFIRMED → NO_SHOW;
+2. ADMIN consegue CONFIRMED → NO_SHOW;
+3. CLIENT não consegue CONFIRMED → NO_SHOW;
+4. histórico registra CONFIRMED → NO_SHOW;
+5. audit_log registra APPOINTMENT_STATUS_CHANGED;
+6. estado NO_SHOW passa a ser terminal;
+7. transições existentes continuam funcionando.
+
+Não remover nenhum teste existente.
+
+Não modificar testes de funcionalidades que não pertencem à F5.2.
+
+GATES OBRIGATÓRIOS:
+
+Executar nesta ordem:
+
+1. typecheck
+2. testes específicos relacionados à alteração
+3. suite completa
+4. build
+
+A suite completa precisa continuar passando sem regressão.
+
+Baseline conhecido antes da F5.2:
+
+- Typecheck: 0 erros
+- Testes: 231/231
+- Build: OK
+- Tabelas: 16
+- Triggers: 14
+- Índices: 43
+- FKs: 20
+- EXCLUDE constraints: 3
+- Migrations: 1
+
+Não aceitar regressão nos 231 testes existentes.
+
+Após implementação, verificar também diretamente que:
+
+- migrations continuam em 1;
+- tabelas continuam em 16;
+- triggers continuam em 14;
+- EXCLUDE constraints continuam em 3.
+
+RELATÓRIO FINAL OBRIGATÓRIO:
+
+Ao terminar, NÃO prossiga para F5.3.
+
+Entregue um relatório contendo:
+
+A. Arquivos lidos
+B. Arquivos modificados
+C. Alterações realizadas
+D. Testes adicionados/modificados
+E. Typecheck
+F. Testes específicos
+G. Suite completa
+H. Build
+I. Integridade do banco
+J. Migrations
+K. Schema
+L. Confirmação de que nenhum arquivo fora do escopo foi alterado
+M. GATE F5.2: APROVADO ou REPROVADO
+
+Se qualquer gate falhar, NÃO tente implementar F5.3 nem outras correções fora do escopo. Pare e informe exatamente o erro.

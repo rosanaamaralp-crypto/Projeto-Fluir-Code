@@ -564,6 +564,129 @@ describe("GET /api/appointments/:id/history", () => {
   });
 });
 
+// ─── F5.2 — CONFIRMED → NO_SHOW (RN-054) ──────────────────────────────────
+
+describe("PATCH /api/appointments/:id — CONFIRMED → NO_SHOW (F5.2 — RN-054)", () => {
+  let apptProfId: string;   // appointment para testes do PROFESSIONAL
+  let apptAdminId: string;  // appointment para teste do ADMIN
+  let apptClientId: string; // appointment para teste de RBAC do CLIENT
+
+  beforeAll(async () => {
+    // Criar 3 appointments CONFIRMED independentes (slots diferentes)
+    const [r1, r2, r3] = await Promise.all([
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+    ]);
+    expect(r1.status).toBe(201);
+    expect(r2.status).toBe(201);
+    expect(r3.status).toBe(201);
+    apptProfId = r1.body.appointment.id;
+    apptAdminId = r2.body.appointment.id;
+    apptClientId = r3.body.appointment.id;
+  });
+
+  it("CLIENT não consegue CONFIRMED → NO_SHOW (400)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${apptClientId}`)
+      .set("Cookie", clientCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+    // Confirmar que o appointment permanece CONFIRMED
+    const check = await request
+      .get(`/api/appointments/${apptClientId}`)
+      .set("Cookie", adminCookie);
+    expect(check.body.appointment.status).toBe("CONFIRMED");
+  });
+
+  it("PROFESSIONAL consegue CONFIRMED → NO_SHOW (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${apptProfId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("NO_SHOW");
+  });
+
+  it("NO_SHOW é estado terminal: tentativa de CANCELLED retorna 400", async () => {
+    // apptProfId está agora em NO_SHOW (teste anterior)
+    const res = await request
+      .patch(`/api/appointments/${apptProfId}`)
+      .set("Cookie", adminCookie)
+      .send({ status: "CANCELLED" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it("histórico registra a transição CONFIRMED → NO_SHOW", async () => {
+    const res = await request
+      .get(`/api/appointments/${apptProfId}/history`)
+      .set("Cookie", profCookie);
+    expect(res.status).toBe(200);
+    const history = res.body.history as Array<{ oldStatus: string | null; newStatus: string }>;
+    const noShowEntry = history.find((h) => h.newStatus === "NO_SHOW");
+    expect(noShowEntry).toBeDefined();
+    expect(noShowEntry!.oldStatus).toBe("CONFIRMED");
+    expect(noShowEntry!.newStatus).toBe("NO_SHOW");
+  });
+
+  it("audit_log registra APPOINTMENT_STATUS_CHANGED para CONFIRMED → NO_SHOW", async () => {
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, apptProfId));
+    const statusLog = logs.find((l) => l.action === "APPOINTMENT_STATUS_CHANGED");
+    expect(statusLog).toBeDefined();
+    expect(statusLog!.newData).toMatchObject({ status: "NO_SHOW" });
+  });
+
+  it("ADMIN consegue CONFIRMED → NO_SHOW (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${apptAdminId}`)
+      .set("Cookie", adminCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("NO_SHOW");
+  });
+
+  it("transições existentes não foram afetadas: CONFIRMED → IN_PROGRESS ainda funciona", async () => {
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const freshId = createRes.body.appointment.id;
+
+    const res = await request
+      .patch(`/api/appointments/${freshId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "IN_PROGRESS" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("IN_PROGRESS");
+  });
+});
+
 // ─── Audit log ────────────────────────────────────────────────────────────
 
 describe("Audit log de appointments (verificação direta no banco)", () => {

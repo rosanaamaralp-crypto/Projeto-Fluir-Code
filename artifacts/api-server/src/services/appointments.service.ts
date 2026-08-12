@@ -64,6 +64,7 @@ function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
  * Matriz de transições permitidas:
  *   CONFIRMED  → CANCELLED     : CLIENT (próprio), PROFESSIONAL (próprio), ADMIN
  *   CONFIRMED  → IN_PROGRESS   : PROFESSIONAL (próprio), ADMIN
+ *   CONFIRMED  → NO_SHOW       : PROFESSIONAL (próprio), ADMIN          [F5.2 — RN-054]
  *   IN_PROGRESS → COMPLETED    : PROFESSIONAL (próprio), ADMIN
  *   IN_PROGRESS → NO_SHOW      : PROFESSIONAL (próprio), ADMIN
  *   IN_PROGRESS → CANCELLED    : ADMIN apenas
@@ -84,6 +85,7 @@ function validateTransition(
   if (currentStatus === "CONFIRMED") {
     if (newStatus === "CANCELLED") return; // Todos os roles
     if (newStatus === "IN_PROGRESS" && (roleId === ROLES.PROFESSIONAL || roleId === ROLES.ADMIN)) return;
+    if (newStatus === "NO_SHOW" && (roleId === ROLES.PROFESSIONAL || roleId === ROLES.ADMIN)) return; // RN-054
     throw new ValidationError(
       `Transição '${currentStatus}' → '${newStatus}' não permitida para este perfil.`,
     );
