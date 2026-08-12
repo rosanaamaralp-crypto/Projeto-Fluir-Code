@@ -1,0 +1,1037 @@
+# AUDITORIA TÉCNICA INDEPENDENTE — FASE 3
+
+A Fase 3 foi implementada e o relatório informa:
+
+* 98/98 testes passando
+* Build OK
+* Servidor rodando
+* PostgreSQL 16.10
+* Drizzle ORM 0.45.2
+* Express 5
+* Runner de migrations customizado via `schema_migrations`
+* Nenhuma nova migration criada
+* Fase 2 preservada
+
+NÃO faça novas implementações ou refatorações neste momento.
+
+Sua tarefa agora é realizar uma **AUDITORIA TÉCNICA INDEPENDENTE E EXAUSTIVA** da Fase 3.
+
+Não aceite o relatório anterior como prova. Verifique diretamente o código, configurações, banco de dados e testes.
+
+## 1. REGRA PRINCIPAL
+
+Não altere nenhum arquivo durante a auditoria.
+
+Não crie migrations.
+
+Não altere tabelas.
+
+Não altere triggers.
+
+Não altere dados do banco.
+
+Não faça cleanup destrutivo.
+
+Não instale novas dependências.
+
+Apenas inspecione, execute comandos de leitura e rode os testes já existentes.
+
+Se encontrar um problema, NÃO corrija agora.
+
+Primeiro documente:
+
+* problema
+* arquivo
+* linha
+* causa
+* impacto
+* severidade
+* correção recomendada
+
+Somente depois de apresentar o relatório pedirei autorização para correções.
+
+---
+
+# 2. AUDITORIA DA FASE 2
+
+Confirme diretamente no PostgreSQL:
+
+### Migrations
+
+Verifique:
+
+```sql
+SELECT * FROM schema_migrations;
+```
+
+Confirme:
+
+* existe somente `schema_migrations`
+* não existe `drizzle.__drizzle_migrations`
+* não existe tabela redundante de migrations
+* `0001_initial_schema.sql` está registrada
+* nenhuma migration nova foi criada pela Fase 3
+
+### Triggers
+
+Consulte `pg_trigger` e confirme os 14 triggers:
+
+* 9 `set_updated_at`
+* 4 append-only
+* 1 `price_at_booking`
+
+Todos devem estar habilitados.
+
+### EXCLUDE constraints
+
+Confirme que continuam existentes:
+
+* `excl_professional_no_overlap`
+* `excl_client_no_overlap`
+* `excl_resource_no_overlap`
+
+### Schema
+
+Confirme que as 14 tabelas da Fase 2 continuam intactas.
+
+Não alterar nada.
+
+---
+
+# 3. AUDITORIA DE DEPENDÊNCIAS
+
+Inspecione:
+
+```text
+artifacts/api-server/package.json
+pnpm-lock.yaml
+```
+
+Confirme se as dependências utilizadas pelo código estão corretamente declaradas.
+
+Especial atenção:
+
+* express-session
+* connect-pg-simple
+* bcrypt
+* express-rate-limit
+* zod
+* vitest
+* supertest
+* @types correspondentes
+
+Procure imports de pacotes que não estejam declarados diretamente no `package.json`.
+
+Também procure dependências declaradas mas não utilizadas.
+
+Não instalar nada.
+
+---
+
+# 4. AUDITORIA DO DATABASE ACCESS
+
+Inspecione:
+
+```text
+artifacts/api-server/src/lib/db.ts
+lib/db/src/index.ts
+```
+
+Confirme:
+
+* existe apenas uma inicialização do client/pool por processo
+* não existe criação de conexão por request
+* não existe criação de Pool dentro de controller/service/repository
+* repositories reutilizam a conexão existente
+* Drizzle está usando o schema correto
+* nenhuma parte da API tenta executar migrations
+* nenhuma parte da API utiliza `drizzle-orm/migrator`
+* nenhuma parte da API manipula `schema_migrations`
+
+Procure no projeto inteiro por:
+
+```text
+drizzle-orm/migrator
+schema_migrations
+new Pool
+new Client
+drizzle(
+```
+
+Informe todos os resultados relevantes.
+
+---
+
+# 5. AUDITORIA DE TRANSAÇÕES
+
+Verifique diretamente o código.
+
+Confirme que operações que precisam ser atômicas realmente usam transaction.
+
+Especialmente:
+
+### Criar CLIENT
+
+Deve ser atomicamente:
+
+```text
+create user
++
+create client
+```
+
+### Criar PROFESSIONAL
+
+Deve ser atomicamente:
+
+```text
+create user
++
+create professional
+```
+
+### Audit logs
+
+Quando uma operação exige audit log, confirme:
+
+```text
+operação principal
++
+INSERT audit_logs
+```
+
+estão na mesma transaction quando a atomicidade é necessária.
+
+Procure casos em que:
+
+```text
+INSERT/UPDATE
+COMMIT
+INSERT audit_logs
+```
+
+possa acontecer, pois isso criaria inconsistência.
+
+---
+
+# 6. AUDITORIA DE AUTENTICAÇÃO
+
+Inspecione profundamente:
+
+```text
+lib/session.ts
+services/auth.service.ts
+controllers/auth.controller.ts
+routes/auth.ts
+middlewares/require-auth.ts
+```
+
+Confirme:
+
+### Login
+
+* validação Zod
+* email normalizado
+* busca case-insensitive
+* usuário precisa estar ACTIVE
+* bcrypt.compare
+* resposta idêntica para email inexistente e senha incorreta
+* password_hash nunca retornado
+* password_hash nunca logado
+* session.regenerate() após autenticação
+* userId armazenado na sessão
+* roleId armazenado na sessão
+* logout destrói sessão
+* cookie removido no logout
+
+### Cookie
+
+Confirme:
+
+```text
+httpOnly = true
+secure = true em production
+sameSite = lax
+maxAge = 8 horas
+rolling = true
+```
+
+### Session store
+
+Confirme:
+
+* connect-pg-simple
+* PostgreSQL como store
+* SESSION_SECRET vindo de environment variable
+* não existe SESSION_SECRET hardcoded
+* não existe armazenamento de senha em sessão
+* não existe armazenamento de password_hash em sessão
+
+### Rate limiting
+
+Confirme:
+
+```text
+10 tentativas
+15 minutos
+por IP
+```
+
+E verifique se o rate limiter está realmente aplicado à rota de login, e não apenas declarado.
+
+---
+
+# 7. AUDITORIA DE AUTORIZAÇÃO
+
+Inspecione:
+
+```text
+middlewares/require-auth.ts
+middlewares/require-role.ts
+```
+
+e TODAS as rotas.
+
+Faça um mapa:
+
+```text
+rota
+método
+autenticação necessária
+role necessária
+ownership necessário
+```
+
+Confirme:
+
+### ADMIN
+
+Tem acesso administrativo somente onde especificado.
+
+### PROFESSIONAL
+
+Só pode alterar:
+
+* próprio professional
+* própria availability
+* próprios blocked_periods
+* próprios professional_services
+
+### CLIENT
+
+Só pode acessar/modificar:
+
+* próprio client
+* próprios addresses
+* recursos próprios
+
+### IDOR
+
+Procure vulnerabilidades do tipo:
+
+```text
+GET /api/clients/:id
+PATCH /api/clients/:id
+GET /api/clients/:clientId/addresses
+PUT /api/clients/:clientId/addresses
+DELETE /api/clients/:clientId/addresses
+```
+
+Verifique se simplesmente alterar o UUID na URL permite acessar dados de outro usuário.
+
+Faça a mesma análise para PROFESSIONAL.
+
+---
+
+# 8. AUDITORIA DE PASSWORD_HASH
+
+Faça uma busca global:
+
+```text
+password_hash
+passwordHash
+```
+
+Classifique cada ocorrência.
+
+Confirme que:
+
+* nunca aparece em response JSON
+* nunca aparece em logs
+* nunca aparece em audit_logs
+* nunca aparece em DTO público
+* nunca aparece em erro HTTP
+* nunca aparece em `/api/auth/me`
+* nunca aparece em endpoints de clients
+* nunca aparece em endpoints de professionals
+* nunca aparece em endpoints administrativos de usuários
+
+Se existir qualquer risco, informe arquivo e linha.
+
+---
+
+# 9. AUDITORIA DE VALIDAÇÃO ZOD
+
+Inspecione todos os validators.
+
+Confirme:
+
+* body validado
+* params validados
+* query validada
+* tipos corretos
+* UUIDs validados
+* datas validadas
+* enums validados
+* números com limites adequados
+* strings com limites adequados
+
+Especial atenção para:
+
+```text
+price
+duration_minutes
+birthDate
+start_time
+end_time
+weekday
+status
+modality
+roleId
+professionalId
+serviceId
+clientId
+resourceId
+addressId
+```
+
+Procure também mass assignment.
+
+Exemplo:
+
+Se CLIENT pode alterar apenas:
+
+```text
+notes
+birthDate
+```
+
+confirme que ele NÃO consegue enviar:
+
+```json
+{
+  "status": "INACTIVE",
+  "userId": "...",
+  "roleId": 1
+}
+```
+
+e alterar campos protegidos.
+
+---
+
+# 10. AUDITORIA DOS REPOSITORIES
+
+Inspecione todos os repositories.
+
+Regra:
+
+> Repository deve executar acesso a dados. Regra de negócio pertence ao service.
+
+Verifique se repositories estão contendo indevidamente:
+
+* autorização
+* regras de ownership
+* decisões de negócio
+* lógica de slots
+* regras de status
+* lógica de autenticação
+
+Também procure:
+
+* SELECT *
+* SQL raw desnecessário
+* queries sem WHERE quando deveriam possuir ownership
+* queries que retornam password_hash
+* queries que ignoram status ACTIVE quando necessário
+
+---
+
+# 11. AUDITORIA DOS CONTROLLERS
+
+Inspecione todos os controllers.
+
+Confirme que:
+
+```text
+request
+→ validation
+→ service
+→ response
+```
+
+está claramente separado.
+
+Procure:
+
+* regra de negócio diretamente no controller
+* SQL no controller
+* acesso direto ao banco no controller
+* tratamento inconsistente de erros
+* respostas com campos sensíveis
+* status HTTP incorretos
+
+Mapeie os status:
+
+```text
+400 Validation
+401 Unauthorized
+403 Forbidden
+404 Not Found
+409 Conflict
+500 Internal Server Error
+```
+
+---
+
+# 12. AUDITORIA DO ERROR HANDLING
+
+Inspecione:
+
+```text
+lib/errors.ts
+```
+
+e o global error handler.
+
+Confirme tratamento de:
+
+```text
+23505
+23503
+23514
+23P01
+P0001
+```
+
+Especial atenção:
+
+`DrizzleQueryError` pode encapsular o erro PostgreSQL em `.cause`.
+
+Confirme que `mapDbError()` realmente consegue extrair o código do erro encapsulado.
+
+Confirme também que:
+
+* erro interno não vaza stack trace para produção
+* erro PostgreSQL não vaza detalhes internos
+* mensagens públicas são seguras
+* logs internos preservam diagnóstico suficiente
+
+---
+
+# 13. AUDITORIA DE SLOTS
+
+Inspecione:
+
+```text
+services/slots.service.ts
+controllers/slots.controller.ts
+validators/slots.validator.ts
+routes/slots.ts
+```
+
+Verifique matematicamente:
+
+### Geração
+
+Exemplo:
+
+```text
+09:00–12:00
+duration = 60
+```
+
+deve produzir:
+
+```text
+09:00–10:00
+10:00–11:00
+11:00–12:00
+```
+
+### Não ultrapassar janela
+
+Nunca gerar:
+
+```text
+11:30–12:30
+```
+
+### Múltiplas janelas
+
+Exemplo:
+
+```text
+09:00–12:00
+14:00–18:00
+```
+
+deve produzir slots independentes.
+
+### Sobreposição
+
+Confirme:
+
+```text
+slot.start < occupied.end
+AND
+slot.end > occupied.start
+```
+
+### Appointments
+
+Confirme que:
+
+```text
+CANCELLED
+COMPLETED
+NO_SHOW
+```
+
+não bloqueiam slots.
+
+E que:
+
+```text
+CONFIRMED
+IN_PROGRESS
+```
+
+bloqueiam.
+
+### Blocked periods
+
+Somente:
+
+```text
+ACTIVE
+```
+
+bloqueia.
+
+### Resource
+
+Para IN_PERSON:
+
+* resource ACTIVE
+* resource disponível
+* pelo menos um resource compatível livre
+
+### Professional service
+
+Somente:
+
+```text
+professional_services.active = true
+```
+
+pode gerar slots.
+
+---
+
+# 14. AUDITORIA DE TIMEZONE
+
+Este é um ponto crítico.
+
+Verifique se a implementação realmente segue a decisão documentada.
+
+Descubra:
+
+* como `date` é interpretado
+* como weekday é calculado
+* se o cálculo usa UTC
+* como `start_time` é convertido
+* como `end_time` é convertido
+* se há risco de mudança de dia por timezone
+* se o servidor estiver em timezone diferente de UTC, o comportamento permanece determinístico
+
+NÃO altere o schema.
+
+Apenas reporte se a implementação é consistente com UTC.
+
+---
+
+# 15. AUDITORIA DE ADVANCE NOTICE
+
+Verifique se:
+
+```text
+SLOT_MIN_NOTICE_HOURS
+SLOT_MAX_ADVANCE_DAYS
+```
+
+existem e são efetivamente utilizadas.
+
+Confirme:
+
+* defaults
+* parsing
+* comportamento quando env var não existe
+* comportamento quando env var é inválida
+* comparação com `now()`
+* boundary conditions
+
+Exemplo:
+
+Se minimum = 2h:
+
+```text
+agora + 1h59 → indisponível
+agora + 2h00 → documentar se é permitido
+agora + 2h01 → disponível
+```
+
+Não altere a regra.
+
+---
+
+# 16. AUDITORIA DE AUDIT LOGS
+
+Descubra exatamente quais operações geram audit_logs.
+
+Faça uma tabela:
+
+| Operação | Gera audit log? | Action | Transaction? |
+| -------- | --------------- | ------ | ------------ |
+
+Inclua:
+
+* login
+* logout
+* criação de client
+* alteração de client
+* criação de professional
+* alteração de professional
+* criação de service
+* alteração de service
+* criação de resource
+* alteração de resource
+* professional_services
+* availability
+* blocked_periods
+* address
+* alterações de status
+
+Compare com o que foi definido na Fase 3.
+
+Não invente comportamento.
+
+---
+
+# 17. AUDITORIA DO APP E ROUTES
+
+Inspecione:
+
+```text
+app.ts
+routes/index.ts
+```
+
+Confirme ordem:
+
+```text
+Express
+→ parsers
+→ session
+→ authentication middleware quando necessário
+→ routers
+→ error handler
+```
+
+Confirme que session middleware não está depois das rotas.
+
+Confirme que todas as rotas planejadas estão realmente registradas.
+
+Liste todas as rotas efetivamente existentes.
+
+---
+
+# 18. AUDITORIA DOS TESTES
+
+Execute:
+
+```bash
+pnpm --filter @workspace/api-server test
+```
+
+ou o comando equivalente atualmente configurado.
+
+Depois execute:
+
+```bash
+pnpm --filter @workspace/api-server build
+```
+
+Se houver scripts específicos de lint/typecheck, execute-os também.
+
+Não altere os testes.
+
+Não faça cleanup destrutivo fora do mecanismo já existente nos testes.
+
+Relate:
+
+```text
+testes
+build
+typecheck
+lint
+```
+
+se disponíveis.
+
+---
+
+# 19. TESTES DE SEGURANÇA NEGATIVOS
+
+Se os testes existentes permitirem, execute testes não destrutivos para verificar:
+
+### Sem sessão
+
+```text
+GET /api/clients
+GET /api/professionals
+GET /api/services
+GET /api/resources
+GET /api/auth/me
+```
+
+Devem retornar 401 quando apropriado.
+
+### CLIENT tentando acessar outro CLIENT
+
+Deve retornar:
+
+```text
+403
+```
+
+ou `404` conforme a política implementada.
+
+### PROFESSIONAL tentando alterar outro PROFESSIONAL
+
+Deve ser negado.
+
+### CLIENT tentando acessar endpoint ADMIN
+
+Deve retornar 403.
+
+### CLIENT tentando alterar status
+
+Deve ser rejeitado.
+
+### CLIENT tentando enviar roleId
+
+Deve ser rejeitado/ignorado.
+
+### CLIENT tentando enviar passwordHash
+
+Nunca deve resultar em alteração.
+
+---
+
+# 20. AUDITORIA DE REGRESSÃO DA FASE 2
+
+Depois dos testes, confirme:
+
+```text
+14 tabelas
+18 índices
+18 CHECK constraints
+20 FKs
+3 EXCLUDE constraints
+14 triggers
+schema_migrations
+```
+
+continuam intactos.
+
+Confirme especialmente que a Fase 3 NÃO criou:
+
+* migration adicional
+* alteração estrutural
+* alteração de trigger
+* alteração de constraint
+* alteração de EXCLUDE constraint
+
+---
+
+# 21. AUDITORIA DE ARQUITETURA
+
+Verifique se a estrutura realmente segue:
+
+```text
+Routes
+   ↓
+Controllers
+   ↓
+Services
+   ↓
+Repositories
+   ↓
+Drizzle
+   ↓
+PostgreSQL
+```
+
+E:
+
+```text
+Middleware
+→ Auth
+→ RBAC
+→ Ownership
+```
+
+Não aceite apenas pela existência dos arquivos.
+
+Verifique imports e fluxo real.
+
+---
+
+# 22. RELATÓRIO FINAL OBRIGATÓRIO
+
+Ao terminar, NÃO faça alterações.
+
+Entregue um relatório com exatamente estas seções:
+
+## A. RESUMO EXECUTIVO
+
+Status:
+
+```text
+APROVADO
+APROVADO COM RESSALVAS
+REPROVADO
+```
+
+## B. RESULTADO DOS TESTES
+
+Informe exatamente:
+
+```text
+testes executados
+passaram
+falharam
+build
+typecheck
+lint
+```
+
+## C. FASE 2 — REGRESSÃO
+
+Tabela com:
+
+```text
+item
+esperado
+encontrado
+status
+```
+
+## D. FASE 3 — ARQUITETURA
+
+Avaliação de:
+
+* DB
+* session
+* auth
+* RBAC
+* ownership
+* repositories
+* services
+* controllers
+* validators
+* routes
+* errors
+* slots
+* audit
+
+## E. SEGURANÇA
+
+Liste todos os pontos auditados.
+
+## F. PROBLEMAS ENCONTRADOS
+
+Para cada problema:
+
+```text
+ID
+Severidade: CRÍTICA / ALTA / MÉDIA / BAIXA
+Arquivo
+Linha
+Problema
+Impacto
+Evidência
+Correção recomendada
+```
+
+## G. PONTOS NÃO VERIFICÁVEIS
+
+Se alguma coisa não puder ser comprovada, diga explicitamente:
+
+```text
+NÃO VERIFICADO
+```
+
+Não considere ausência de evidência como aprovação.
+
+## H. RISCOS PARA FASE 4
+
+Liste problemas que possam afetar a implementação futura de:
+
+```text
+appointments
+transactions
+concurrency
+notifications
+payments
+```
+
+## I. CHECKLIST FINAL
+
+Use:
+
+```text
+[ ] Fase 2 preservada
+[ ] migrations preservadas
+[ ] triggers preservados
+[ ] EXCLUDE preservado
+[ ] authentication segura
+[ ] sessions seguras
+[ ] RBAC correto
+[ ] ownership correto
+[ ] password_hash protegido
+[ ] validação correta
+[ ] repositories isolados
+[ ] transactions corretas
+[ ] error mapping correto
+[ ] slots correto
+[ ] timezone consistente
+[ ] rate limit funcionando
+[ ] audit logs corretos
+[ ] testes passando
+[ ] build passando
+[ ] sem regressões
+```
+
+IMPORTANTE:
+
+Não responda simplesmente "98/98 testes passando, portanto está tudo correto".
+
+A finalidade desta auditoria é encontrar problemas que os testes existentes podem não cobrir.
+
+Não altere nenhum arquivo.
+
+Não corrija nenhum problema.
+
+Primeiro entregue somente o relatório de auditoria.
