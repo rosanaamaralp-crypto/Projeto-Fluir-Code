@@ -1,0 +1,71 @@
+Vamos iniciar a FASE 5.7.
+
+IMPORTANTE: NÃO implemente nada ainda.
+
+Primeiro faça somente a análise e o planejamento da F5.7, seguindo rigorosamente o mesmo padrão utilizado nas fases F5.4, F5.5 e F5.6.
+
+1. Leia todos os arquivos obrigatórios da F5.7 em paralelo antes de tocar em qualquer código.
+2. Leia os documentos oficiais relacionados à F5.7, especialmente:
+   - Doc 7 — Fluxos do Sistema
+   - Doc 14 — Especificação Completa de Regras
+   - Doc 16 — Especificação de API e Contratos
+   - Doc 17 — Plano Oficial de Implementação
+3. Leia os arquivos de produção diretamente envolvidos na F5.7.
+4. Leia os testes existentes relacionados à funcionalidade.
+5. Verifique o estado atual do workspace:
+   - git status
+   - arquivos modificados
+   - arquivos untracked
+   - último commit/checkpoint
+6. Verifique quais funcionalidades das F5.4, F5.5 e F5.6 já estão implementadas e devem ser reutilizadas.
+7. NÃO modifique:
+   - schema do banco
+   - migrations
+   - frontend
+   - arquivos fora do escopo
+   salvo se a documentação oficial da F5.7 exigir explicitamente.
+
+Antes de qualquer implementação, entregue um:
+
+PLANO TÉCNICO F5.7
+
+O plano deve conter:
+
+A. Arquivos lidos
+B. Documentação oficial utilizada
+C. Estado atual da implementação
+D. Métodos/funções/repositories existentes que podem ser reutilizados
+E. Contrato documental da F5.7
+F. Fluxo técnico proposto, passo a passo
+G. Regras de negócio aplicáveis
+H. RBAC/permissões
+I. Validações necessárias
+J. Tratamento de erros usando os erros existentes
+K. Estratégia de transação/rollback
+L. Concorrência e constraints do banco
+M. Histórico/status history, se aplicável
+N. Audit log, se aplicável
+O. Campos que podem ser alterados
+P. Campos protegidos
+Q. Arquivos que serão modificados
+R. Testes que deverão ser adicionados
+S. Testes existentes que devem permanecer intactos
+T. Gates obrigatórios
+U. Riscos e decisões pendentes
+
+REGRAS IMPORTANTES:
+
+- Não invente regras que não estejam na documentação.
+- Se houver ambiguidade documental, marque como "DECISÃO PENDENTE".
+- Não escolha silenciosamente uma regra quando a documentação não for suficiente.
+- Não altere código nesta etapa.
+- Não altere testes nesta etapa.
+- Não crie migration.
+- Não faça commit nesta etapa.
+
+Ao final, escreva:
+
+GATE DE PLANEJAMENTO F5.7
+Status: AGUARDANDO APROVAÇÃO
+
+E aguarde minha autorização explícita antes de implementar.
