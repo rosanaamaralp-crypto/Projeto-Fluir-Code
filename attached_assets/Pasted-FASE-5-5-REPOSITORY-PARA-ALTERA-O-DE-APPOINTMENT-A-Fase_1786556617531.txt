@@ -1,0 +1,255 @@
+FASE 5.5 — REPOSITORY PARA ALTERAÇÃO DE APPOINTMENT
+
+A Fase 5.4 foi concluída e APROVADA.
+
+Workspace integrity:
+F5.4 workspace integrity: OK
+
+Baseline atual:
+- Typecheck: 0 erros
+- Testes: 276/276
+- Build api-server: OK
+- Tabelas: 16
+- Triggers: 14
+- EXCLUDE constraints: 3
+- Migrations: 1
+- AlterAppointmentSchema: implementado
+- AlterAppointmentInput: implementado
+- PatchAppointmentSchema: ainda NÃO integrado
+- Nenhuma alteração pendente no Git
+
+IMPLEMENTAR EXCLUSIVAMENTE A FASE 5.5.
+
+NÃO implementar F5.6.
+NÃO implementar F5.7.
+NÃO implementar F5.8.
+NÃO implementar frontend.
+NÃO criar migration.
+NÃO alterar schema do banco.
+NÃO integrar AlterAppointmentSchema ao PatchAppointmentSchema.
+NÃO modificar controller.
+NÃO modificar service.
+
+OBJETIVO
+
+Auditar e, se necessário, adicionar ao:
+
+src/repositories/appointments.repository.ts
+
+o método de persistência necessário para atualizar os campos de alteração de um appointment.
+
+ANTES DE CODIFICAR
+
+Leia integralmente:
+
+1. src/repositories/appointments.repository.ts
+2. src/services/appointments.service.ts
+3. src/validators/appointments.validator.ts
+4. lib/db/src/schema/appointments.ts
+5. lib/db/src/schema/appointment-status-history.ts
+6. tests existentes relacionados a appointments repository/service
+7. Documentos oficiais relevantes da Fase 5:
+   - Doc 7
+   - Doc 14
+   - Doc 16
+
+Determine se já existe algum método de update que possa ser reutilizado.
+
+NÃO crie um método duplicado se já existir uma operação equivalente.
+
+ESCOPO DO UPDATE
+
+O repository deve suportar somente os campos necessários à alteração documentada:
+
+- professionalId
+- modality
+- addressId
+- startDatetime
+
+Se a análise do código existente demonstrar que algum desses campos NÃO deve ser persistido diretamente pelo repository neste estágio, explique antes de alterar.
+
+IMPORTANTE SOBRE resourceId
+
+NÃO criar uma API genérica de alteração de resourceId para o F5.5.
+
+A resolução/liberação/reserva de recurso será responsabilidade da lógica de negócio da F5.6.
+
+IMPORTANTE SOBRE STATUS
+
+O novo método de F5.5 NÃO deve permitir alterar:
+
+- status
+- priceAtBooking
+- clientId
+- serviceId
+- tenantId
+- id
+- createdAt
+
+Não criar método genérico do tipo:
+
+update(id, data: Partial<Appointment>)
+
+se isso permitir alterar campos que não fazem parte do contrato da Fase 5.
+
+Prefira um método explicitamente tipado para os campos permitidos.
+
+Exemplo conceitual (NÃO copie cegamente; adapte ao padrão real do projeto):
+
+updateAppointmentFields(
+  id,
+  input: {
+    professionalId?: string;
+    modality?: ...
+    addressId?: string | null;
+    startDatetime?: Date;
+  }
+)
+
+O nome final deve seguir a convenção existente do repository.
+
+IMPORTANTE SOBRE NULL
+
+Analise o schema real de appointments antes de decidir o tipo de addressId.
+
+A F5.6 precisará conseguir fazer:
+
+HOME_CARE → IN_PERSON
+
+removendo o addressId.
+
+Portanto, se o schema permitir NULL, o repository precisa suportar explicitamente:
+
+addressId: null
+
+Não invente essa regra; confirme no schema.
+
+TRANSAÇÃO
+
+O repository não deve criar uma transação de negócio própria se o padrão atual do projeto recebe uma transação/conexão do service.
+
+Preserve o padrão arquitetural existente.
+
+O objetivo é que a F5.6 possa executar posteriormente, dentro de UMA transação:
+
+validação → alteração → histórico → audit → commit
+
+Não encapsule isso agora em uma transação interna que impeça o service de controlar atomicidade.
+
+REGRAS QUE NÃO DEVEM ENTRAR NO REPOSITORY
+
+Não implementar nesta fase:
+
+- RBAC
+- ownership
+- tenant validation
+- disponibilidade
+- blocked periods
+- professional services
+- resource resolution
+- modality business rules
+- status transition
+- terminal state
+- audit log
+- status history
+- rollback de negócio
+
+Essas regras pertencem à F5.6.
+
+TESTES
+
+Adicionar testes de repository somente se houver padrão de testes dessa camada no projeto.
+
+Cobrir, conforme o padrão existente:
+
+1. Atualização de professionalId.
+2. Atualização de modality.
+3. Atualização de addressId.
+4. Atualização de startDatetime.
+5. Atualização combinada dos campos permitidos.
+6. addressId = null, SE o schema permitir.
+7. Confirmar que os campos protegidos não fazem parte do método/API de atualização.
+
+Não criar testes de RBAC ou disponibilidade nesta fase.
+
+Não criar testes de controller.
+
+Não criar testes de integração da operação completa.
+
+GATES
+
+Executar:
+
+1. Typecheck
+2. Testes específicos criados/existentes
+3. Suite completa
+4. Build específico do api-server
+5. git diff --name-only
+6. git status --short
+
+BASELINE:
+
+276 testes.
+
+Se adicionar N testes, informar:
+
+276 + N = total final.
+
+BANCO
+
+Confirmar:
+
+- 16 tabelas
+- 14 triggers
+- 3 EXCLUDE constraints
+- 1 migration
+
+Nenhuma alteração deve ocorrer.
+
+ESCOPO
+
+Idealmente:
+
+- src/repositories/appointments.repository.ts
+- teste correspondente do repository, se existir padrão apropriado.
+
+NÃO modificar:
+
+- validators
+- controllers
+- services
+- schema
+- migrations
+- frontend
+
+Se descobrir que a arquitetura atual exige alteração em outro arquivo para implementar corretamente F5.5, NÃO faça a alteração automaticamente.
+
+PARE e informe qual arquivo seria necessário e por quê.
+
+RELATÓRIO FINAL OBRIGATÓRIO
+
+Entregar:
+
+A. Arquivos lidos
+B. Método existente encontrado (se houver)
+C. Necessidade ou não de novo método
+D. Contrato final do método
+E. Campos permitidos
+F. Campos explicitamente protegidos
+G. Tratamento de NULL
+H. Estratégia de transação/conexão
+I. Testes adicionados
+J. Testes existentes preservados
+K. Arquivos modificados
+L. Typecheck
+M. Testes específicos
+N. Suite completa
+O. Build api-server
+P. git diff --name-only
+Q. git status --short
+R. Integridade do banco
+S. Migrations/schema
+T. Ressalvas
+U. GATE F5.5 — APROVADO ou REPROVADO
+
+NÃO iniciar F5.6 automaticamente.

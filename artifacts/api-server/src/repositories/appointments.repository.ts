@@ -43,6 +43,27 @@ export interface CreateAppointmentData {
   createdBy: string;
 }
 
+/**
+ * Campos que podem ser alterados in-place na operação de alteração (RN-055/RN-056).
+ *
+ * Campos protegidos (nunca presentes aqui):
+ *   status, priceAtBooking, clientId, serviceId, tenantId, id, createdAt.
+ *
+ * `addressId` aceita null para suportar a transição HOME_CARE → IN_PERSON
+ * (remoção explícita do endereço). O schema do banco permite NULL nesta coluna.
+ *
+ * `endDatetime` é derivado de startDatetime + durationMinutes (calculado pelo service).
+ * Deve ser fornecido sempre que startDatetime for alterado para manter a integridade
+ * das EXCLUDE constraints (tstzrange usa ambas as colunas).
+ */
+export interface UpdateAppointmentFieldsData {
+  professionalId?: string;
+  modality?: string;
+  addressId?: string | null;
+  startDatetime?: Date;
+  endDatetime?: Date;
+}
+
 export interface AppointmentFilter {
   clientId?: string;
   professionalId?: string;
@@ -146,6 +167,50 @@ export const AppointmentsRepository = {
     const rows = await db
       .update(appointments)
       .set({ status })
+      .where(eq(appointments.id, id))
+      .returning();
+    return rows[0] ?? null;
+  },
+
+  /**
+   * Atualiza os campos de alteração in-place de um appointment (RN-055/RN-056).
+   *
+   * Aceita apenas os campos do contrato de alteração. Campos protegidos
+   * (status, priceAtBooking, clientId, serviceId, id, createdAt) não fazem
+   * parte desta interface e não podem ser alterados por este método.
+   *
+   * `addressId: null` remove explicitamente o endereço (necessário em HOME_CARE → IN_PERSON).
+   *
+   * Não gerencia transação própria — aceita DB ou PgTransaction do service,
+   * permitindo que a F5.6 execute validação → alteração → histórico → audit em
+   * uma única transação controlada externamente.
+   *
+   * O trigger `set_updated_at` cuida de `updated_at` automaticamente.
+   */
+  async updateFields(
+    db: DB,
+    id: string,
+    data: UpdateAppointmentFieldsData,
+  ): Promise<AppointmentRow | null> {
+    const setValues: {
+      professionalId?: string;
+      modality?: string;
+      addressId?: string | null;
+      startDatetime?: Date;
+      endDatetime?: Date;
+    } = {};
+
+    if (data.professionalId !== undefined) setValues.professionalId = data.professionalId;
+    if (data.modality !== undefined) setValues.modality = data.modality;
+    // null é valor válido: remove o endereço (HOME_CARE → IN_PERSON)
+    if (data.addressId !== undefined) setValues.addressId = data.addressId;
+    if (data.startDatetime !== undefined) setValues.startDatetime = data.startDatetime;
+    // endDatetime deve acompanhar startDatetime para manter integridade das EXCLUDE constraints
+    if (data.endDatetime !== undefined) setValues.endDatetime = data.endDatetime;
+
+    const rows = await db
+      .update(appointments)
+      .set(setValues)
       .where(eq(appointments.id, id))
       .returning();
     return rows[0] ?? null;
