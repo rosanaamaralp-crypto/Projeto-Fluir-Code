@@ -103,3 +103,40 @@ describe("DELETE /api/services/:id", () => {
     expect(getRes.body.service.status).toBe("INACTIVE");
   });
 });
+
+// ─── GET /api/services/:id (F9 — GAP-07) ─────────────────────────────────────
+
+describe("GET /api/services/:id", () => {
+  it("autenticado busca service por ID → 200 com campos obrigatórios", async () => {
+    const res = await request
+      .get(`/api/services/${ids.serviceId}`)
+      .set("Cookie", clientCookie);
+    expect(res.status).toBe(200);
+    expect(res.body.service).toBeDefined();
+    expect(res.body.service.id).toBe(ids.serviceId);
+    expect(res.body.service.name).toBeDefined();
+    expect(res.body.service.durationMinutes).toBeDefined();
+    expect(res.body.service.price).toBeDefined();
+    expect(res.body.service.allowedModalities).toBeDefined();
+  });
+
+  it("ADMIN busca service por ID → 200", async () => {
+    const res = await request
+      .get(`/api/services/${ids.serviceId}`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(200);
+    expect(res.body.service.id).toBe(ids.serviceId);
+  });
+
+  it("ID inexistente → 404", async () => {
+    const res = await request
+      .get("/api/services/00000000-0000-0000-0000-000000000099")
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(404);
+  });
+
+  it("anônimo → 401", async () => {
+    const res = await request.get(`/api/services/${ids.serviceId}`);
+    expect(res.status).toBe(401);
+  });
+});

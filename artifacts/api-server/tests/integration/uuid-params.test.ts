@@ -162,4 +162,24 @@ describe("P6 — UUID inválido em path params retorna 400", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  // F9 — GAP-01: UUID em appointments/:id/history e notifications/:id/read
+
+  describe("GET /api/appointments/:id/history", () => {
+    it("UUID inválido → 400 (não 500)", async () => {
+      const res = await request
+        .get(`/api/appointments/${INVALID_UUID}/history`)
+        .set("Cookie", adminCookie);
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe("POST /api/notifications/:id/read", () => {
+    it("UUID inválido → 400 (não 500)", async () => {
+      const res = await request
+        .post(`/api/notifications/${INVALID_UUID}/read`)
+        .set("Cookie", adminCookie);
+      expect(res.status).toBe(400);
+    });
+  });
 });

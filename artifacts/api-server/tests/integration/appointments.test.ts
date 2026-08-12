@@ -2014,3 +2014,67 @@ describe("F5.6 — PATCH /api/appointments/:id (alteração in-place)", () => {
     expect(res.status).toBe(404);
   });
 });
+
+// ─── F9 — IDOR: isolamento cross-user ────────────────────────────────────────
+//
+// Verifica que PROFESSIONAL B não acessa appointments de PROFESSIONAL A,
+// e que CLIENT B não consegue cancelar o appointment de CLIENT A.
+//
+// Usa concExtras (prof2 + client2) já semeados no beforeAll principal.
+
+describe("F9 — IDOR: isolamento cross-user em appointments", () => {
+  let prof2Cookie: string;
+  let client2Cookie: string;
+  let apptId: string; // appointment pertencente a client1 + prof1
+
+  beforeAll(async () => {
+    // Login como prof2 e client2 (criados por seedConcurrencyExtras)
+    prof2Cookie = await loginAs("prof2-appt@fluir.test", TEST_PASSWORDS.professional);
+    client2Cookie = await loginAs("client2-appt@fluir.test", TEST_PASSWORDS.client2);
+
+    // Usar timestamp fixo d+30 às 15:00 UTC: dentro da janela 2h–60d,
+    // e com hora diferente de uniqueSlot()/alterSlot() (que usam 10–13h).
+    const farFuture = new Date();
+    farFuture.setUTCDate(farFuture.getUTCDate() + 30);
+    farFuture.setUTCHours(15, 0, 0, 0);
+    const idrSlot = farFuture.toISOString();
+
+    // Criar appointment pertencente a client1/prof1 para usar nos testes de IDOR
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        resourceId: extras.resourceId,
+        startDatetime: idrSlot,
+        modality: "IN_PERSON",
+      });
+
+    if (res.status !== 201) {
+      throw new Error(
+        `IDOR beforeAll: criação de appointment falhou com ${res.status}: ${JSON.stringify(res.body)}`,
+      );
+    }
+    apptId = res.body.appointment.id as string;
+  });
+
+  it("PROFESSIONAL B não acessa appointment de PROFESSIONAL A → 403", async () => {
+    // prof2 tenta GET de um appointment onde ele não é o profissional
+    const res = await request
+      .get(`/api/appointments/${apptId}`)
+      .set("Cookie", prof2Cookie);
+    // O service aplica ownership: PROFESSIONAL só vê próprios appointments.
+    // Resultado correto: 403 (ou 404 por segurança — ambos aceitáveis).
+    expect([403, 404]).toContain(res.status);
+  });
+
+  it("CLIENT B não cancela appointment de CLIENT A → 403", async () => {
+    // client2 tenta PATCH no appointment de client1
+    const res = await request
+      .patch(`/api/appointments/${apptId}`)
+      .set("Cookie", client2Cookie)
+      .send({ status: "CANCELLED" });
+    expect(res.status).toBe(403);
+  });
+});

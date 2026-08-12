@@ -125,3 +125,80 @@ describe("PATCH /api/professionals/:id", () => {
     expect(res.status).toBe(403);
   });
 });
+
+// ─── Sub-recursos de professionals (F9 — GAP-03) ─────────────────────────────
+
+describe("GET /api/professionals/:profId/services", () => {
+  it("qualquer autenticado pode listar serviços do profissional → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/services`)
+      .set("Cookie", clientCookie);
+    expect(res.status).toBe(200);
+    // Controller responde com chave `professionalServices` (não `services`)
+    expect(Array.isArray(res.body.professionalServices)).toBe(true);
+  });
+
+  it("ADMIN lista serviços do profissional → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/services`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.professionalServices)).toBe(true);
+  });
+
+  it("anônimo → 401", async () => {
+    const res = await request.get(`/api/professionals/${ids.professionalId}/services`);
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("GET /api/professionals/:profId/availability", () => {
+  it("qualquer autenticado pode listar disponibilidade → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/availability`)
+      .set("Cookie", clientCookie);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.availability)).toBe(true);
+  });
+
+  it("PROFESSIONAL pode listar própria disponibilidade → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/availability`)
+      .set("Cookie", profCookie);
+    expect(res.status).toBe(200);
+  });
+
+  it("anônimo → 401", async () => {
+    const res = await request.get(`/api/professionals/${ids.professionalId}/availability`);
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("GET /api/professionals/:profId/blocked-periods", () => {
+  it("PROFESSIONAL lista períodos bloqueados → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/blocked-periods`)
+      .set("Cookie", profCookie);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.blockedPeriods)).toBe(true);
+  });
+
+  it("ADMIN lista períodos bloqueados de qualquer profissional → 200", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/blocked-periods`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(200);
+  });
+
+  it("CLIENT → 403 (requireProfessional middleware)", async () => {
+    const res = await request
+      .get(`/api/professionals/${ids.professionalId}/blocked-periods`)
+      .set("Cookie", clientCookie);
+    expect(res.status).toBe(403);
+  });
+
+  it("anônimo → 401", async () => {
+    const res = await request.get(`/api/professionals/${ids.professionalId}/blocked-periods`);
+    expect(res.status).toBe(401);
+  });
+});
