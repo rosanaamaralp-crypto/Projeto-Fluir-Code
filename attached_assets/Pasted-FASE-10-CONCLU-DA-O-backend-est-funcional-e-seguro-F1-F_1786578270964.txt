@@ -1,0 +1,109 @@
+FASE 10 CONCLUÍDA.
+
+O backend está funcional e seguro:
+- F1–F8 concluídas
+- F9 concluída: 488/488 testes
+- F10 concluída: 500/500 testes
+- typecheck OK
+- build OK
+
+A auditoria atual do frontend confirmou:
+- React + Vite funcionando
+- frontend em artifacts/fluir-da-vida/
+- atualmente existe apenas uma home estática
+- não existe tela de login
+- não existe integração de negócio com a API
+- o cliente OpenAPI atualmente conhece apenas /api/healthz
+
+AGORA NÃO IMPLEMENTE NADA.
+
+Quero apenas uma AUDITORIA E PLANO DA PRÓXIMA FASE.
+
+Faça o seguinte:
+
+1. Leia novamente os documentos oficiais do projeto, respeitando rigorosamente a hierarquia documental:
+   Doc 18 > Doc 17 > Doc 16 > Doc 14 > demais documentos.
+
+2. Identifique qual é a PRÓXIMA FASE OFICIAL após a Fase 10.
+
+3. Leia as seções dessa próxima fase e identifique exatamente o que os documentos oficiais determinam para o FRONTEND.
+
+4. Verifique especificamente se essa fase contempla:
+   - autenticação/login
+   - cliente OpenAPI
+   - integração frontend/API
+   - roteamento
+   - proteção de rotas
+   - dashboard
+   - logout
+   - controle de acesso por perfil
+   - tratamento de sessão
+
+5. Compare cada requisito oficial com o estado REAL atual do projeto.
+
+6. Liste claramente:
+   - o que já existe;
+   - o que está parcialmente implementado;
+   - o que ainda não existe;
+   - o que precisa ser implementado.
+
+7. Verifique os arquivos reais do frontend antes de concluir o plano:
+   - artifacts/fluir-da-vida/src/App.tsx
+   - artifacts/fluir-da-vida/src/main.tsx
+   - artifacts/fluir-da-vida/src/pages/
+   - artifacts/fluir-da-vida/src/components/
+   - lib/api-client-react/
+   - configuração do OpenAPI/orval
+   - package.json
+   - configuração do Replit/workflows
+
+8. NÃO altere nenhum arquivo.
+9. NÃO instale dependências.
+10. NÃO execute implementação.
+11. NÃO faça commit.
+
+No final, produza exatamente este relatório:
+
+A. PRÓXIMA FASE OFICIAL
+- Nome:
+- Número:
+- Objetivo oficial:
+
+B. REQUISITOS OFICIAIS PARA O FRONTEND
+Liste os requisitos diretamente sustentados pela documentação.
+
+C. ESTADO ATUAL
+- O que já existe:
+- O que funciona:
+- O que não funciona:
+- Integração atual com API:
+
+D. GAP ANALYSIS
+Para cada requisito:
+- Requisito
+- Estado atual
+- O que falta
+- Prioridade
+
+E. PLANO TÉCNICO
+Liste os arquivos que provavelmente precisarão ser criados/modificados e explique o papel de cada um.
+
+F. PRIMEIRO MARCO VISUAL
+Explique qual é o menor conjunto de implementação necessário para eu conseguir abrir a aplicação no navegador e realizar um fluxo REAL de:
+Login → autenticação → primeira tela protegida → logout.
+
+G. TESTES E GATES
+Liste os testes que deverão existir e os gates obrigatórios antes de considerar a fase concluída.
+
+H. RISCOS E DECISÕES PENDENTES
+Liste qualquer decisão que precise da minha aprovação antes da implementação.
+
+IMPORTANTE:
+Não invente requisitos.
+Não altere regras de negócio.
+Não altere código de produção nesta etapa.
+Baseie o plano primeiro nos documentos oficiais e depois confirme o estado no código real.
+
+Finalize obrigatoriamente com:
+
+STATUS: AGUARDANDO APROVAÇÃO
