@@ -1,0 +1,347 @@
+FASE 3.1 — AUDITORIA FINAL E GATE PARA FASE 4
+
+A Fase 3.1 foi concluída após a auditoria técnica independente.
+
+Resultado informado:
+
+* 9/9 problemas corrigidos
+* pnpm run typecheck → 0 erros
+* pnpm run test → 136/136 testes passando
+* pnpm run build → OK
+* Regressão da Fase 2 → OK
+* Nenhuma nova migration
+* 14 tabelas de negócio preservadas
+* 14 triggers preservados
+* 43 indexes
+* 20 FKs
+* 3 EXCLUDE constraints
+* schema_migrations intacto
+
+NÃO implemente a Fase 4 ainda.
+
+Faça agora somente uma AUDITORIA FINAL DE GATE da Fase 3.1.
+
+OBJETIVO:
+Confirmar de forma independente que as correções realmente existem no código e que não houve regressão da Fase 2 ou da Fase 3.
+
+IMPORTANTE:
+
+* Não criar arquivos.
+* Não modificar arquivos.
+* Não corrigir nada.
+* Não instalar dependências.
+* Não alterar banco.
+* Não executar migrations.
+* Não alterar schema.
+* Apenas ler, executar verificações e produzir relatório.
+* Se algum teste precisar alterar dados, não faça isso sem explicar antes.
+
+VERIFICAÇÕES OBRIGATÓRIAS:
+
+1. TYPECHECK
+   Executar:
+   pnpm run typecheck
+
+Confirmar:
+0 erros TypeScript.
+
+Verificar especialmente:
+
+* src/lib/db-types.ts
+* repositories
+* controllers
+* uso de transactions
+* ausência de casts incorretos entre db e transaction.
+
+2. TESTES
+   Executar:
+   pnpm run test
+
+Confirmar:
+136/136 testes passando ou informar exatamente o resultado atual.
+
+Não aceitar apenas informação registrada anteriormente. Execute novamente.
+
+3. BUILD
+   Executar:
+   pnpm run build
+
+Confirmar build de produção OK.
+
+4. BOOTSTRAP ADMIN
+   Verificar:
+
+* scripts/bootstrap-admin.ts existe
+* não existe endpoint público de bootstrap
+* criação do primeiro ADMIN exige execução explícita do script
+* senha nunca é exibida em logs
+* password_hash nunca é retornado
+* script utiliza a mesma camada de banco da aplicação
+* script não cria migration
+* script é seguro contra criação duplicada do ADMIN
+* verificar tratamento de ADMIN já existente
+
+Não execute o bootstrap real contra o banco de produção.
+
+5. TRANSACTION P2
+   Inspecionar professionals.controller.ts.
+
+Confirmar que:
+
+* atualização de users
+* atualização de professionals
+* audit log
+
+quando fizerem parte da mesma operação sejam executados dentro da mesma db.transaction().
+
+Não aceitar atualização parcial fora da transaction.
+
+6. VALIDAÇÃO P3
+   Inspecionar UpdateProfessionalSchema e PATCH /api/professionals/:id.
+
+Confirmar que:
+
+* name é validado
+* phone é validado
+* limites de tamanho são aplicados
+* controller utiliza somente dados validados pelo Zod
+* não existe leitura paralela de req.body que permita contornar o schema.
+
+7. RESOURCE / IN_PERSON P4
+   Inspecionar slots.service.ts.
+
+Confirmar explicitamente qual regra foi implementada:
+
+IN_PERSON exige resource?
+OU
+resource é opcional?
+
+Depois verificar se o comportamento do algoritmo corresponde exatamente à regra escolhida.
+
+Também verificar:
+
+* nenhum slot IN_PERSON é liberado indevidamente
+* ausência de resources não gera falso positivo
+* resource ocupado elimina corretamente o slot
+* pelo menos um resource disponível mantém o slot disponível quando essa for a regra.
+
+8. TYPE SYSTEM P5
+   Verificar se os repositories aceitam corretamente:
+
+* Database
+* Transaction
+
+sem casts inseguros.
+
+Confirmar que:
+pnpm run typecheck
+não depende de ignorar erros.
+
+9. UUID PATH VALIDATION P6
+   Verificar todas as rotas que possuem:
+   :id
+   :profId
+   :clientId
+   :serviceId
+   :resourceId
+
+Confirmar que os parâmetros UUID passam por validação Zod antes de chegar ao repository.
+
+Testar pelo menos:
+GET/PATCH/DELETE com UUID inválido.
+
+Esperado:
+HTTP 400.
+
+Não aceitar:
+HTTP 500 por erro PostgreSQL 22P02.
+
+10. SLOT BOUNDARY P7
+    Verificar o comportamento de SLOT_MIN_NOTICE_HOURS.
+
+Confirmar e documentar:
+
+* slot exatamente no limite
+* slot imediatamente antes
+* slot imediatamente depois
+
+A regra deve ser consistente e estar coberta por teste.
+
+11. CLIENT UPDATE P8
+    Verificar:
+
+* CLIENT não consegue alterar status
+* ADMIN consegue alterar status quando permitido
+* schema utilizado corresponde à regra de autorização
+* não existe possibilidade de mass assignment.
+
+12. BLOCKED PERIODS P9
+    Verificar:
+    PATCH /api/professionals/:profId/blocked-periods/:id
+
+Confirmar que autorização está na camada correta:
+
+* ADMIN permitido
+* PROFESSIONAL permitido somente se a regra definida permitir
+* CLIENT proibido
+* controller não contém autorização redundante ou contraditória.
+
+13. AUTENTICAÇÃO
+    Revalidar:
+
+* login
+* logout
+* /api/auth/me
+* session.regenerate()
+* session store PostgreSQL
+* SESSION_SECRET
+* httpOnly
+* secure em production
+* sameSite=lax
+* maxAge 8h
+* rolling=true
+* rate limit 10/15min
+* bcrypt saltRounds=12
+* placeholder hash para evitar user enumeration
+* password_hash nunca aparece em response.
+
+14. RBAC + IDOR
+    Fazer uma matriz real das rotas.
+
+Confirmar:
+ADMIN
+PROFESSIONAL
+CLIENT
+
+e ownership por recurso.
+
+Testar especialmente:
+
+* CLIENT tentando acessar outro client
+* CLIENT tentando alterar outro client
+* PROFESSIONAL tentando alterar outro professional
+* PROFESSIONAL tentando alterar disponibilidade de outro professional
+* PROFESSIONAL tentando alterar blocked_period de outro professional
+* CLIENT tentando administrar services/resources
+* CLIENT tentando criar professional.
+
+15. AUDIT LOG
+    Verificar se todas as operações sensíveis possuem audit log.
+
+Separar:
+
+* audit dentro de transaction
+* audit fora de transaction
+
+Identificar qualquer operação em que o dado principal possa ser persistido sem seu audit correspondente.
+
+Não modificar nada.
+
+16. REGRESSÃO FASE 2
+    Verificar diretamente no PostgreSQL:
+
+* schema_migrations
+* quantidade de migrations
+* tabelas
+* triggers
+* CHECK constraints
+* FK constraints
+* EXCLUDE constraints
+* índices
+* funções/triggers existentes
+
+Confirmar que nenhuma migration nova foi criada.
+
+Particular atenção:
+
+* excl_client_no_overlap
+* excl_professional_no_overlap
+* excl_resource_no_overlap
+
+17. DRIZZLE
+    Confirmar que NÃO existe em artifacts/api-server/src:
+
+* drizzle-orm/migrator
+* migrate()
+* new Pool()
+* criação independente de conexão
+* acesso direto à schema_migrations
+
+Confirmar que getDatabaseClient() continua sendo a única fonte de conexão.
+
+18. DOCUMENTAÇÃO
+    Verificar se:
+    docs/FASE-3-ARQUITETURA.md
+    replit.md
+
+estão coerentes com o código atual.
+
+Se houver divergência, NÃO corrigir. Apenas registrar.
+
+FORMATO DO RELATÓRIO:
+
+# AUDITORIA FINAL — FASE 3.1
+
+## Resultado
+
+APROVADO
+ou
+APROVADO COM RESSALVAS
+ou
+REPROVADO
+
+## Testes
+
+* typecheck:
+* test:
+* build:
+
+## Correções P1-P9
+
+Tabela:
+ID | Resultado | Evidência
+
+## Segurança
+
+Listar somente problemas reais encontrados.
+
+## Integridade Fase 2
+
+Tabela:
+Item | Esperado | Encontrado | Status
+
+## Transações
+
+Listar operações que possuem garantia atômica e qualquer exceção encontrada.
+
+## Autorização
+
+Apresentar matriz ADMIN / PROFESSIONAL / CLIENT.
+
+## Pendências
+
+Somente problemas reais ainda existentes.
+
+## Risco para Fase 4
+
+Classificar:
+CRÍTICO
+ALTO
+MÉDIO
+BAIXO
+NENHUM
+
+## GATE
+
+Concluir explicitamente:
+
+"FASE 3.1 LIBERADA PARA FASE 4"
+
+ou
+
+"FASE 3.1 NÃO LIBERADA — corrigir: ..."
+
+REGRA FINAL:
+Não implemente nenhuma correção durante esta auditoria.
+
+Somente depois do relatório eu decidirei se devemos corrigir algo ou iniciar a Fase 4.
