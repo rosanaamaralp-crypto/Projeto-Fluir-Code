@@ -37,7 +37,8 @@ import {
   ForbiddenError,
 } from "../lib/errors.js";
 import { ROLES } from "../middlewares/require-role.js";
-import type { CreateAppointmentInput, RescheduleInput, ListAppointmentsQuery } from "../validators/appointments.validator.js";
+import type { CreateAppointmentInput, RescheduleInput, ListAppointmentsQuery, AlterAppointmentInput } from "../validators/appointments.validator.js";
+import type { UpdateAppointmentFieldsData } from "../repositories/appointments.repository.js";
 
 // ─── Configuração (mesma dos slots, sem duplicar) ─────────────────────────
 
@@ -171,12 +172,17 @@ async function validateInAvailabilityWindow(
  * - Se resourceId fornecido: valida que é ACTIVE e está livre.
  * - Se não fornecido: seleciona automaticamente o primeiro resource ACTIVE disponível.
  * - Se nenhum disponível: ConflictError 409.
+ *
+ * @param excludeAppointmentId — ID do appointment sendo alterado in-place.
+ *   Quando fornecido, esse appointment é excluído da checagem de conflito para
+ *   evitar self-conflict na operação alter (RN-055/RN-056).
  */
 async function resolveResource(
   db: DrizzleDB,
   resourceId: string | undefined,
   start: Date,
   end: Date,
+  excludeAppointmentId?: string,
 ): Promise<string> {
   const allActive = await ResourcesRepository.findAll(db, true);
   if (allActive.length === 0) {
@@ -189,7 +195,11 @@ async function resolveResource(
       throw new NotFoundError("Sala não encontrada ou inativa.");
     }
     const occupied = await AppointmentsRepository.findActiveByResourceInRange(db, resourceId, start, end);
-    const busy = occupied.some((a) => overlaps(start, end, a.startDatetime, a.endDatetime));
+    const busy = occupied.some(
+      (a) =>
+        (excludeAppointmentId === undefined || a.id !== excludeAppointmentId) &&
+        overlaps(start, end, a.startDatetime, a.endDatetime),
+    );
     if (busy) {
       throw new ConflictError("Sala já ocupada neste horário.");
     }
@@ -199,7 +209,11 @@ async function resolveResource(
   // Auto-selecionar primeiro resource livre
   for (const r of allActive) {
     const occupied = await AppointmentsRepository.findActiveByResourceInRange(db, r.id, start, end);
-    const busy = occupied.some((a) => overlaps(start, end, a.startDatetime, a.endDatetime));
+    const busy = occupied.some(
+      (a) =>
+        (excludeAppointmentId === undefined || a.id !== excludeAppointmentId) &&
+        overlaps(start, end, a.startDatetime, a.endDatetime),
+    );
     if (!busy) {
       return r.id;
     }
@@ -754,6 +768,261 @@ export const AppointmentsService = {
       });
 
       return { old: cancelled, new: newAppointment };
+    });
+  },
+
+  /**
+   * Altera campos de um agendamento in-place — operação ALTER (F5.6 / RN-055 / RN-056).
+   *
+   * Restrições:
+   *   - Apenas ADMIN pode executar (W1).
+   *   - Somente agendamentos CONFIRMED podem ser alterados (W2).
+   *   - serviceId e clientId são imutáveis.
+   *   - endDatetime é recalculado pelo backend a partir de durationMinutes.
+   *
+   * Pipeline (tudo dentro de db.transaction):
+   *  1.  findById → NotFoundError se ausente
+   *  2.  status !== CONFIRMED → ValidationError
+   *  3.  RBAC: não ADMIN → ForbiddenError
+   *  4.  ServicesRepository.findById → capturar durationMinutes / allowedModalities
+   *  5.  Se professionalId muda: validar ACTIVE + ProfessionalServicesRepository.findOne
+   *  6.  Validar modality vs service.allowedModalities
+   *  7.  Calcular horários efetivos (merge input com estado atual)
+   *  8.  Validar antecedência mínima/máxima somente se startDatetime muda
+   *  9.  validateInAvailabilityWindow (profissional efetivo)
+   * 10.  BlockedPeriodsRepository.findActiveOverlapping
+   * 11.  Conflito profissional (excluindo self)
+   * 12.  Conflito cliente (excluindo self)
+   * 13.  Resolver resource/address conforme modalidade efetiva
+   * 14.  Construir setValues e verificar idempotência
+   * 15.  AppointmentsRepository.updateFields
+   * 16.  AppointmentStatusHistoryRepository.create (oldStatus = newStatus)
+   * 17.  AuditLogsRepository.create (action: APPOINTMENT_ALTERED)
+   * 18.  return updated; COMMIT
+   */
+  async update(
+    db: DrizzleDB,
+    params: {
+      appointmentId: string;
+      input: AlterAppointmentInput;
+      sessionUserId: string;
+      sessionRoleId: number;
+      ipAddress: string | null;
+    },
+  ): Promise<AppointmentRow> {
+    const { appointmentId, input, sessionUserId, sessionRoleId, ipAddress } = params;
+
+    return db.transaction(async (tx) => {
+      // 1. Buscar appointment
+      const appointment = await AppointmentsRepository.findById(tx, appointmentId);
+      if (!appointment) throw new NotFoundError("Agendamento não encontrado.");
+
+      // 2. Somente CONFIRMED pode ser alterado (W2)
+      if (appointment.status !== "CONFIRMED") {
+        throw new ValidationError(
+          `Agendamento com status '${appointment.status}' não pode ser alterado.`,
+        );
+      }
+
+      // 3. RBAC — apenas ADMIN pode alterar (W1)
+      if (sessionRoleId !== ROLES.ADMIN) {
+        throw new ForbiddenError();
+      }
+
+      // 4. Carregar service (durationMinutes + allowedModalities)
+      const service = await ServicesRepository.findById(tx, appointment.serviceId);
+      if (!service || service.status !== "ACTIVE") {
+        throw new ValidationError("Serviço inativo. Alteração não permitida.");
+      }
+
+      // 5. Validar novo profissional (somente se professionalId mudar)
+      const effectiveProfessionalId = input.professionalId ?? appointment.professionalId;
+      if (input.professionalId !== undefined && input.professionalId !== appointment.professionalId) {
+        const newProf = await ProfessionalsRepository.findById(tx, input.professionalId);
+        if (!newProf) throw new NotFoundError("Profissional não encontrado.");
+        if (newProf.status !== "ACTIVE") {
+          throw new ValidationError("Profissional inativo. Alteração não permitida.");
+        }
+        const ps = await ProfessionalServicesRepository.findOne(tx, input.professionalId, appointment.serviceId);
+        if (!ps || !ps.active) {
+          throw new ValidationError("Este profissional não oferece este serviço.");
+        }
+      }
+
+      // 6. Validar modality vs service.allowedModalities
+      const effectiveModality = input.modality ?? appointment.modality;
+      const allowed = service.allowedModalities;
+      if (allowed !== "BOTH" && allowed !== effectiveModality) {
+        throw new ValidationError(`Este serviço não permite a modalidade '${effectiveModality}'.`);
+      }
+
+      // 7. Calcular horários efetivos
+      const effectiveStart = input.startDatetime
+        ? new Date(input.startDatetime)
+        : appointment.startDatetime;
+      const effectiveEnd = input.startDatetime
+        ? new Date(effectiveStart.getTime() + service.durationMinutes * 60 * 1000)
+        : appointment.endDatetime;
+
+      // 8. Validar antecedência somente se startDatetime muda
+      if (input.startDatetime) {
+        const now = Date.now();
+        if (effectiveStart <= new Date(now + getMinNoticeMs())) {
+          throw new ValidationError(
+            `O agendamento deve ser feito com antecedência mínima de ${process.env["SLOT_MIN_NOTICE_HOURS"] ?? "2"}h.`,
+          );
+        }
+        if (effectiveStart > new Date(now + getMaxAdvanceMs())) {
+          throw new ValidationError(
+            `O agendamento não pode ser feito com mais de ${process.env["SLOT_MAX_ADVANCE_DAYS"] ?? "60"} dias de antecedência.`,
+          );
+        }
+      }
+
+      // 9. Validar janela de disponibilidade do profissional efetivo
+      await validateInAvailabilityWindow(tx, effectiveProfessionalId, effectiveStart, effectiveEnd);
+
+      // 10. Blocked periods
+      const blocked = await BlockedPeriodsRepository.findActiveOverlapping(
+        tx,
+        effectiveProfessionalId,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (blocked.length > 0) {
+        throw new ConflictError("Profissional bloqueado neste horário.");
+      }
+
+      // 11. Conflito do profissional (excluindo o próprio appointment)
+      const profConflicts = await AppointmentsRepository.findActiveByProfessionalInRange(
+        tx,
+        effectiveProfessionalId,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (
+        profConflicts.some(
+          (a) => a.id !== appointmentId && overlaps(effectiveStart, effectiveEnd, a.startDatetime, a.endDatetime),
+        )
+      ) {
+        throw new ConflictError("Profissional já possui agendamento neste horário.");
+      }
+
+      // 12. Conflito do cliente (excluindo o próprio appointment)
+      const clientConflicts = await AppointmentsRepository.findActiveByClientInRange(
+        tx,
+        appointment.clientId,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (
+        clientConflicts.some(
+          (a) => a.id !== appointmentId && overlaps(effectiveStart, effectiveEnd, a.startDatetime, a.endDatetime),
+        )
+      ) {
+        throw new ConflictError("Cliente já possui agendamento neste horário.");
+      }
+
+      // 13. Resolver resource/address conforme modalidade efetiva
+      const modalityChanged = effectiveModality !== appointment.modality;
+      const timeChanged = input.startDatetime !== undefined;
+
+      let resolvedResourceId: string | null = appointment.resourceId;
+      let resolvedAddressId: string | null = appointment.addressId;
+
+      if (effectiveModality === "IN_PERSON") {
+        resolvedAddressId = null;
+        if (modalityChanged || timeChanged) {
+          // Re-selecionar resource (horário ou modalidade mudou)
+          // excludeAppointmentId evita self-conflict na checagem
+          resolvedResourceId = await resolveResource(tx, undefined, effectiveStart, effectiveEnd, appointmentId);
+        }
+        // Se nem modalidade nem horário mudaram, manter resource atual
+      } else {
+        // HOME_CARE
+        resolvedResourceId = null;
+        const effectiveAddressId = input.addressId ?? appointment.addressId;
+        if (!effectiveAddressId) {
+          throw new ValidationError("addressId é obrigatório para modalidade HOME_CARE.");
+        }
+        if (modalityChanged || input.addressId !== undefined) {
+          // Revalidar endereço quando modalidade ou addressId mudar
+          const address = await AddressesRepository.findById(tx, effectiveAddressId);
+          if (!address) throw new NotFoundError("Endereço não encontrado.");
+          if (address.clientId !== appointment.clientId) {
+            throw new ForbiddenError("Endereço não pertence ao cliente do agendamento.");
+          }
+        }
+        resolvedAddressId = effectiveAddressId;
+      }
+
+      // 14. Construir setValues com campos que realmente mudam
+      const setValues: UpdateAppointmentFieldsData = {};
+      if (effectiveProfessionalId !== appointment.professionalId)
+        setValues.professionalId = effectiveProfessionalId;
+      if (effectiveModality !== appointment.modality)
+        setValues.modality = effectiveModality;
+      if (resolvedResourceId !== appointment.resourceId)
+        setValues.resourceId = resolvedResourceId;
+      if (resolvedAddressId !== appointment.addressId)
+        setValues.addressId = resolvedAddressId;
+      if (timeChanged) {
+        setValues.startDatetime = effectiveStart;
+        setValues.endDatetime = effectiveEnd;
+      }
+
+      // Idempotência: nenhum campo mudou → retornar appointment atual sem audit
+      if (Object.keys(setValues).length === 0) {
+        return appointment;
+      }
+
+      // 15. Persistir alteração
+      const updated = await AppointmentsRepository.updateFields(tx, appointmentId, setValues);
+      if (!updated) throw new NotFoundError("Agendamento não encontrado após atualização.");
+
+      // 16. Registrar histórico (status não muda — old e new são iguais)
+      await AppointmentStatusHistoryRepository.create(tx, {
+        appointmentId,
+        oldStatus: appointment.status,
+        newStatus: appointment.status,
+        changedBy: sessionUserId,
+        reason: null,
+        oldStartDatetime: appointment.startDatetime,
+        newStartDatetime: effectiveStart,
+        oldEndDatetime: appointment.endDatetime,
+        newEndDatetime: effectiveEnd,
+        oldResourceId: appointment.resourceId,
+        newResourceId: resolvedResourceId,
+        oldAddressId: appointment.addressId,
+        newAddressId: resolvedAddressId,
+      });
+
+      // 17. Audit log
+      await AuditLogsRepository.create(tx, {
+        userId: sessionUserId,
+        action: "APPOINTMENT_ALTERED",
+        entityType: "appointments",
+        entityId: appointmentId,
+        oldData: {
+          professionalId: appointment.professionalId,
+          modality: appointment.modality,
+          resourceId: appointment.resourceId,
+          addressId: appointment.addressId,
+          startDatetime: appointment.startDatetime.toISOString(),
+          endDatetime: appointment.endDatetime.toISOString(),
+        },
+        newData: {
+          professionalId: effectiveProfessionalId,
+          modality: effectiveModality,
+          resourceId: resolvedResourceId,
+          addressId: resolvedAddressId,
+          startDatetime: effectiveStart.toISOString(),
+          endDatetime: effectiveEnd.toISOString(),
+        },
+        ipAddress,
+      });
+
+      return updated;
     });
   },
 };

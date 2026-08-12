@@ -49,8 +49,9 @@ export interface CreateAppointmentData {
  * Campos protegidos (nunca presentes aqui):
  *   status, priceAtBooking, clientId, serviceId, tenantId, id, createdAt.
  *
- * `addressId` aceita null para suportar a transição HOME_CARE → IN_PERSON
- * (remoção explícita do endereço). O schema do banco permite NULL nesta coluna.
+ * `addressId` e `resourceId` aceitam null para suportar transições de modalidade
+ * (IN_PERSON → HOME_CARE: resourceId → null; HOME_CARE → IN_PERSON: addressId → null).
+ * O schema do banco permite NULL em ambas as colunas.
  *
  * `endDatetime` é derivado de startDatetime + durationMinutes (calculado pelo service).
  * Deve ser fornecido sempre que startDatetime for alterado para manter a integridade
@@ -59,6 +60,7 @@ export interface CreateAppointmentData {
 export interface UpdateAppointmentFieldsData {
   professionalId?: string;
   modality?: string;
+  resourceId?: string | null;
   addressId?: string | null;
   startDatetime?: Date;
   endDatetime?: Date;
@@ -195,6 +197,7 @@ export const AppointmentsRepository = {
     const setValues: {
       professionalId?: string;
       modality?: string;
+      resourceId?: string | null;
       addressId?: string | null;
       startDatetime?: Date;
       endDatetime?: Date;
@@ -202,6 +205,8 @@ export const AppointmentsRepository = {
 
     if (data.professionalId !== undefined) setValues.professionalId = data.professionalId;
     if (data.modality !== undefined) setValues.modality = data.modality;
+    // null é valor válido: remove/define sala conforme transição de modalidade
+    if (data.resourceId !== undefined) setValues.resourceId = data.resourceId;
     // null é valor válido: remove o endereço (HOME_CARE → IN_PERSON)
     if (data.addressId !== undefined) setValues.addressId = data.addressId;
     if (data.startDatetime !== undefined) setValues.startDatetime = data.startDatetime;

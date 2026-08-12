@@ -29,7 +29,7 @@ export const CreateAppointmentSchema = z.object({
 
 export type CreateAppointmentInput = z.infer<typeof CreateAppointmentSchema>;
 
-// ─── PATCH /api/appointments/:id ──────────────────────────────────────────
+// ─── PATCH /api/appointments/:id — sub-schemas internos ───────────────────
 
 /** Cancelamento: { status: "CANCELLED", reason?: string } */
 const CancelSchema = z.object({
@@ -53,16 +53,7 @@ const RescheduleSchema = z.object({
   }),
 });
 
-export const PatchAppointmentSchema = z.union([
-  CancelSchema,
-  UpdateStatusSchema,
-  RescheduleSchema,
-]);
-
-export type PatchAppointmentInput = z.infer<typeof PatchAppointmentSchema>;
-export type RescheduleInput = z.infer<typeof RescheduleSchema>["reschedule"];
-
-// ─── PATCH /api/appointments/:id — alteração in-place (F5.4) ─────────────
+// ─── PATCH /api/appointments/:id — alteração in-place (F5.4 / F5.6) ──────
 //
 // Contrato: Doc 16 § 40 — PATCH /api/appointments/:id
 //   { "startDatetime": "...", "professionalId": "...", "modality": "...", "addressId": "..." }
@@ -75,12 +66,12 @@ export type RescheduleInput = z.infer<typeof RescheduleSchema>["reschedule"];
 //   - resourceId NÃO é campo livre; é resolvido pelo backend.
 //   - serviceId NÃO é campo desta operação.
 //
-// NOTA DE INTEGRAÇÃO: Este schema será adicionado ao PatchAppointmentSchema
-// em F5.6, quando AppointmentsService.alter() e o branch do controller
-// estiverem implementados. Adicioná-lo ao union agora quebraria o typecheck
-// do controller (body.status ficaria string | undefined na branch else).
+// Discriminação no controller por narrowing TypeScript (após union):
+//   "reschedule" in body → RescheduleSchema
+//   "status" in body     → CancelSchema | UpdateStatusSchema
+//   else                 → AlterAppointmentSchema
 
-/** Alteração in-place de appointment — RN-055/RN-056 */
+/** Alteração in-place de appointment — RN-055/RN-056 (F5.6) */
 export const AlterAppointmentSchema = z
   .object({
     professionalId: UUID.optional(),
@@ -103,6 +94,29 @@ export const AlterAppointmentSchema = z
   );
 
 export type AlterAppointmentInput = z.infer<typeof AlterAppointmentSchema>;
+
+// ─── PATCH /api/appointments/:id — union final ────────────────────────────
+
+/**
+ * União de todos os formatos aceitos pelo PATCH /api/appointments/:id.
+ *
+ * Ordem intencional: AlterAppointmentSchema por último para que os schemas com
+ * discriminantes explícitos (status, reschedule) sejam tentados primeiro pelo Zod.
+ *
+ * Discriminação no controller:
+ *   "reschedule" in body → RescheduleSchema
+ *   "status" in body     → CancelSchema | UpdateStatusSchema
+ *   else                 → AlterAppointmentSchema
+ */
+export const PatchAppointmentSchema = z.union([
+  CancelSchema,
+  UpdateStatusSchema,
+  RescheduleSchema,
+  AlterAppointmentSchema,
+]);
+
+export type PatchAppointmentInput = z.infer<typeof PatchAppointmentSchema>;
+export type RescheduleInput = z.infer<typeof RescheduleSchema>["reschedule"];
 
 // ─── GET /api/appointments (query params) ────────────────────────────────
 

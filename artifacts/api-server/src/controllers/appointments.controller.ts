@@ -9,7 +9,7 @@ import { AppointmentStatusHistoryRepository } from "../repositories/appointment-
 import { mapDbError } from "../lib/errors.js";
 import type { CreateAppointmentInput, ListAppointmentsQuery } from "../validators/appointments.validator.js";
 import { formatZodError } from "../middlewares/validate.js";
-import { PatchAppointmentSchema } from "../validators/appointments.validator.js";
+import { PatchAppointmentSchema, type AlterAppointmentInput } from "../validators/appointments.validator.js";
 import { ValidationError } from "../lib/errors.js";
 
 function getIp(req: Request): string | null {
@@ -97,10 +97,16 @@ export const AppointmentsController = {
   /**
    * PATCH /api/appointments/:id
    *
-   * Aceita 3 formas de payload (validadas via Zod):
-   *   1. { status: "CANCELLED", reason?: string }       → cancelamento
-   *   2. { status: "IN_PROGRESS" | "COMPLETED" | "NO_SHOW" }  → mudança de status
-   *   3. { reschedule: { startDatetime, resourceId?, addressId? } }  → remarcação
+   * Aceita 4 formas de payload (validadas via Zod):
+   *   1. { status: "CANCELLED", reason?: string }                     → cancelamento
+   *   2. { status: "IN_PROGRESS" | "COMPLETED" | "NO_SHOW" }          → mudança de status
+   *   3. { reschedule: { startDatetime, resourceId?, addressId? } }    → remarcação
+   *   4. { professionalId?, modality?, addressId?, startDatetime? }    → alteração in-place (F5.6)
+   *
+   * Discriminação por narrowing TypeScript:
+   *   "reschedule" in body → (3)
+   *   "status" in body     → (1) ou (2)
+   *   else                 → (4)
    */
   async patch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -118,7 +124,7 @@ export const AppointmentsController = {
       const body = parseResult.data;
 
       if ("reschedule" in body) {
-        // Remarcação
+        // (3) Remarcação
         const result = await AppointmentsService.reschedule(db, {
           appointmentId: id,
           rescheduleInput: body.reschedule,
@@ -130,16 +136,28 @@ export const AppointmentsController = {
         return;
       }
 
-      // Mudança de status (cancelamento ou outro)
-      const updated = await AppointmentsService.updateStatus(db, {
+      if ("status" in body) {
+        // (1) Cancelamento ou (2) mudança de status
+        const updated = await AppointmentsService.updateStatus(db, {
+          appointmentId: id,
+          newStatus: body.status,
+          reason: "reason" in body ? body.reason : undefined,
+          sessionUserId: session.userId,
+          sessionRoleId: session.roleId,
+          ipAddress,
+        });
+        res.json({ appointment: updated });
+        return;
+      }
+
+      // (4) Alteração in-place — F5.6
+      const updated = await AppointmentsService.update(db, {
         appointmentId: id,
-        newStatus: body.status,
-        reason: "reason" in body ? body.reason : undefined,
+        input: body as AlterAppointmentInput,
         sessionUserId: session.userId,
         sessionRoleId: session.roleId,
         ipAddress,
       });
-
       res.json({ appointment: updated });
     } catch (err) {
       next(mapDbError(err));

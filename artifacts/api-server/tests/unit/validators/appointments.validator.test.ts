@@ -208,17 +208,16 @@ describe("PatchAppointmentSchema — regressão F5.4 (schemas existentes preserv
     expect(r.success).toBe(true);
   });
 
-  // 10. payload inválido não confundido com schemas existentes
-  it("10a. { professionalId: uuid } não é aceito pelo PatchAppointmentSchema atual", () => {
-    // AlterSchema não faz parte do union PatchAppointmentSchema ainda (integração em F5.6).
-    // Confirma que o payload de alteração é distinto dos schemas existentes.
+  // 10. payloads de alteração in-place integrados ao union em F5.6
+  it("10a. { professionalId: uuid } é aceito pelo PatchAppointmentSchema (F5.6 — AlterAppointmentSchema integrado)", () => {
+    // Em F5.4 este payload era rejeitado; em F5.6 AlterAppointmentSchema foi adicionado ao union.
     const r = PatchAppointmentSchema.safeParse({ professionalId: VALID_UUID });
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
   });
 
-  it("10b. { modality: 'IN_PERSON' } não é aceito pelo PatchAppointmentSchema atual", () => {
+  it("10b. { modality: 'IN_PERSON' } é aceito pelo PatchAppointmentSchema (F5.6 — AlterAppointmentSchema integrado)", () => {
     const r = PatchAppointmentSchema.safeParse({ modality: "IN_PERSON" });
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
   });
 
   it("10c. payload totalmente vazio {} não é aceito", () => {

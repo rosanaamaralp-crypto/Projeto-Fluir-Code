@@ -1,0 +1,125 @@
+F5.6 — AUTORIZAÇÃO PARA IMPLEMENTAÇÃO
+
+Pode prosseguir com a implementação da Fase 5.6 conforme o PLANO TÉCNICO já analisado.
+
+DECISÕES CONFIRMADAS:
+
+W1 — RBAC:
+A operação de ALTERAÇÃO (alter) será restrita exclusivamente ao ADMIN.
+Somente ADMIN pode alterar:
+- professionalId
+- modality
+- addressId
+- startDatetime
+
+CLIENT e PROFESSIONAL devem receber ForbiddenError (HTTP 403) ao tentar executar a operação alter.
+
+W2 — STATUS:
+Somente appointments com status CONFIRMED podem ser alterados.
+Se o appointment estiver:
+- IN_PROGRESS
+- COMPLETED
+- CANCELLED
+- NO_SHOW
+
+deve rejeitar a operação com ValidationError.
+
+IMPLEMENTAR O PLANO F5.6 COMPLETO:
+
+1. Integrar AlterAppointmentSchema ao PatchAppointmentSchema.
+2. Adicionar o branch de ALTER no controller.
+3. Implementar AppointmentsService.update() dentro de uma única transação.
+4. Reutilizar os repositories e helpers existentes.
+5. Ajustar resolveResource() para aceitar excludeAppointmentId quando necessário, evitando self-conflict.
+6. Revalidar profissional, serviço, professional_services, modalidade e disponibilidade.
+7. Revalidar:
+   - antecedência mínima/máxima quando startDatetime mudar;
+   - janela de disponibilidade;
+   - blocked periods;
+   - conflito de profissional;
+   - conflito de cliente;
+   - disponibilidade de resource/maca.
+8. Implementar corretamente as transições:
+   IN_PERSON → HOME_CARE
+   HOME_CARE → IN_PERSON
+   IN_PERSON → IN_PERSON
+   HOME_CARE → HOME_CARE
+9. addressId deve ser validado contra o clientId do appointment.
+10. resourceId deve ser resolvido pelo backend.
+11. endDatetime deve ser calculado exclusivamente pelo service usando durationMinutes.
+12. NÃO permitir alteração de:
+   status, priceAtBooking, clientId, serviceId, id, createdAt, tenantId, resourceId ou endDatetime pelo input.
+13. Registrar AppointmentStatusHistory com valores old/new.
+14. Registrar AuditLog:
+   action = "APPOINTMENT_ALTERED"
+15. Toda a operação deve ocorrer dentro de db.transaction().
+16. Garantir rollback automático em qualquer erro.
+17. Preservar as EXCLUDE constraints e não alterar schema/migrations.
+
+TESTES:
+
+Adicionar os testes previstos no plano F5.6, incluindo:
+- ADMIN alterando professionalId;
+- CLIENT/PROFESSIONAL tentando alterar professionalId → 403;
+- tentativa de alter por CLIENT/PROFESSIONAL → 403;
+- alteração de modalidade;
+- alteração de endereço;
+- HOME_CARE ↔ IN_PERSON;
+- appointments em todos os estados não-CONFIRMED → rejeitados;
+- conflitos de profissional;
+- conflitos de cliente;
+- conflito/indisponibilidade de resource;
+- profissional inativo;
+- profissional sem o serviço;
+- HOME_CARE sem endereço;
+- endereço pertencente a outro cliente;
+- alteração de horário;
+- idempotência;
+- histórico old/new;
+- audit APPOINTMENT_ALTERED;
+- integridade de ownership/RBAC;
+- concorrência, quando o padrão existente permitir.
+
+GATES OBRIGATÓRIOS ANTES DE FINALIZAR:
+
+- Typecheck sem erros
+- Suite completa de testes sem regressões
+- Testes específicos da F5.6 passando
+- Build do api-server OK
+- Confirmar que não houve alteração em migrations/schema
+- Confirmar integridade:
+  16 tabelas
+  14 triggers
+  3 EXCLUDE constraints
+  1 migration
+- git diff --name-only
+- git status --short
+
+NÃO faça alterações fora do escopo da F5.6.
+NÃO remova nem enfraqueça testes existentes.
+NÃO faça migration.
+NÃO altere o schema do banco.
+
+Antes de finalizar, apresente um RELATÓRIO FINAL F5.6 contendo:
+A. arquivos lidos
+B. arquivos modificados
+C. implementação realizada
+D. RBAC
+E. estados permitidos/bloqueados
+F. pipeline de validação
+G. tratamento de resource/address
+H. histórico
+I. audit
+J. transação/rollback
+K. concorrência
+L. testes adicionados
+M. typecheck
+N. suite completa
+O. build
+P. integridade do banco
+Q. git diff/status
+R. eventuais ressalvas
+
+IMPORTANTE:
+Não considere a tarefa concluída apenas porque o código compila.
+Execute todos os gates acima e só declare F5.6 APROVADA se todos passarem.
