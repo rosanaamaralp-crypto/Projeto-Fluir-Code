@@ -1,0 +1,333 @@
+Lendo a documentação oficial e o estado atual do código em paralelo.
+
+
+7 actions
+Lendo as seções específicas de FASE 8 em todos os documentos.
+
+
+4 actions
+Lendo as seções de NOTIFICAÇÕES e TESTES nos documentos de maior autoridade.
+
+
+4 actions
+Lendo o módulo de notificações nos documentos de maior autoridade e o schema atual do banco.
+
+
+5 actions
+Lendo as especificações completas de notificações em Doc 16, Doc 18, Doc 14 e o schema atual do banco.
+
+
+6 actions
+A tabela notifications já existe. Lendo os detalhes restantes: schema Drizzle, triggers de notificação e contexto de Doc 14 sobre RN-087.
+
+
+6 actions
+Lendo os fluxos do profissional e do cliente no Doc 18 para entender quem recebe notificações.
+
+
+4 actions
+Tenho todos os dados necessários. Produzindo o plano.
+
+PLANO TÉCNICO — FASE 8: NOTIFICAÇÕES
+A. Documentos Oficiais Utilizados
+Documento	Localização	Trecho relevante
+Doc 18 — Pacote Mestre	docs/18-...	§8 — notifications no schema do banco; §34 — NotificationService; §38 — "Responsável por gerar notificações internas"; §40 — FASE 20 = Notificações; PROMPT 16 — "Implemente notificações internas"
+Doc 17 — Plano Oficial	docs/17-...	§43 — FASE 18: "Implementar inicialmente notificações internas" — agendamento confirmado, alterado, cancelamento, lembrete
+Doc 16 — API e Contratos	docs/16-...	§46 — GET /api/notifications; §47 — POST /api/notifications/:id/read; §54 — paginação padrão (page, limit)
+Doc 14 — Regras de Negócio	docs/14-...	RN-087 — "Notificações deverão estar associadas ao usuário correto"
+Doc 10 — MVP e Ordem	docs/10-...	§18 — Módulo Notificações: "🔴 MVP — mensagens internas; confirmação visual"; §25 — F8 = TESTES
+Doc 00 — Índice	docs/00-...	Hierarquia: Doc 18 > Doc 17 > Doc 16 > Doc 14
+Divergência documentada: Doc 10 §25 define F8 = TESTES (Sprint 08) sem uma sprint dedicada a Notificações. Porém, Doc 17 (§43: FASE 18 = Notificações → §44: FASE 19 = Testes) e Doc 18 (§40: FASE 20 = Notificações → FASE 21 = Testes) ambos posicionam Notificações explicitamente antes de Testes. Pela hierarquia Doc 18 > Doc 17 > Doc 10, F8 = NOTIFICAÇÕES. O bloco de Testes será F9.
+
+B. Objetivo da Fase
+Implementar o módulo de notificações internas do sistema Fluir da Vida, composto de:
+
+Geração de notificações — NotificationService invocado pelos services de Appointments nos eventos de criação, alteração, cancelamento e conclusão, criando registros na tabela notifications já existente.
+Leitura de notificações — GET /api/notifications retorna as notificações do usuário autenticado com suporte a filtro opcional por não lidas e paginação.
+Marcação como lida — POST /api/notifications/:id/read marca uma notificação como lida, protegida contra IDOR.
+Nenhuma integração externa (e-mail, WhatsApp, SMS). Somente notificações internas, conforme Doc 18 PROMPT 16: "Não implementar integrações externas ainda."
+
+C. Regras de Negócio Aplicáveis
+Código	Regra	Impacto técnico
+RN-087	Notificações devem estar associadas ao usuário correto	user_id na tabela notifications é chave para IDOR: cada usuário só vê/lê as suas
+Doc 18 PROMPT 16	Eventos notificáveis: confirmação, alteração, cancelamento, lembrete, conclusão quando aplicável	NotificationService deve ser chamado nos services de appointments para cada evento relevante
+Doc 17 §43	Implementar inicialmente notificações internas — confirmado, alterado, cancelamento, lembrete	Escopo do MVP: confirmado + alterado + cancelamento + conclusão; lembrete → DECISÃO PENDENTE D6
+Doc 10 §18	MVP: mensagens internas, confirmação visual	Confirmado com as duas endpoints previstas em Doc 16
+Doc 16 §54	Listagens aceitam page e limit	Paginação obrigatória em GET /api/notifications
+RN-082	Toda operação protegida deve validar autorização no backend	IDOR: POST /notifications/:id/read valida que a notificação pertence ao usuário da sessão
+D. Estado Atual do Sistema
+O que já existe
+Item	Estado
+Tabela notifications no banco	✅ — id, user_id, type, title, message, appointment_id, read_at, created_at; FK para users e appointments; índices idx_notif_user_all e idx_notif_user_unread
+Schema Drizzle notifications	✅ — exportado de @workspace/db
+AppointmentsService.create()	✅ — F4; ponto de injeção para notificação de criação
+AppointmentsService.alter()	✅ — F5; ponto de injeção para notificação de alteração
+AppointmentsService.cancel()	✅ — F5; ponto de injeção para notificação de cancelamento
+AppointmentsService.updateStatus()	✅ — F5; ponto de injeção para notificação de conclusão
+src/routes/index.ts	✅ — router central; precisa registrar notificationsRouter
+O que ainda não existe
+Item	Situação
+src/services/notifications.service.ts	❌ Não existe — NotificationService a criar
+src/validators/notifications.validator.ts	❌ Não existe
+src/repositories/notifications.repository.ts	❌ Não existe
+src/controllers/notifications.controller.ts	❌ Não existe
+src/routes/notifications.ts	❌ Não existe
+tests/integration/notifications.test.ts	❌ Não existe
+Chamadas ao NotificationService nos appointments services	❌ Não existem
+O que pode ser reutilizado
+Padrão validateQuery e validateParams dos middlewares existentes
+Padrão requireAuth (todos os roles autenticados) — sem requireAdmin
+Padrão de repository com findMany + paginação (audit-logs)
+mapDbError para tratamento de erros de banco
+DrizzleDB type de db-types.ts
+E. Contrato / API Esperado
+E.1 — GET /api/notifications
+Auth: qualquer usuário autenticado (retorna apenas as próprias)
+Fonte: Doc 16 §46; paginação: Doc 16 §54
+
+Query params:
+
+Parâmetro	Tipo	Validação
+unread	"true" | "false"	opcional; filtra apenas não lidas (read_at IS NULL)
+page	inteiro ≥ 1	padrão: 1
+limit	inteiro 1–50	padrão: 20 (decisão pendente D3)
+Resposta 200:
+
+{
+  "data": [
+    {
+      "id": "uuid",
+      "type": "APPOINTMENT_CONFIRMED",
+      "title": "Agendamento confirmado",
+      "message": "Seu agendamento para Massagem Teste em 12/08/2026 às 10:00 foi confirmado.",
+      "appointmentId": "uuid | null",
+      "readAt": "ISO | null",
+      "createdAt": "ISO"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+
+Ordenação: created_at DESC (mais recentes primeiro; índice idx_notif_user_all cobre isso).
+
+E.2 — POST /api/notifications/:id/read
+Auth: qualquer usuário autenticado
+Fonte: Doc 16 §47
+
+Params: id (UUID da notificação)
+Body: nenhum
+
+Resposta 200:
+
+{
+  "notification": {
+    "id": "uuid",
+    "readAt": "ISO"
+  }
+}
+
+Códigos HTTP:
+
+Situação	HTTP
+Sucesso	200
+Não autenticado	401
+Notificação pertence a outro usuário	403
+UUID inválido	400
+ID inexistente	404
+Notificação já lida (idempotente)	200 — retorna readAt já existente
+Erro de banco	500
+E.3 — Geração de notificações (interna, não-endpoint)
+NotificationService.create(db, { userId, type, title, message, appointmentId? }) — chamado dentro dos services de appointments existentes, após o commit da operação principal.
+
+Eventos e destinatários propostos (D1 — DECISÃO PENDENTE):
+
+Evento	Notificação para CLIENT	Notificação para PROFESSIONAL
+Appointment criado	"Agendamento confirmado"	"Novo agendamento recebido"
+Appointment alterado	"Agendamento alterado"	"Agendamento do cliente alterado"
+Appointment cancelado	"Agendamento cancelado"	"Agendamento cancelado"
+Status → COMPLETED	"Atendimento concluído"	— (opcional — D1)
+Lembrete	— (D6 — fora do escopo MVP)	— (D6)
+F. Fluxo Técnico de Implementação
+F8.1 — NotificationService (src/services/notifications.service.ts)
+Método único: NotificationService.create(db, entry) — insere uma notificação na tabela notifications. Não gera audit log.
+Tipos de notificação (constantes): APPOINTMENT_CONFIRMED, APPOINTMENT_ALTERED, APPOINTMENT_CANCELLED, APPOINTMENT_COMPLETED, NEW_APPOINTMENT_RECEIVED.
+Mensagens geradas dinamicamente com dados do agendamento.
+Chamado de AppointmentsService com a mesma instância de db após o commit principal.
+F8.2 — Modificação de AppointmentsService
+create(): chamar NotificationService.create() para CLIENT e PROFESSIONAL após commit.
+alter(): chamar para CLIENT e PROFESSIONAL.
+cancel(): chamar para CLIENT e PROFESSIONAL.
+updateStatus() ao atingir COMPLETED: chamar para CLIENT (opcional D1).
+Falha na notificação não deve reverter a operação principal (try/catch isolado — notificação é best-effort).
+F8.3 — Validator (src/validators/notifications.validator.ts)
+ListNotificationsQuerySchema — query params: unread (boolean coercive), page, limit.
+NotificationParamsSchema — params: id (UUID).
+F8.4 — Repository (src/repositories/notifications.repository.ts)
+create(db, entry) — insere notificação.
+findManyByUserId(db, userId, filters) — SELECT + COUNT paginado filtrando por user_id (e opcionalmente read_at IS NULL). Ordenação: created_at DESC.
+findById(db, id) — busca uma notificação por ID (para IDOR check).
+markAsRead(db, id) — UPDATE read_at = NOW() WHERE id = id. Idempotente (se já lida, não recria).
+F8.5 — Controller (src/controllers/notifications.controller.ts)
+list() — GET /notifications: lê userId da sessão, chama repository, retorna paginado.
+markAsRead() — POST /notifications/:id/read: valida UUID, busca notificação, verifica ownership, atualiza read_at.
+F8.6 — Routes (src/routes/notifications.ts)
+GET /notifications → requireAuth + validateQuery + controller.list
+POST /notifications/:id/read → requireAuth + validateParams + controller.markAsRead
+F8.7 — Registro (src/routes/index.ts)
+Importar e registrar notificationsRouter.
+G. RBAC
+Endpoint	ADMIN	PROFESSIONAL	CLIENT	Anônimo
+GET /api/notifications	✅ 200 (próprias)	✅ 200 (próprias)	✅ 200 (próprias)	❌ 401
+POST /api/notifications/:id/read	✅ 200 (própria)	✅ 200 (própria)	✅ 200 (própria)	❌ 401
+Notificação de outro usuário	❌ 403	❌ 403	❌ 403	—
+Todos os três roles autenticados podem listar e marcar suas próprias notificações. Nenhum role pode acessar notificações de outro usuário (RN-087).
+
+H. Validações
+Regra	Comportamento
+id em POST /notifications/:id/read não é UUID	400 — Zod
+id não existe na tabela	404
+id existe mas pertence a outro usuário	403
+Notificação já marcada como lida	200 — idempotente, retorna readAt existente
+unread com valor fora de "true"/"false"	400 — Zod
+page < 1	400 — Zod
+limit > 50	400 — Zod
+I. Tratamento de Erros
+Situação	HTTP	Código
+Não autenticado	401	UNAUTHORIZED
+Notificação de outro usuário	403	FORBIDDEN
+UUID inválido no params	400	VALIDATION_ERROR
+Query param inválido	400	VALIDATION_ERROR
+ID não encontrado	404	NOT_FOUND
+Erro de banco	500	via mapDbError
+J. Banco de Dados
+Nenhuma migration prevista.
+
+A tabela notifications já existe com schema completo:
+
+id uuid PK
+user_id uuid FK → users(id) RESTRICT
+type varchar(50) NOT NULL
+title varchar(255) NOT NULL
+message text NOT NULL
+appointment_id uuid FK → appointments(id) RESTRICT (nullable)
+read_at timestamptz (nullable)
+created_at timestamptz NOT NULL DEFAULT now()
+Índices existentes:
+
+idx_notif_user_all — (user_id, created_at DESC) — cobre GET /api/notifications sem filtro
+idx_notif_user_unread — (user_id, created_at DESC) WHERE read_at IS NULL — cobre filtro unread=true
+Schema Drizzle notifications já exportado de @workspace/db.
+
+Baseline preservado: 16 tabelas · 14 triggers · 3 EXCLUDE constraints · 1 migration.
+
+K. Concorrência / Transações
+Geração de notificações: ocorre fora da transação principal dos services de appointments (best-effort). Falha na criação de notificação não reverte o agendamento. try/catch isolado em AppointmentsService.
+POST /notifications/:id/read: UPDATE simples sem risco de concorrência. Se duas requisições simultâneas marcarem a mesma notificação como lida, ambas retornam 200 com o mesmo read_at (idempotente).
+GET /api/notifications: leitura pura, sem concorrência relevante.
+L. Audit Logs
+Operação	Audit log?	Justificativa
+GET /api/notifications	❌ Não	Leitura; padrão estabelecido em F6-F7
+POST /notifications/:id/read	❌ Não	Ação de baixa criticidade sobre dado próprio do usuário
+Criação de notificação (interna)	❌ Não	Evento derivado de ações já auditadas (create/alter/cancel appointment)
+M. Arquivos a Criar e Modificar
+Arquivo	Ação
+src/services/notifications.service.ts	NOVO
+src/validators/notifications.validator.ts	NOVO
+src/repositories/notifications.repository.ts	NOVO
+src/controllers/notifications.controller.ts	NOVO
+src/routes/notifications.ts	NOVO
+tests/integration/notifications.test.ts	NOVO
+src/routes/index.ts	ALTERADO — registrar notificationsRouter
+src/services/appointments.service.ts	ALTERADO — chamar NotificationService em create, alter, cancel, updateStatus(COMPLETED)
+Total: 6 novos + 2 alterados = 8 arquivos.
+
+A alteração em appointments.service.ts é de baixo risco: adiciona chamadas best-effort dentro de try/catch isolado, sem alterar o contrato externo dos endpoints ou a lógica de negócio existente.
+
+N. Plano de Testes de Integração
+RBAC — GET /api/notifications (4 testes)
+ADMIN autenticado → 200
+PROFESSIONAL autenticado → 200
+CLIENT autenticado → 200
+Anônimo → 401
+RBAC — POST /api/notifications/:id/read (4 testes)
+ADMIN → 200 (notificação própria)
+PROFESSIONAL → 200 (notificação própria)
+CLIENT → 200 (notificação própria)
+Anônimo → 401
+IDOR — GET /api/notifications (2 testes)
+CLIENT vê apenas suas próprias notificações (não as do PROFESSIONAL)
+PROFESSIONAL vê apenas as suas (não as do CLIENT)
+IDOR — POST /api/notifications/:id/read (2 testes)
+CLIENT tenta marcar notificação do PROFESSIONAL → 403
+PROFESSIONAL tenta marcar notificação do CLIENT → 403
+Happy path — GET /api/notifications (5 testes)
+Retorna campos esperados (id, type, title, message, appointmentId, readAt, createdAt)
+Notificações não lidas têm readAt = null
+Notificações lidas têm readAt preenchido
+Paginação: limit=1 retorna 1 item com totalPages correto
+Filtro unread=true retorna apenas notificações com readAt = null
+Happy path — POST /api/notifications/:id/read (3 testes)
+Retorna id e readAt preenchido
+readAt foi persistido (GET após POST confirma)
+Idempotente: marcar já-lida retorna 200 com o mesmo readAt
+Geração de notificações (4 testes)
+Criar appointment → CLIENT tem notificação com type APPOINTMENT_CONFIRMED
+Criar appointment → PROFESSIONAL tem notificação com type NEW_APPOINTMENT_RECEIVED
+Cancelar appointment → CLIENT tem notificação com type APPOINTMENT_CANCELLED
+Alterar appointment → CLIENT tem notificação com type APPOINTMENT_ALTERED
+Validações (5 testes)
+POST /notifications/:id/read com UUID inválido → 400
+POST /notifications/:id/read com UUID inexistente → 404
+GET /notifications?unread=maybe → 400
+GET /notifications?page=0 → 400
+GET /notifications?limit=51 → 400
+Estimativa total: ~29 testes
+
+O. Gates Obrigatórios
+Gate	Critério
+Typecheck	0 erros
+Testes anteriores	394/394 intactos
+Novos testes F8	todos passando (~29)
+Suite completa	394 + ~29 = ~423 verdes
+Build	OK
+Tabelas	16 (inalteradas)
+Triggers	14 (inalterados)
+EXCLUDE constraints	3 (inalteradas)
+Migrations	1 (nenhuma nova)
+git diff --name-only	somente os 8 arquivos do escopo
+Regressão appointments.service.ts	nenhum dos 394 testes existentes quebrado
+Chamadas best-effort	falha na notificação não quebra agendamento
+P. Riscos e Decisões Pendentes
+ID	Tipo	Descrição	Proposta
+D1	DECISÃO	Quem recebe notificações de cada evento? CLIENT apenas, ou CLIENT + PROFESSIONAL?	Proposta: CLIENT + PROFESSIONAL para todos os eventos de appointment (criação, alteração, cancelamento). Conclusão (COMPLETED): apenas CLIENT.
+D2	DECISÃO	Quais são os valores exatos do campo type? Nenhum documento especifica enum.	Proposta: APPOINTMENT_CONFIRMED, NEW_APPOINTMENT_RECEIVED, APPOINTMENT_ALTERED, APPOINTMENT_CANCELLED, APPOINTMENT_COMPLETED.
+D3	DECISÃO	limit máximo em GET /api/notifications: 50 ou 100? Doc 16 §54 não especifica limite máximo para notificações.	Proposta: 50 (notificações são mais frequentes que audit-logs; 50 é mais adequado para mobile).
+D4	DECISÃO	ADMIN recebe notificações? Não há tela "Notificações" no fluxo do Admin (Doc 18 §27 — fluxo Admin não menciona Notificações).	Proposta: ADMIN não recebe notificações de agendamento. Apenas CLIENT e PROFESSIONAL. GET /api/notifications para ADMIN retornará data: [] normalmente (sem erro).
+D5	DECISÃO	Notificação gerada de forma síncrona (mesmo db request) ou best-effort (try/catch isolado)?	Proposta: best-effort — try/catch isolado após commit principal. Falha na notificação não reverte agendamento. Consistente com RN-056 (integridade da operação principal).
+D6	DECISÃO	Implementar lembrete? Requer cron job ou scheduler — infraestrutura não prevista no MVP do API Server.	Proposta: NÃO implementar no MVP. Doc 18 PROMPT 16 lista "lembrete" mas diz "Implementar inicialmente notificações internas" — o "inicialmente" justifica o adiamento.
+R1	RISCO BAIXO	Modificação de appointments.service.ts pode introduzir regressão nos 394 testes existentes.	Mitigado: notificação em try/catch isolado; modificação não altera contrato externo do service.
+R2	RISCO BAIXO	Integração entre services de appointments e o novo NotificationService cria acoplamento.	Mitigado: dependência unidirecional (appointments → notifications). NotificationService não importa nada de appointments.
+D7	DECISÃO	O campo message deve ter texto completo ou apenas referências (ex: appointmentId)?	Proposta: texto legível completo gerado em tempo de criação (ex: "Seu agendamento para Massagem Teste em 12/08/2026 às 10:00 foi confirmado."). Simplifica o frontend; alinhado com "confirmação visual" do Doc 10 §18.
+GATE DE PLANEJAMENTO
+Status:           AGUARDANDO APROVAÇÃO
+Próxima feature:  FASE 8 — NOTIFICAÇÕES
+                  (Doc 17 §43 / Doc 18 §40 FASE 20 / Doc 16 §46-47)
+Escopo:           NotificationService (geração); GET /api/notifications;
+                  POST /api/notifications/:id/read; integração com
+                  AppointmentsService (create, alter, cancel, updateStatus)
+Arquivos novos:   6 (service, validator, repository, controller, route, test)
+Arquivos alter.:  2 (appointments.service.ts, routes/index.ts)
+Migration:        NÃO — tabela notifications já existe com schema completo
+Risco regressão:  BAIXO — notificação best-effort não altera contratos existentes
+Decisões pend.:   D1 — Quem recebe notificações (CLIENT+PROFESSIONAL ou CLIENT only)?
+                  D2 — Enum exato dos tipos (type column)?
+                  D3 — limit máximo: 50 ou 100?
+                  D4 — ADMIN recebe notificações?
+                  D5 — Síncrono ou best-effort (proposta: best-effort)?
+                  D6 — Lembrete implementado? (proposta: não no MVP)
+                  D7 — Formato da message (proposta: texto legível completo)?
