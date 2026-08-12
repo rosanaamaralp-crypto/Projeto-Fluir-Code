@@ -55,6 +55,13 @@ export interface AppointmentTestExtras {
   availabilityId: string;
 }
 
+export interface ConcurrencyExtras {
+  prof2Id: string;
+  prof2UserId: string;
+  client2Id: string;
+  client2UserId: string;
+}
+
 export async function seedTestData(): Promise<TestUsers> {
   await cleanTestData();
 
@@ -99,6 +106,69 @@ export async function seedTestData(): Promise<TestUsers> {
     clientId: client!.id,
     clientUserId: clientUser!.id,
     serviceId: svc!.id,
+  };
+}
+
+/**
+ * Cria segundo profissional e segundo cliente para testes de concorrência (OBS-C).
+ * Cases A, B, C precisam de dois profissionais e/ou dois clientes distintos.
+ */
+export async function seedConcurrencyExtras(ids: TestUsers): Promise<ConcurrencyExtras> {
+  const prof2Hash = await bcrypt.hash(TEST_PASSWORDS.professional, SALT_ROUNDS);
+  const client2Hash = await bcrypt.hash(TEST_PASSWORDS.client2, SALT_ROUNDS);
+
+  const [prof2User] = await db
+    .insert(users)
+    .values({
+      roleId: 2,
+      name: "Profissional 2 Concurrent",
+      email: "prof2-appt@fluir.test",
+      passwordHash: prof2Hash,
+    })
+    .returning({ id: users.id });
+
+  const [prof2] = await db
+    .insert(professionals)
+    .values({ userId: prof2User!.id, specialty: "Massoterapeuta 2", bio: "Bio prof2" })
+    .returning({ id: professionals.id });
+
+  const [client2User] = await db
+    .insert(users)
+    .values({
+      roleId: 3,
+      name: "Cliente 2 Concurrent",
+      email: "client2-appt@fluir.test",
+      passwordHash: client2Hash,
+    })
+    .returning({ id: users.id });
+
+  const [client2] = await db
+    .insert(clients)
+    .values({ userId: client2User!.id, birthDate: "1992-05-20" })
+    .returning({ id: clients.id });
+
+  // Vínculo prof2 → serviceId
+  await db
+    .insert(professionalServices)
+    .values({ professionalId: prof2!.id, serviceId: ids.serviceId, active: true })
+    .onConflictDoNothing();
+
+  // Disponibilidade para prof2 (todos os 7 dias, 08:00–20:00)
+  for (let w = 0; w <= 6; w++) {
+    await db.insert(availability).values({
+      professionalId: prof2!.id,
+      weekday: w,
+      startTime: "08:00",
+      endTime: "20:00",
+      active: true,
+    });
+  }
+
+  return {
+    prof2Id: prof2!.id,
+    prof2UserId: prof2User!.id,
+    client2Id: client2!.id,
+    client2UserId: client2User!.id,
   };
 }
 

@@ -1,0 +1,445 @@
+## FASE 4.1 — CORREÇÃO DAS RESSALVAS DA AUDITORIA INDEPENDENTE
+
+A Fase 4 foi auditada independentemente e recebeu:
+
+**APROVADA COM RESSALVAS**
+
+Resultado atual confirmado:
+
+* typecheck: 0 erros
+* testes: 216/216 passando
+* build: OK
+* schema íntegro
+* 0 problemas críticos
+* 0 problemas altos
+
+Não quero implementar nenhuma nova funcionalidade neste momento.
+
+Quero executar exclusivamente a **FASE 4.1 — Correção das ressalvas encontradas na auditoria independente da Fase 4**.
+
+### REGRA PRINCIPAL
+
+Antes de modificar qualquer arquivo:
+
+1. Leia todos os arquivos envolvidos nas OBS-A, OBS-C, OBS-D e OBS-E.
+2. Leia também os testes existentes relacionados a appointments, slots, concorrência, audit logs e reagendamento.
+3. Verifique o schema real do banco antes de alterar qualquer código.
+4. Não crie migration.
+5. Não altere tabelas, constraints, triggers, EXCLUDE constraints ou FKs.
+6. Não altere regras de negócio que não estejam diretamente relacionadas às quatro observações abaixo.
+7. Não faça refatorações cosméticas.
+8. Não altere contratos existentes da API sem necessidade.
+9. Preserve integralmente os 216 testes existentes.
+10. Ao final, execute novamente typecheck, todos os testes, build e regressão do schema.
+
+---
+
+# OBS-A — AUDIT LOG DO CANCELAMENTO DURANTE REAGENDAMENTO
+
+Auditoria identificou:
+
+Durante `reschedule()`, o appointment original é alterado para `CANCELLED`, mas é criado somente um audit log:
+
+`APPOINTMENT_RESCHEDULED`
+
+O cancelamento do appointment original não possui seu próprio:
+
+`APPOINTMENT_CANCELLED`
+
+### Correção desejada
+
+Dentro da mesma `db.transaction()` usada pelo reagendamento:
+
+1. Atualizar o appointment original para `CANCELLED`.
+2. Registrar o respectivo `appointment_status_history`.
+3. Criar um audit log:
+
+`action = "APPOINTMENT_CANCELLED"`
+
+com:
+
+`entityId = appointmentId` do appointment ORIGINAL.
+
+4. Criar o novo appointment.
+5. Criar o histórico do novo appointment.
+6. Criar o audit log:
+
+`action = "APPOINTMENT_RESCHEDULED"`
+
+conforme o comportamento atual.
+
+### Requisitos
+
+* Tudo deve permanecer na mesma transaction.
+* Se qualquer operação falhar, tudo deve sofrer rollback.
+* O comportamento atual do reagendamento deve ser preservado.
+* Não remover o `APPOINTMENT_RESCHEDULED`.
+* Não duplicar audit logs.
+* Verificar o formato utilizado atualmente pelos demais audit logs antes de implementar.
+
+Adicionar teste de integração verificando que um reagendamento bem-sucedido produz:
+
+1. `APPOINTMENT_CANCELLED` para o appointment original.
+2. `APPOINTMENT_RESCHEDULED` para o reagendamento.
+3. histórico de status do appointment original.
+4. histórico de status do novo appointment.
+
+---
+
+# OBS-B — NÃO ALTERAR
+
+A auditoria identificou que `addresses` não possui coluna `status`.
+
+Isso está de acordo com o schema atual.
+
+**NÃO faça nenhuma alteração relacionada à OBS-B.**
+
+Não criar coluna.
+Não criar migration.
+Não inventar status para addresses.
+
+Apenas manter documentado que não há ação necessária.
+
+---
+
+# OBS-C — TESTES DE CONCORRÊNCIA
+
+Já existe teste de concorrência para o Caso D.
+
+Agora adicionar testes independentes para os três cenários restantes:
+
+### Caso A
+
+Mesmo `client_id`, profissionais diferentes e mesmo horário.
+
+Esperado:
+
+* exatamente 1 request bem-sucedido
+* exatamente 1 conflito `409`
+
+A proteção deve ocorrer pela:
+
+`excl_client_no_overlap`
+
+### Caso B
+
+Mesmo profissional, clientes diferentes e mesmo horário.
+
+Esperado:
+
+* exatamente 1 request bem-sucedido
+* exatamente 1 conflito `409`
+
+A proteção deve ocorrer pela:
+
+`excl_professional_no_overlap`
+
+### Caso C
+
+Mesmo resource, clientes e profissionais diferentes e mesmo horário.
+
+Esperado:
+
+* exatamente 1 request bem-sucedido
+* exatamente 1 conflito `409`
+
+A proteção deve ocorrer pela:
+
+`excl_resource_no_overlap`
+
+### Requisitos importantes
+
+Use requests realmente concorrentes, seguindo o padrão já utilizado no Caso D, preferencialmente com `Promise.all`.
+
+Não substitua os testes por testes sequenciais.
+
+Não altere as constraints do banco.
+
+Não altere a lógica de concorrência para fazer os testes passarem.
+
+Os testes devem demonstrar que a constraint do PostgreSQL é a proteção definitiva.
+
+Depois dos testes, verificar também que o resultado continua sendo exatamente:
+
+`[201, 409]`
+
+independentemente da ordem das respostas.
+
+---
+
+# OBS-D — GET /api/slots PARA CLIENT
+
+Auditoria identificou uma inconsistência de UX:
+
+Quando um usuário com role `CLIENT` consulta:
+
+`GET /api/slots`
+
+sem fornecer `clientId`, o serviço não considera os appointments já existentes daquele cliente.
+
+Assim, um horário que será recusado posteriormente pelo `POST /api/appointments` pode aparecer como disponível.
+
+### Correção desejada
+
+Para usuários `CLIENT`:
+
+* derivar o `clientId` exclusivamente da sessão autenticada;
+* não confiar em `clientId` enviado pelo cliente;
+* usar esse `clientId` na consulta de slots mesmo quando o parâmetro não for informado.
+
+Se o CLIENT enviar um `clientId` diferente do seu:
+
+* não utilizar o ID fornecido;
+* utilizar o ID derivado da sessão.
+
+Para ADMIN e demais roles, preservar o comportamento atual.
+
+### Requisitos
+
+Não transformar o GET `/slots` em endpoint de criação/reserva.
+
+Não alterar as regras de disponibilidade.
+
+Não alterar as EXCLUDE constraints.
+
+Não introduzir nova regra de negócio além de garantir que o próprio CLIENT seja considerado no cálculo de disponibilidade.
+
+Adicionar testes cobrindo:
+
+1. CLIENT consulta slots sem `clientId` → usa seu próprio clientId.
+2. CLIENT possui appointment no horário → slot não aparece como disponível.
+3. CLIENT envia `clientId` de outro cliente → o sistema ignora o ID informado e usa o próprio.
+4. ADMIN mantém comportamento atual.
+
+---
+
+# OBS-E — TESTES DE INTEGRAÇÃO DO REAGENDAMENTO
+
+Esta é a observação de maior prioridade.
+
+Adicionar testes de integração end-to-end para:
+
+`PATCH /api/appointments/:id`
+
+com:
+
+```json
+{
+  "reschedule": {
+    "startDatetime": "..."
+  }
+}
+```
+
+Cobrir obrigatoriamente:
+
+### Teste 1 — CLIENT happy path
+
+CLIENT reagenda seu próprio appointment confirmado.
+
+Esperado:
+
+* HTTP 200
+* appointment original → `CANCELLED`
+* novo appointment criado
+* novo appointment → `CONFIRMED`
+* histórico correto para ambos
+* audit log `APPOINTMENT_CANCELLED`
+* audit log `APPOINTMENT_RESCHEDULED`
+
+### Teste 2 — ADMIN happy path
+
+ADMIN reagenda appointment de um cliente.
+
+Esperado:
+
+* HTTP 200
+* operação concluída corretamente
+* histórico correto
+* audit logs corretos
+
+### Teste 3 — PROFESSIONAL
+
+PROFESSIONAL tenta reagendar.
+
+Esperado:
+
+* HTTP 403
+* appointment original permanece `CONFIRMED`
+* nenhum novo appointment criado
+* nenhum histórico indevido
+* nenhum audit log indevido
+
+### Teste 4 — Appointment não CONFIRMED
+
+Tentar reagendar appointment que já esteja:
+
+* `IN_PROGRESS`, ou
+* `COMPLETED`, ou
+* `CANCELLED`, ou
+* `NO_SHOW`
+
+Esperado:
+
+* HTTP 400
+* nenhum novo appointment
+* estado original preservado
+* nenhum audit log de reagendamento
+
+### Teste 5 — Conflito no novo horário
+
+Criar um appointment conflitante no novo horário e tentar reagendar o original para esse horário.
+
+Esperado:
+
+* HTTP 409
+* appointment original permanece `CONFIRMED`
+* novo appointment não existe
+* histórico do original não registra cancelamento
+* não existe `APPOINTMENT_CANCELLED` do reagendamento
+* não existe `APPOINTMENT_RESCHEDULED`
+
+Esse teste é especialmente importante para comprovar o rollback da transaction.
+
+### Teste 6 — Falha de regra de negócio no novo horário
+
+Cobrir pelo menos um caso em que o novo horário seja inválido por uma regra de disponibilidade já existente.
+
+Esperado:
+
+* erro apropriado
+* appointment original permanece `CONFIRMED`
+* nenhum novo appointment
+* nenhum audit de reagendamento
+
+---
+
+# PRESERVAÇÃO DO CONTRATO ATUAL
+
+Durante toda a implementação:
+
+* Não modificar o schema do banco.
+* Não criar migration.
+* Não modificar EXCLUDE constraints.
+* Não modificar triggers.
+* Não modificar FKs.
+* Não alterar nomes de status existentes.
+* Não alterar modalidades existentes:
+
+  * `IN_PERSON`
+  * `HOME_CARE`
+* Não alterar RBAC existente.
+* Não permitir que CLIENT manipule `clientId`.
+* Não permitir que PROFESSIONAL crie ou reagende appointments.
+* Não remover nenhum teste existente.
+* Não reduzir cobertura para fazer o suite passar.
+
+---
+
+# ETAPA DE VERIFICAÇÃO OBRIGATÓRIA
+
+Depois de implementar:
+
+### 1. Typecheck
+
+Executar:
+
+`pnpm run typecheck`
+
+Resultado obrigatório:
+
+`0 erros`
+
+### 2. Testes
+
+Executar:
+
+`pnpm run test`
+
+Resultado obrigatório:
+
+Todos os testes existentes + novos testes passando.
+
+O baseline atual é:
+
+`216/216`
+
+O número final deverá ser maior que 216.
+
+### 3. Build
+
+Executar:
+
+`pnpm run build`
+
+Resultado obrigatório:
+
+`OK`
+
+### 4. Regressão do banco
+
+Verificar diretamente no banco:
+
+* 16 tabelas
+* 14 tabelas de negócio
+* 14 triggers
+* 43 índices
+* 20 FKs
+* 3 EXCLUDE constraints
+* 1 migration aplicada
+* nenhuma migration nova
+
+Confirmar especialmente que permanecem:
+
+* `excl_client_no_overlap`
+* `excl_professional_no_overlap`
+* `excl_resource_no_overlap`
+
+### 5. Verificação final de código
+
+Procurar por:
+
+* `new Pool()` fora de `src/lib/db.ts`
+* `as any`
+* `@ts-ignore`
+* migration runner
+* acesso direto ao banco fora do padrão existente
+
+Não deve surgir nenhum novo anti-pattern.
+
+---
+
+# DOCUMENTAÇÃO
+
+Atualizar `docs/FASE-4-ARQUITETURA.md` e `replit.md` somente depois que todas as verificações passarem.
+
+Documentar:
+
+* OBS-A corrigida
+* OBS-C corrigida
+* OBS-D corrigida
+* OBS-E corrigida
+* OBS-B sem ação por decisão de schema
+
+Não declarar a Fase 4.1 concluída antes de todos os gates passarem.
+
+---
+
+# RELATÓRIO FINAL OBRIGATÓRIO
+
+Ao terminar, apresentar:
+
+1. Arquivos criados.
+2. Arquivos modificados.
+3. Correção realizada para cada OBS.
+4. Quantidade final de testes.
+5. Resultado do typecheck.
+6. Resultado do build.
+7. Resultado da regressão do banco.
+8. Confirmação de que nenhuma migration foi criada.
+9. Confirmação de que as 3 EXCLUDE constraints permanecem intactas.
+10. Eventuais problemas que ainda permanecerem.
+
+**Não iniciar Fase 5 ou qualquer nova funcionalidade.**
+
+O objetivo desta tarefa é exclusivamente fechar as ressalvas da auditoria independente da Fase 4.

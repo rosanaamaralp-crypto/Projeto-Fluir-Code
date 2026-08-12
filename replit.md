@@ -51,6 +51,7 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 - **Fase 3 (concluída):** API REST completa — autenticação, RBAC, 11 routers, slots, auditoria, 136 testes passando.
 - **Fase 3.1 (concluída):** 9 correções pós-auditoria (P1–P9) — bootstrap admin, transação atômica no update de profissional, schemas por role para clientes, IN_PERSON sem recursos, DrizzleDB union type, validateParams em todas as rotas, boundary documentado, schemas separados cliente, PATCH blocked_periods via requireAdmin na rota.
 - **Fase 4 (concluída):** Módulo de appointments completo — 5 endpoints, lógica de modalidade (IN_PERSON/HOME_CARE), transições de status RBAC, reagendamento atômico, auditoria transacional, proteção de concorrência via EXCLUDE constraints (23P01 → 409), 216 testes passando.
+- **Fase 4.1 (concluída):** Correção das ressalvas da auditoria independente da Fase 4 — OBS-A: APPOINTMENT_CANCELLED adicionado ao reagendamento dentro da mesma transaction; OBS-B: sem ação (schema correto); OBS-C: testes de concorrência para Casos A, B, C adicionados; OBS-D: testes end-to-end confirmando que clientId do CLIENT é derivado exclusivamente da sessão; OBS-E: 6 testes de integração de reagendamento adicionados. Total: 231 testes passando.
 - O acesso ao banco é criado sob demanda (`getDatabaseClient()`).
 - O contrato OpenAPI é a fonte de verdade para a API e seus clientes gerados.
 - O lint inicial usa Prettier; regras de ESLint ficam para quando houver código de produto.

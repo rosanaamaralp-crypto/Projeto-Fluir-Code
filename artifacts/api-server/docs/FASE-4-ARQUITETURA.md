@@ -146,11 +146,17 @@ Independe de alterações futuras no preço do serviço.
 
 Todo evento de appointment dispara um registro em `audit_logs` **dentro da mesma transação**:
 
-| Evento | action |
-|---|---|
-| Criação | `APPOINTMENT_CREATED` |
-| Mudança de status | `APPOINTMENT_STATUS_UPDATED` |
-| Reagendamento | `APPOINTMENT_RESCHEDULED` |
+| Evento | action | entityId |
+|---|---|---|
+| Criação | `APPOINTMENT_CREATED` | ID do novo appointment |
+| Mudança de status | `APPOINTMENT_STATUS_UPDATED` | ID do appointment |
+| Cancelamento | `APPOINTMENT_CANCELLED` | ID do appointment cancelado |
+| Reagendamento | `APPOINTMENT_RESCHEDULED` | ID do **novo** appointment criado |
+
+> **OBS-A (Fase 4.1):** Durante `reschedule()`, o appointment original recebe um audit
+> `APPOINTMENT_CANCELLED` (entityId = ID original), seguido do `APPOINTMENT_RESCHEDULED`
+> (entityId = ID do novo appointment). Ambos ficam na mesma transaction — se qualquer
+> operação falhar, tudo sofre rollback e nenhum audit é gravado.
 
 Por decisão da Fase 4 (OBS-2), o audit de appointments é sempre transacional — diferente do login/logout (fire-and-forget legacy da Fase 3).
 
@@ -161,14 +167,25 @@ Por decisão da Fase 4 (OBS-2), o audit de appointments é sempre transacional �
 | Suite | Arquivo | Cobertura |
 |---|---|---|
 | Unit | `tests/unit/services/appointments.service.test.ts` | Lógica pura: end_datetime, antecedência, transições, modalidade, resource, ownership, 23P01 |
-| Integration | `tests/integration/appointments.test.ts` | Todos os cenários de RBAC, validação, criação, status, história, audit, blocked period, disponibilidade |
-| Concurrency | `tests/integration/concurrency/appointments.concurrent.test.ts` | Promise.all de 2 requests idênticos → [201, 409], 1 CONFIRMED no banco |
+| Integration | `tests/integration/appointments.test.ts` | Todos os cenários de RBAC, validação, criação, status, história, audit, blocked period, disponibilidade, **reagendamento (OBS-E)** |
+| Concurrency | `tests/integration/concurrency/appointments.concurrent.test.ts` | Promise.all → [201, 409] para Casos A, B, C e D (OBS-C) |
+| Slots CLIENT filter | `tests/integration/slots-client-filter.test.ts` | CLIENT sem clientId → usa sessão; CLIENT com appointment → slot oculto; CLIENT envia clientId de outro → ignorado; ADMIN sem filtro (OBS-D) |
 
-**Regra de slot nos testes de integração:** `uniqueSlot()` garante slots dentro da janela 08:00–20:00 UTC em dias futuros (d+2 em diante), com incremento de 1h por chamada para evitar sobreposição de 60 min de duração.
+**Regra de slot nos testes de integração:**
+- `uniqueSlot()` usa d+2 em diante, horas 10–13 UTC, incremento de 1h por chamada.
+- `rSlot()` (testes de reagendamento) usa d+20 em diante para evitar colisão com os demais.
+
+**Casos de concorrência (OBS-C):**
+- **Caso A** (d+11): mesmo client, profissionais diferentes → `excl_client_no_overlap`
+- **Caso B** (d+12): mesmo profissional, clientes diferentes → `excl_professional_no_overlap`
+- **Caso C** (d+13): mesmo resource, client+professional diferentes → `excl_resource_no_overlap`
+- **Caso D** (d+10): mesma combinação completa → qualquer EXCLUDE constraint
 
 ---
 
-## 11. Seed de testes (`seedAppointmentExtras`)
+## 11. Seed de testes
+
+### `seedAppointmentExtras`
 
 Fixtures adicionais para testes de appointments:
 
@@ -178,7 +195,37 @@ Fixtures adicionais para testes de appointments:
 - **Vínculos:** `professional_services` para ambos os serviços
 - **Endereço do cliente:** para testes de HOME_CARE
 
-O cleanup em `cleanTestData()` agora inclui:
-1. `DISABLE TRIGGER trg_appt_history_no_delete` (append-only)
-2. DELETE `appointment_status_history` e `appointments` para users de teste
-3. `ENABLE TRIGGER trg_appt_history_no_delete` — reativado **imediatamente** no mesmo bloco
+### `seedConcurrencyExtras` (Fase 4.1 — OBS-C)
+
+Fixtures adicionais para os Casos A, B e C de concorrência:
+
+- **prof2** (`prof2-appt@fluir.test`): segundo profissional com availability 08:00–20:00 e vínculo ao serviceId de teste
+- **client2** (`client2-appt@fluir.test`): segundo cliente para testes de Caso B e C
+
+O cleanup em `cleanTestData()` inclui `client2-appt@fluir.test` e `prof2-appt@fluir.test`.
+
+---
+
+## 12. Fase 4.1 — Correção das ressalvas da auditoria independente
+
+### OBS-A — Audit log do cancelamento durante reagendamento ✅ CORRIGIDA
+
+**Problema:** `reschedule()` só emitia `APPOINTMENT_RESCHEDULED`. O cancelamento do original não tinha `APPOINTMENT_CANCELLED`.
+
+**Correção:** Após o status history do cancelamento (passo 5), adicionado `APPOINTMENT_CANCELLED` com `entityId = appointmentId` (original), dentro da mesma transaction. O `APPOINTMENT_RESCHEDULED` permanece inalterado no entityId do novo appointment.
+
+### OBS-B — addresses sem coluna status ✅ SEM AÇÃO
+
+Por decisão de schema, `addresses` não possui coluna `status`. Nenhuma alteração necessária.
+
+### OBS-C — Testes de concorrência para Casos A, B, C ✅ CORRIGIDA
+
+Adicionados três casos ao `appointments.concurrent.test.ts` com `Promise.all`, verificando que a EXCLUDE constraint correspondente é a proteção definitiva em cada cenário.
+
+### OBS-D — GET /api/slots para CLIENT ✅ CORRIGIDA (já implementada, testes adicionados)
+
+O `SlotsController` já derivava `clientId` exclusivamente da session para role CLIENT (o `SlotsQuerySchema` não inclui `clientId`, então qualquer parâmetro enviado pelo cliente é descartado pelo middleware). Adicionado `slots-client-filter.test.ts` provando o comportamento end-to-end.
+
+### OBS-E — Testes de integração do reagendamento ✅ CORRIGIDA
+
+Adicionados 6 testes de integração em `appointments.test.ts` cobrindo: CLIENT happy path (com verificação de audit APPOINTMENT_CANCELLED + APPOINTMENT_RESCHEDULED), ADMIN happy path, PROFESSIONAL → 403, appointment não CONFIRMED → 400, conflito com rollback → 409, regra de negócio inválida → erro.

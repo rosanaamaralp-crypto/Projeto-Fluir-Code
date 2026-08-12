@@ -641,3 +641,363 @@ describe("Horário fora da disponibilidade do profissional (409)", () => {
     expect(res.status).toBe(409);
   });
 });
+
+// ─── OBS-E — Testes de integração do reagendamento ────────────────────────
+//
+// Cobre PATCH /api/appointments/:id com body { reschedule: { startDatetime } }.
+// Slots de reagendamento começam em d+20 para evitar qualquer colisão com os
+// testes anteriores (que usam d+2 a d+~8 via uniqueSlot).
+
+let rescheduleSlotCounter = 0;
+/** Slot fixo dentro da janela 08:00–20:00 UTC, começando em d+20. */
+function rSlot(): string {
+  const dayOffset = 20 + Math.floor(rescheduleSlotCounter / 4);
+  const hour = 10 + (rescheduleSlotCounter % 4); // 10, 11, 12, 13 UTC
+  rescheduleSlotCounter += 1;
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + dayOffset);
+  d.setUTCHours(hour, 0, 0, 0);
+  return d.toISOString();
+}
+
+describe("OBS-E — PATCH /api/appointments/:id (reagendamento)", () => {
+
+  // ── Teste 1: CLIENT happy path ─────────────────────────────────────────
+
+  it("Teste 1 — CLIENT reagenda próprio appointment CONFIRMED (200)", async () => {
+    const originalSlot = rSlot();
+    const newSlot = rSlot();
+
+    // Criar appointment original
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const originalId = createRes.body.appointment.id;
+    expect(createRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Reagendar
+    const patchRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie)
+      .send({ reschedule: { startDatetime: newSlot } });
+
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.appointment).toBeDefined();
+
+    const newApptId = patchRes.body.appointment.id;
+    expect(newApptId).not.toBe(originalId); // novo appointment criado
+
+    // Appointment original → CANCELLED
+    const origRes = await request
+      .get(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie);
+    expect(origRes.status).toBe(200);
+    expect(origRes.body.appointment.status).toBe("CANCELLED");
+
+    // Novo appointment → CONFIRMED
+    expect(patchRes.body.appointment.status).toBe("CONFIRMED");
+    expect(patchRes.body.appointment.startDatetime).toBe(newSlot);
+
+    // Audit logs — OBS-A: deve existir APPOINTMENT_CANCELLED e APPOINTMENT_RESCHEDULED
+    const logsOriginal = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, originalId));
+
+    expect(logsOriginal.some((l) => l.action === "APPOINTMENT_CANCELLED")).toBe(true);
+
+    const logsNew = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, newApptId));
+
+    expect(logsNew.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(true);
+
+    // Histórico do appointment original: CONFIRMED → CANCELLED
+    const histOrigRes = await request
+      .get(`/api/appointments/${originalId}/history`)
+      .set("Cookie", clientCookie);
+    expect(histOrigRes.status).toBe(200);
+    const histOrig = histOrigRes.body.history as Array<{ oldStatus: string | null; newStatus: string }>;
+    expect(histOrig.some((h) => h.oldStatus === "CONFIRMED" && h.newStatus === "CANCELLED")).toBe(true);
+
+    // Histórico do novo appointment: null → CONFIRMED
+    const histNewRes = await request
+      .get(`/api/appointments/${newApptId}/history`)
+      .set("Cookie", clientCookie);
+    expect(histNewRes.status).toBe(200);
+    const histNew = histNewRes.body.history as Array<{ oldStatus: string | null; newStatus: string }>;
+    expect(histNew.some((h) => h.oldStatus === null && h.newStatus === "CONFIRMED")).toBe(true);
+  });
+
+  // ── Teste 2: ADMIN happy path ──────────────────────────────────────────
+
+  it("Teste 2 — ADMIN reagenda appointment de um cliente (200)", async () => {
+    const originalSlot = rSlot();
+    const newSlot = rSlot();
+
+    // Criar via CLIENT
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const originalId = createRes.body.appointment.id;
+
+    // ADMIN reagenda
+    const patchRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", adminCookie)
+      .send({ reschedule: { startDatetime: newSlot } });
+
+    expect(patchRes.status).toBe(200);
+    const newApptId = patchRes.body.appointment.id;
+    expect(newApptId).not.toBe(originalId);
+    expect(patchRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Original → CANCELLED
+    const origRes = await request
+      .get(`/api/appointments/${originalId}`)
+      .set("Cookie", adminCookie);
+    expect(origRes.status).toBe(200);
+    expect(origRes.body.appointment.status).toBe("CANCELLED");
+
+    // Audit logs corretos
+    const logsOrig = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, originalId));
+    expect(logsOrig.some((l) => l.action === "APPOINTMENT_CANCELLED")).toBe(true);
+
+    const logsNew = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, newApptId));
+    expect(logsNew.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(true);
+  });
+
+  // ── Teste 3: PROFESSIONAL → 403 ───────────────────────────────────────
+
+  it("Teste 3 — PROFESSIONAL tenta reagendar → 403, appointment original inalterado", async () => {
+    const originalSlot = rSlot();
+    const newSlot = rSlot();
+
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const originalId = createRes.body.appointment.id;
+
+    // PROFESSIONAL tenta reagendar
+    const patchRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", profCookie)
+      .send({ reschedule: { startDatetime: newSlot } });
+
+    expect(patchRes.status).toBe(403);
+
+    // Appointment original permanece CONFIRMED
+    const origRes = await request
+      .get(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie);
+    expect(origRes.status).toBe(200);
+    expect(origRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Nenhum audit log de APPOINTMENT_CANCELLED nem APPOINTMENT_RESCHEDULED para o original
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, originalId));
+    expect(logs.some((l) => l.action === "APPOINTMENT_CANCELLED")).toBe(false);
+    expect(logs.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(false);
+  });
+
+  // ── Teste 4: appointment não CONFIRMED → 400 ──────────────────────────
+
+  it("Teste 4 — reagendar appointment CANCELLED retorna 400, sem novo appointment", async () => {
+    const originalSlot = rSlot();
+    const newSlot = rSlot();
+
+    // Criar e cancelar
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const originalId = createRes.body.appointment.id;
+
+    // Cancelar
+    const cancelRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie)
+      .send({ status: "CANCELLED" });
+    expect(cancelRes.status).toBe(200);
+
+    // Tentar reagendar → deve ser 400
+    const patchRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie)
+      .send({ reschedule: { startDatetime: newSlot } });
+
+    expect(patchRes.status).toBe(400);
+
+    // Verificar que nenhum novo appointment foi criado ao novo slot
+    const origRes = await request
+      .get(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie);
+    expect(origRes.body.appointment.status).toBe("CANCELLED");
+
+    // Nenhum APPOINTMENT_RESCHEDULED no audit para o original
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, originalId));
+    expect(logs.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(false);
+  });
+
+  // ── Teste 5: conflito no novo horário → 409 + rollback total ──────────
+
+  it("Teste 5 — conflito no novo horário → 409, original permanece CONFIRMED, rollback", async () => {
+    const slotForOriginal = rSlot();
+    const slotOccupied = rSlot(); // este slot será ocupado por outro appointment
+
+    // Criar appointment X (o que queremos reagendar)
+    const createX = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: slotForOriginal,
+        modality: "IN_PERSON",
+      });
+    expect(createX.status).toBe(201);
+    const xId = createX.body.appointment.id;
+
+    // Criar appointment Y no slot conflitante (mesmo client → excl_client_no_overlap)
+    // Para que haja conflito, o mesmo client não pode ter dois appointments sobrepostos.
+    // Mas Y é criado com o mesmo client e mesmo profissional — isso é válido em slots diferentes.
+    // Vamos usar um segundo client para Y para conflito via profissional (excl_professional_no_overlap)
+    // Mas mais simples: Y é criado pelo admin com o mesmo client no slotOccupied
+    const createY = await request
+      .post("/api/appointments")
+      .set("Cookie", adminCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        clientId: ids.clientId,
+        startDatetime: slotOccupied,
+        modality: "IN_PERSON",
+      });
+    expect(createY.status).toBe(201);
+    const yId = createY.body.appointment.id;
+
+    // Tentar reagendar X para o slotOccupied (onde Y já existe para o mesmo cliente)
+    const patchRes = await request
+      .patch(`/api/appointments/${xId}`)
+      .set("Cookie", clientCookie)
+      .send({ reschedule: { startDatetime: slotOccupied } });
+
+    expect(patchRes.status).toBe(409);
+
+    // X deve continuar CONFIRMED (rollback da transaction)
+    const xRes = await request
+      .get(`/api/appointments/${xId}`)
+      .set("Cookie", clientCookie);
+    expect(xRes.status).toBe(200);
+    expect(xRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Y deve continuar CONFIRMED (não foi afetado)
+    const yRes = await request
+      .get(`/api/appointments/${yId}`)
+      .set("Cookie", adminCookie);
+    expect(yRes.status).toBe(200);
+    expect(yRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Audit: NÃO deve existir APPOINTMENT_CANCELLED para X (rollback)
+    const logsX = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, xId));
+    // Apenas APPOINTMENT_CREATED (da criação), sem CANCELLED nem RESCHEDULED
+    expect(logsX.some((l) => l.action === "APPOINTMENT_CANCELLED")).toBe(false);
+    expect(logsX.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(false);
+
+    // Histórico de X: não deve ter entrada de CANCELLED
+    const histRes = await request
+      .get(`/api/appointments/${xId}/history`)
+      .set("Cookie", clientCookie);
+    expect(histRes.status).toBe(200);
+    const hist = histRes.body.history as Array<{ newStatus: string }>;
+    expect(hist.every((h) => h.newStatus !== "CANCELLED")).toBe(true);
+  });
+
+  // ── Teste 6: regra de negócio inválida no novo horário ────────────────
+
+  it("Teste 6 — reagendar para horário fora da disponibilidade → erro, original inalterado", async () => {
+    const originalSlot = rSlot();
+
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const originalId = createRes.body.appointment.id;
+
+    // Tentar reagendar para 03:00 UTC (fora da janela 08:00–20:00)
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 21);
+    d.setUTCHours(3, 0, 0, 0);
+    const invalidSlot = d.toISOString();
+
+    const patchRes = await request
+      .patch(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie)
+      .send({ reschedule: { startDatetime: invalidSlot } });
+
+    // Deve retornar erro (409 por regra de disponibilidade)
+    expect([400, 409]).toContain(patchRes.status);
+
+    // Appointment original permanece CONFIRMED
+    const origRes = await request
+      .get(`/api/appointments/${originalId}`)
+      .set("Cookie", clientCookie);
+    expect(origRes.status).toBe(200);
+    expect(origRes.body.appointment.status).toBe("CONFIRMED");
+
+    // Nenhum audit de reagendamento
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, originalId));
+    expect(logs.some((l) => l.action === "APPOINTMENT_RESCHEDULED")).toBe(false);
+  });
+});

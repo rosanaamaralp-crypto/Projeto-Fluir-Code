@@ -683,6 +683,19 @@ export const AppointmentsService = {
         newAddressId,
       });
 
+      // 5b. Audit log APPOINTMENT_CANCELLED para o appointment ORIGINAL (OBS-A)
+      // Garante rastreabilidade completa: queryar audit_logs pelo ID do original
+      // retorna o evento de cancelamento, mesmo quando a causa foi um reagendamento.
+      await AuditLogsRepository.create(tx, {
+        userId: sessionUserId,
+        action: "APPOINTMENT_CANCELLED",
+        entityType: "appointments",
+        entityId: appointmentId,
+        oldData: { status: "CONFIRMED" },
+        newData: { status: "CANCELLED", reason: "Remarcação solicitada pelo cliente/admin." },
+        ipAddress,
+      });
+
       // 6. Criar novo appointment
       const newAppointment = await AppointmentsRepository.create(tx, {
         clientId: original.clientId,
