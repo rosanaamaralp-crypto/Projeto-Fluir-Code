@@ -39,6 +39,7 @@ import {
 import { ROLES } from "../middlewares/require-role.js";
 import type { CreateAppointmentInput, RescheduleInput, ListAppointmentsQuery, AlterAppointmentInput } from "../validators/appointments.validator.js";
 import type { UpdateAppointmentFieldsData } from "../repositories/appointments.repository.js";
+import { NotificationService } from "./notifications.service.js";
 
 // ─── Configuração (mesma dos slots, sem duplicar) ─────────────────────────
 
@@ -262,7 +263,7 @@ export const AppointmentsService = {
   ): Promise<AppointmentRow> {
     const { input, sessionUserId, sessionRoleId, ipAddress } = params;
 
-    return db.transaction(async (tx) => {
+    const created = await db.transaction(async (tx) => {
       // 1. Resolver client
       let clientId: string;
       if (sessionRoleId === ROLES.CLIENT) {
@@ -441,6 +442,26 @@ export const AppointmentsService = {
 
       return appointment;
     });
+
+    // F8 — Notificações (best-effort: falha não reverte o agendamento)
+    try {
+      const [clientRec, professionalRec] = await Promise.all([
+        ClientsRepository.findById(db, created.clientId),
+        ProfessionalsRepository.findById(db, created.professionalId),
+      ]);
+      if (clientRec?.userId && professionalRec?.userId) {
+        await NotificationService.notifyAppointmentCreated(db, {
+          clientUserId: clientRec.userId,
+          professionalUserId: professionalRec.userId,
+          appointmentId: created.id,
+          startDatetime: created.startDatetime,
+        });
+      }
+    } catch {
+      // best-effort: falha na notificação não reverte o agendamento
+    }
+
+    return created;
   },
 
   /**
@@ -525,7 +546,7 @@ export const AppointmentsService = {
   ): Promise<AppointmentRow> {
     const { appointmentId, newStatus, reason, sessionUserId, sessionRoleId, ipAddress } = params;
 
-    return db.transaction(async (tx) => {
+    const statusResult = await db.transaction(async (tx) => {
       const appointment = await AppointmentsRepository.findById(tx, appointmentId);
       if (!appointment) throw new NotFoundError("Agendamento não encontrado.");
 
@@ -562,6 +583,32 @@ export const AppointmentsService = {
 
       return updated;
     });
+
+    // F8 — Notificações (best-effort: falha não reverte o agendamento)
+    try {
+      const [clientRec, professionalRec] = await Promise.all([
+        ClientsRepository.findById(db, statusResult.clientId),
+        ProfessionalsRepository.findById(db, statusResult.professionalId),
+      ]);
+      if (newStatus === "CANCELLED" && clientRec?.userId && professionalRec?.userId) {
+        await NotificationService.notifyAppointmentCancelled(db, {
+          clientUserId: clientRec.userId,
+          professionalUserId: professionalRec.userId,
+          appointmentId: statusResult.id,
+          startDatetime: statusResult.startDatetime,
+        });
+      } else if (newStatus === "COMPLETED" && clientRec?.userId) {
+        await NotificationService.notifyAppointmentCompleted(db, {
+          clientUserId: clientRec.userId,
+          appointmentId: statusResult.id,
+          startDatetime: statusResult.startDatetime,
+        });
+      }
+    } catch {
+      // best-effort: falha na notificação não reverte o agendamento
+    }
+
+    return statusResult;
   },
 
   /**
@@ -812,7 +859,7 @@ export const AppointmentsService = {
   ): Promise<AppointmentRow> {
     const { appointmentId, input, sessionUserId, sessionRoleId, ipAddress } = params;
 
-    return db.transaction(async (tx) => {
+    const altered = await db.transaction(async (tx) => {
       // 1. Buscar appointment
       const appointment = await AppointmentsRepository.findById(tx, appointmentId);
       if (!appointment) throw new NotFoundError("Agendamento não encontrado.");
@@ -1024,5 +1071,25 @@ export const AppointmentsService = {
 
       return updated;
     });
+
+    // F8 — Notificações (best-effort: falha não reverte o agendamento)
+    try {
+      const [clientRec, professionalRec] = await Promise.all([
+        ClientsRepository.findById(db, altered.clientId),
+        ProfessionalsRepository.findById(db, altered.professionalId),
+      ]);
+      if (clientRec?.userId && professionalRec?.userId) {
+        await NotificationService.notifyAppointmentAltered(db, {
+          clientUserId: clientRec.userId,
+          professionalUserId: professionalRec.userId,
+          appointmentId: altered.id,
+          startDatetime: altered.startDatetime,
+        });
+      }
+    } catch {
+      // best-effort: falha na notificação não reverte o agendamento
+    }
+
+    return altered;
   },
 };

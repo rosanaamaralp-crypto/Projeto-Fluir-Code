@@ -302,6 +302,22 @@ export async function cleanTestData(): Promise<void> {
         )
       `, [email]);
 
+      // F8: deletar notificações vinculadas a appointments antes de deletar appointments (FK)
+      await pgClient.query(`
+        DELETE FROM notifications
+        WHERE appointment_id IN (
+          SELECT a.id FROM appointments a
+          WHERE a.client_id IN (
+            SELECT c.id FROM clients c
+            WHERE c.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+          )
+          OR a.professional_id IN (
+            SELECT p.id FROM professionals p
+            WHERE p.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+          )
+        )
+      `, [email]);
+
       await pgClient.query(`
         DELETE FROM appointments
         WHERE client_id IN (
@@ -322,6 +338,9 @@ export async function cleanTestData(): Promise<void> {
       );
       const u = result.rows[0];
       if (!u) continue;
+
+      // F8: deletar notificações do usuário antes de deletar o usuário (FK notifications.user_id)
+      await pgClient.query("DELETE FROM notifications WHERE user_id = $1", [u.id]);
 
       // Remover audit_logs do usuário (trigger desabilitado neste bloco)
       await pgClient.query("DELETE FROM audit_logs WHERE user_id = $1", [u.id]);
