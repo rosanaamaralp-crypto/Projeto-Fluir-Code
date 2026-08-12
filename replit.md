@@ -14,7 +14,10 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 - `pnpm --filter @workspace/db run push` — push DB schema via Drizzle Kit (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 - `pnpm run lint` — check formatting across project source files
-- `pnpm run test` — run foundation tests
+- `pnpm run test` — run foundation tests (lib/db)
+- `pnpm --filter @workspace/api-server run test` — run API integration tests (98 testes)
+- `pnpm --filter @workspace/api-server run test:watch` — modo watch
+- `npx tsx scripts/bootstrap-admin.ts` — criar primeiro ADMIN (recusa se já existir um)
 
 ## Stack
 
@@ -44,6 +47,7 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 
 - A Fase 1 manteve somente o health check técnico; módulos de negócio aguardam aprovação por fase.
 - **Fase 2 (concluída):** 14 tabelas criadas, seed aplicado, 21 testes de validação passando.
+- **Fase 3 (concluída):** API REST completa — autenticação, RBAC, 11 routers, slots, auditoria, 98 testes passando.
 - O acesso ao banco é criado sob demanda (`getDatabaseClient()`).
 - O contrato OpenAPI é a fonte de verdade para a API e seus clientes gerados.
 - O lint inicial usa Prettier; regras de ESLint ficam para quando houver código de produto.
@@ -53,6 +57,13 @@ Fundação técnica do sistema de gestão de atendimentos do Fluir da Vida.
 - `appointment_status_history` e `audit_logs` são append-only garantidos por trigger no banco.
 - `price_at_booking` é imutável após criação, garantido por trigger no banco.
 - `updated_at` é atualizado automaticamente por trigger em todas as 9 tabelas relevantes.
+- Sessões: `express-session` + `connect-pg-simple` (tabela `sessions` auto-criada no primeiro start).
+- bcrypt salt rounds = 12 (produção); 10 nos testes para velocidade.
+- Rate limit: 10 tentativas de login / 15 minutos por IP.
+- Slots em UTC puro: `availability.weekday` e horários interpretados em UTC; `date` recebido como YYYY-MM-DD UTC.
+- Primeiro ADMIN via CLI (`scripts/bootstrap-admin.ts`) — sem endpoint público.
+- `mapDbError()` extrai erros pg de `DrizzleQueryError` via `.cause` para mapear 23505/23P01/etc. corretamente.
+- `validateQuery` usa `Object.defineProperty` pois `req.query` é getter readonly no `router@2.x` (Express 5).
 
 ## Product
 

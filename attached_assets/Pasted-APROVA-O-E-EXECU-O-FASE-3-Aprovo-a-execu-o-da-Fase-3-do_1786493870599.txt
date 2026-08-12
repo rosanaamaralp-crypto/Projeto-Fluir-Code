@@ -1,0 +1,445 @@
+APROVAÇÃO E EXECUÇÃO — FASE 3
+
+Aprovo a execução da Fase 3 do projeto conforme o plano técnico apresentado anteriormente.
+
+Antes de criar ou modificar qualquer arquivo, siga obrigatoriamente as decisões abaixo.
+
+## 1. DECISÕES APROVADAS
+
+### A. Timezone dos slots
+
+Adotar **UTC puro nesta Fase 3**.
+
+Regras:
+
+* `availability.weekday` será interpretado em UTC.
+* `availability.start_time` e `availability.end_time` serão interpretados em UTC.
+* O endpoint `/api/slots` receberá `date` em formato `YYYY-MM-DD`, interpretado em UTC.
+* Os slots retornados deverão estar em ISO 8601 UTC.
+* NÃO adicionar coluna de timezone por profissional.
+* NÃO criar nova migration para timezone nesta fase.
+
+Essa decisão deve ser documentada em `docs/FASE-3-...`.
+
+### B. Antecedência dos agendamentos
+
+Adotar:
+
+* `SLOT_MIN_NOTICE_HOURS=2`
+* `SLOT_MAX_ADVANCE_DAYS=60`
+
+Os valores deverão ser configuráveis por environment variables, com esses valores como defaults.
+
+Não hard-code os valores diretamente na lógica de negócio.
+
+### C. Primeiro ADMIN
+
+NÃO criar endpoint público `/api/auth/bootstrap`.
+
+NÃO criar ADMIN automaticamente no seed normal.
+
+Criar um **script CLI separado e seguro para bootstrap do primeiro ADMIN**, executável somente manualmente.
+
+Requisitos:
+
+* Deve verificar se já existe um usuário com role ADMIN.
+* Se já existir ADMIN, deve recusar a operação.
+* Nunca sobrescrever ou alterar um ADMIN existente.
+* A senha deve ser informada de forma segura, sem aparecer em logs.
+* Usar bcrypt com salt rounds 12.
+* O script deve criar `users` com role ADMIN.
+* O script não deve criar client nem professional.
+* Documentar claramente o comando de execução.
+
+### D. Auditoria
+
+Não registrar absolutamente todos os SELECTs ou operações triviais.
+
+Auditar as operações sensíveis:
+
+* USER_LOGIN
+* USER_LOGOUT
+* criação de client
+* criação de professional
+* criação/alteração/desativação de service
+* criação/alteração/desativação de resource
+* criação/alteração/desativação de professional_service
+* criação/alteração/desativação de availability
+* criação/cancelamento de blocked_period
+* alterações relevantes de dados de client
+* alterações relevantes de dados de professional
+* alterações de endereço
+* alterações de status
+* operações administrativas
+* qualquer operação futura de appointment
+
+Nunca gravar:
+
+* password
+* password_hash
+* SESSION_SECRET
+* tokens
+* cookies
+* outros segredos
+
+Os `old_data` e `new_data` devem excluir campos sensíveis.
+
+## 2. USERS NÃO TERÁ CRUD PÚBLICO
+
+Remover do escopo da Fase 3:
+
+* `users.controller.ts`
+* `users.validator.ts`
+* `routes/users.ts`
+
+Não criar CRUD REST público para `/api/users`.
+
+O usuário será criado internamente pelos fluxos:
+
+* criação de CLIENT → users + clients na mesma transaction
+* criação de PROFESSIONAL → users + professionals na mesma transaction
+* bootstrap do ADMIN → script CLI
+
+Pode existir `users.repository.ts`, pois ele é necessário internamente.
+
+## 3. CONCORRÊNCIA — REGRA IMPORTANTE
+
+Não considerar `SELECT FOR UPDATE` como única garantia contra race conditions.
+
+A garantia definitiva contra agendamentos simultâneos continua sendo fornecida pelas EXCLUDE constraints existentes no PostgreSQL:
+
+* `excl_professional_no_overlap`
+* `excl_resource_no_overlap`
+* `excl_client_no_overlap`
+
+O fluxo transacional pode usar verificações/locks quando apropriado, mas qualquer erro PostgreSQL `23P01` deverá ser tratado explicitamente como conflito e convertido para HTTP 409.
+
+NÃO alterar as EXCLUDE constraints existentes.
+
+## 4. PRESERVAR INTEGRALMENTE A FASE 2
+
+Antes de implementar, inspecione o estado atual do projeto e do banco.
+
+Não recriar tabelas existentes.
+
+Não modificar a migration `0001_initial_schema.sql`.
+
+Não remover:
+
+* EXCLUDE constraints
+* CHECK constraints
+* FKs
+* índices
+* triggers
+* `price_at_booking` immutable
+* triggers append-only
+* `set_updated_at()`
+* `schema_migrations`
+
+Não substituir o runner customizado de migration por `drizzle-orm/migrator`.
+
+O mecanismo de migration continua sendo:
+
+`schema_migrations` + `lib/db/src/migrate.ts`
+
+## 5. DRIZZLE
+
+Usar Drizzle ORM para queries da aplicação.
+
+Usar o `getDatabaseClient()` existente como fonte única da conexão.
+
+Não criar múltiplos pools.
+
+Não criar conexão nova por request.
+
+Criar singleton em:
+
+`artifacts/api-server/src/lib/db.ts`
+
+e exportar:
+
+* `db`
+* `pool`
+
+## 6. AUTENTICAÇÃO
+
+Implementar:
+
+* `POST /api/auth/login`
+* `POST /api/auth/logout`
+* `GET /api/auth/me`
+
+Usar:
+
+* express-session
+* connect-pg-simple
+* SESSION_SECRET existente
+* bcrypt salt rounds 12
+* express-rate-limit
+
+Login:
+
+1. validar com Zod;
+2. procurar usuário por email;
+3. verificar ACTIVE;
+4. executar bcrypt.compare;
+5. resposta indistinguível para email inexistente/senha errada;
+6. `req.session.regenerate()`;
+7. armazenar somente dados necessários na session;
+8. atualizar `last_login_at`;
+9. registrar `USER_LOGIN`;
+10. nunca retornar `password_hash`.
+
+Cookie:
+
+* httpOnly=true
+* secure=true em production
+* sameSite=lax
+* maxAge=8 horas
+* rolling=true
+
+Rate limit:
+
+10 tentativas por IP a cada 15 minutos.
+
+## 7. AUTORIZAÇÃO
+
+Implementar:
+
+* `require-auth.ts`
+* `require-role.ts`
+* controle de ownership por recurso
+
+Roles:
+
+* ADMIN = 1
+* PROFESSIONAL = 2
+* CLIENT = 3
+
+ADMIN pode acessar tudo.
+
+PROFESSIONAL somente seus próprios recursos.
+
+CLIENT somente seus próprios recursos.
+
+Nunca confiar somente no `:id` recebido pela API. A autorização deve considerar o usuário autenticado.
+
+## 8. CRUD DA FASE 3
+
+Implementar somente:
+
+* clients
+* professionals
+* addresses
+* services
+* resources
+* professional_services
+* availability
+* blocked_periods
+
+Não implementar appointments ainda.
+
+Não criar endpoints de appointment nesta fase.
+
+Apenas deixar a arquitetura preparada para a Fase 4.
+
+## 9. SLOTS
+
+Implementar:
+
+`GET /api/slots?professionalId=&serviceId=&date=&modality=`
+
+Regras:
+
+1. service ativo;
+2. professional ativo;
+3. professional oferece o service;
+4. availability ativa;
+5. weekday calculado em UTC;
+6. gerar slots conforme `duration_minutes`;
+7. respeitar `SLOT_MIN_NOTICE_HOURS`;
+8. respeitar `SLOT_MAX_ADVANCE_DAYS`;
+9. excluir appointments conflitantes;
+10. excluir blocked_periods;
+11. se IN_PERSON, verificar existência de pelo menos um resource ACTIVE disponível;
+12. retornar somente slots realmente disponíveis.
+
+Appointments são somente leitura nesta fase.
+
+Não criar appointments.
+
+## 10. ERROS
+
+Criar:
+
+`lib/errors.ts`
+
+Com:
+
+* NotFoundError
+* ConflictError
+* ForbiddenError
+* ValidationError
+
+Mapear pelo menos:
+
+* 23505 → ConflictError
+* 23503 → contexto apropriado
+* 23514 → ValidationError
+* 23P01 → ConflictError / HTTP 409
+* P0001 → erro semântico conforme mensagem do trigger
+
+Não expor stack trace nem detalhes internos do PostgreSQL ao cliente.
+
+## 11. TRANSACTIONS
+
+Obrigatório usar transaction para:
+
+### Client
+
+Criar:
+
+`users + clients`
+
+atomicamente.
+
+### Professional
+
+Criar:
+
+`users + professionals`
+
+atomicamente.
+
+### Audit
+
+Operação de negócio + `audit_logs` devem ser atômicos quando fizerem parte da mesma operação.
+
+Se qualquer etapa falhar, rollback completo.
+
+## 12. TESTES
+
+Usar Vitest para os novos testes.
+
+Criar testes para:
+
+* autenticação
+* rate limiting
+* user enumeration
+* RBAC
+* ownership
+* repositories
+* clients
+* professionals
+* services
+* resources
+* professional_services
+* availability
+* blocked_periods
+* addresses
+* slots
+* erros
+
+Para testes de integração, preferir transactions com rollback quando possível.
+
+Não deixar dados de teste permanentes no banco.
+
+Não desabilitar triggers append-only na aplicação normal.
+
+Qualquer mecanismo especial de cleanup deve existir somente nos testes e deve reativar os triggers imediatamente.
+
+## 13. SEGURANÇA
+
+Confirmar antes da conclusão:
+
+* nenhum endpoint retorna `password_hash`;
+* nenhuma senha aparece em logs;
+* nenhum segredo aparece em logs;
+* endpoints protegidos retornam 401 sem sessão;
+* endpoints sem permissão retornam 403;
+* ownership é validado;
+* rate limit está ativo;
+* session fixation é mitigada;
+* cookie está configurado corretamente;
+* SQL é executado via Drizzle/prepared statements;
+* erros internos não vazam para o cliente.
+
+## 14. DOCUMENTAÇÃO
+
+Criar/atualizar documentação da Fase 3 contendo:
+
+* arquitetura;
+* autenticação;
+* sessões;
+* RBAC;
+* ownership;
+* repositories;
+* services;
+* controllers;
+* validators;
+* endpoints;
+* slots;
+* timezone UTC;
+* limites 2h/60 dias;
+* bootstrap do ADMIN;
+* auditoria;
+* segurança;
+* testes;
+* comandos para executar;
+* decisões tomadas;
+* pendências para Fase 4.
+
+Também atualizar `replit.md`.
+
+## 15. ORDEM DE EXECUÇÃO
+
+Execute nesta ordem:
+
+1. inspecionar projeto atual;
+2. confirmar estado da Fase 2;
+3. implementar `lib/errors.ts`;
+4. implementar singleton `lib/db.ts`;
+5. implementar sessão;
+6. implementar autenticação;
+7. implementar middlewares;
+8. implementar repositories;
+9. implementar clients + addresses;
+10. implementar professionals;
+11. implementar services + resources;
+12. implementar professional_services;
+13. implementar availability;
+14. implementar blocked_periods;
+15. implementar slots;
+16. implementar bootstrap ADMIN;
+17. implementar testes;
+18. executar testes;
+19. revisar segurança;
+20. revisar documentação;
+21. executar uma auditoria final;
+22. somente então apresentar o relatório final.
+
+## 16. REGRA ABSOLUTA
+
+NÃO modificar a Fase 2 sem necessidade.
+
+NÃO criar migration nova sem necessidade.
+
+NÃO alterar schema do banco para resolver problema que possa ser resolvido na camada de aplicação.
+
+NÃO implementar funcionalidades da Fase 4.
+
+NÃO inventar entidades, campos, status ou regras que não estejam neste plano.
+
+Se encontrar uma inconsistência técnica que exija alteração de arquitetura, PARE antes de modificar arquivos e apresente o problema e a solução proposta para aprovação.
+
+Durante a execução, informe claramente:
+
+* arquivos criados;
+* arquivos modificados;
+* dependências adicionadas;
+* testes executados;
+* quantidade de testes aprovados;
+* erros encontrados e corrigidos;
+* qualquer alteração em relação ao plano original.
+
+Somente considere a Fase 3 concluída depois que todos os testes passarem e a auditoria final confirmar que a Fase 2 permanece íntegra.

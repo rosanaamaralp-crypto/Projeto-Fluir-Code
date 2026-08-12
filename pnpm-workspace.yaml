@@ -28,7 +28,7 @@ catalog:
   tsx: 4.23.1
   vite: ^7.3.2
   wouter: ^3.3.5
-  zod: ^3.25.76
+  zod: 3.25.76
 
 minimumReleaseAge: 1440
 
@@ -38,6 +38,7 @@ minimumReleaseAgeExclude:
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - bcrypt
   - esbuild
   - msw
   - unrs-resolver
