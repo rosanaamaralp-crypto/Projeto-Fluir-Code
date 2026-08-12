@@ -1,10 +1,21 @@
 /**
  * Seed de dados para testes de integração.
  * Cleanup usa DISABLE/ENABLE TRIGGER nos logs append-only — exclusivo para testes.
+ *
+ * Fase 4: estendido para incluir cleanup de appointments e appointment_status_history.
  */
 import bcrypt from "bcrypt";
 import { getDatabaseClient } from "@workspace/db";
-import { users, clients, professionals, services } from "@workspace/db";
+import {
+  users,
+  clients,
+  professionals,
+  services,
+  resources,
+  availability,
+  professionalServices,
+  addresses,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const { db, pool } = getDatabaseClient();
@@ -15,6 +26,7 @@ export const TEST_PASSWORDS = {
   admin: "AdminPass123!",
   professional: "ProfPass123!",
   client: "ClientPass123!",
+  client2: "Client2Pass123!",
 };
 
 export const TEST_EMAILS = {
@@ -23,6 +35,11 @@ export const TEST_EMAILS = {
   client: "client-test@fluir.test",
 };
 
+export const TEST_SERVICE_NAMES = [
+  "Massagem Teste",
+  "Massagem Domiciliar Teste",
+];
+
 export interface TestUsers {
   adminId: string;
   professionalId: string;
@@ -30,6 +47,12 @@ export interface TestUsers {
   clientId: string;
   clientUserId: string;
   serviceId: string;
+}
+
+export interface AppointmentTestExtras {
+  resourceId: string;
+  serviceHomeCareId: string;
+  availabilityId: string;
 }
 
 export async function seedTestData(): Promise<TestUsers> {
@@ -80,18 +103,102 @@ export async function seedTestData(): Promise<TestUsers> {
 }
 
 /**
+ * Cria fixtures adicionais necessárias para testes de appointments:
+ * - Resource (para IN_PERSON)
+ * - Serviço HOME_CARE
+ * - Janela de disponibilidade do profissional (todos os dias, 08:00–20:00)
+ * - Vínculo professional_services para ambos os serviços
+ * - Endereço do cliente (para HOME_CARE)
+ */
+export async function seedAppointmentExtras(ids: TestUsers): Promise<AppointmentTestExtras> {
+  // Resource para IN_PERSON
+  const [resource] = await db
+    .insert(resources)
+    .values({ name: "Sala Teste Fase4", type: "MASSAGE_TABLE", status: "ACTIVE" })
+    .returning({ id: resources.id });
+
+  // Serviço exclusivo HOME_CARE
+  const [svcHc] = await db
+    .insert(services)
+    .values({
+      name: "Massagem Domiciliar Teste",
+      durationMinutes: 60,
+      price: "120.00",
+      allowedModalities: "HOME_CARE",
+      status: "ACTIVE",
+    })
+    .returning({ id: services.id });
+
+  // Disponibilidade para todos os dias da semana (0–6), 08:00–20:00
+  const [avail] = await db
+    .insert(availability)
+    .values({
+      professionalId: ids.professionalId,
+      weekday: new Date().getUTCDay(), // dia atual
+      startTime: "08:00",
+      endTime: "20:00",
+      active: true,
+    })
+    .returning({ id: availability.id });
+
+  // Garantir disponibilidade para todos os 7 dias (necessário nos testes)
+  for (let w = 0; w <= 6; w++) {
+    if (w === new Date().getUTCDay()) continue; // já inserido
+    await db.insert(availability).values({
+      professionalId: ids.professionalId,
+      weekday: w,
+      startTime: "08:00",
+      endTime: "20:00",
+      active: true,
+    }).onConflictDoNothing();
+  }
+
+  // Vínculos professional_services
+  await db
+    .insert(professionalServices)
+    .values({ professionalId: ids.professionalId, serviceId: ids.serviceId, active: true })
+    .onConflictDoNothing();
+
+  await db
+    .insert(professionalServices)
+    .values({ professionalId: ids.professionalId, serviceId: svcHc!.id, active: true })
+    .onConflictDoNothing();
+
+  // Endereço do cliente (HOME_CARE)
+  await db.insert(addresses).values({
+    clientId: ids.clientId,
+    street: "Rua dos Testes",
+    number: "123",
+    neighborhood: "Centro",
+    city: "São Paulo",
+    state: "SP",
+    postalCode: "01310-100",
+    isDefault: true,
+  }).onConflictDoNothing();
+
+  return {
+    resourceId: resource!.id,
+    serviceHomeCareId: svcHc!.id,
+    availabilityId: avail!.id,
+  };
+}
+
+/**
  * Limpa dados de teste.
- * DISABLE/ENABLE TRIGGER é usado exclusivamente aqui para remover audit_logs
- * referenciados pelos usuários de teste. Os triggers são reativados imediatamente.
+ * DISABLE/ENABLE TRIGGER usado exclusivamente aqui para remover dados append-only.
+ * Os triggers são reativados imediatamente após o cleanup.
  * Mecanismo permitido somente em scripts de teste (conforme decisão da Fase 3).
+ *
+ * Fase 4: inclui cleanup de appointment_status_history e appointments.
  */
 export async function cleanTestData(): Promise<void> {
   const pgClient = await pool.connect();
   try {
     await pgClient.query("BEGIN");
 
-    // Desabilitar trigger append-only SOMENTE para limpeza de dados de teste
+    // Desabilitar triggers append-only para limpeza de dados de teste
     await pgClient.query("ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete");
+    await pgClient.query("ALTER TABLE appointment_status_history DISABLE TRIGGER trg_appt_history_no_delete");
 
     const testEmails = [
       ...Object.values(TEST_EMAILS),
@@ -102,7 +209,41 @@ export async function cleanTestData(): Promise<void> {
       "outro-prof2-rbac@fluir.test",
       // P1: bootstrap admin test email
       "bootstrap-admin@fluir.test",
+      // Fase 4: emails adicionais de testes de appointments
+      "client2-appt@fluir.test",
+      "prof2-appt@fluir.test",
     ];
+
+    // Fase 4: limpar appointments e status_history vinculados a usuários de teste
+    // (antes de deletar clients/professionals, pois FKs referenciam esses)
+    for (const email of testEmails) {
+      await pgClient.query(`
+        DELETE FROM appointment_status_history
+        WHERE appointment_id IN (
+          SELECT a.id FROM appointments a
+          WHERE a.client_id IN (
+            SELECT c.id FROM clients c
+            WHERE c.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+          )
+          OR a.professional_id IN (
+            SELECT p.id FROM professionals p
+            WHERE p.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+          )
+        )
+      `, [email]);
+
+      await pgClient.query(`
+        DELETE FROM appointments
+        WHERE client_id IN (
+          SELECT c.id FROM clients c
+          WHERE c.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+        )
+        OR professional_id IN (
+          SELECT p.id FROM professionals p
+          WHERE p.user_id = (SELECT id FROM users WHERE lower(email) = lower($1))
+        )
+      `, [email]);
+    }
 
     for (const email of testEmails) {
       const result = await pgClient.query<{ id: string; role_id: number }>(
@@ -128,7 +269,6 @@ export async function cleanTestData(): Promise<void> {
           [u.id],
         );
         for (const prof of profResult.rows) {
-          // Remover entidades que referenciam professionals (ordem importa: FK)
           await pgClient.query(
             "DELETE FROM blocked_periods WHERE professional_id = $1",
             [prof.id],
@@ -149,15 +289,23 @@ export async function cleanTestData(): Promise<void> {
     }
 
     // Limpar services de teste
+    for (const name of TEST_SERVICE_NAMES) {
+      await pgClient.query("DELETE FROM services WHERE name = $1", [name]);
+    }
     await pgClient.query("DELETE FROM services WHERE name = 'Massagem Teste'");
 
-    // Reativar trigger imediatamente após o cleanup
+    // Limpar resources de teste (Fase 4)
+    await pgClient.query("DELETE FROM resources WHERE name = 'Sala Teste Fase4'");
+
+    // Reativar triggers imediatamente após o cleanup
+    await pgClient.query("ALTER TABLE appointment_status_history ENABLE TRIGGER trg_appt_history_no_delete");
     await pgClient.query("ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete");
 
     await pgClient.query("COMMIT");
   } catch (err) {
     await pgClient.query("ROLLBACK").catch(() => {});
     // Garantir reativação mesmo em caso de erro
+    await pgClient.query("ALTER TABLE appointment_status_history ENABLE TRIGGER trg_appt_history_no_delete").catch(() => {});
     await pgClient.query("ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete").catch(() => {});
     throw err;
   } finally {

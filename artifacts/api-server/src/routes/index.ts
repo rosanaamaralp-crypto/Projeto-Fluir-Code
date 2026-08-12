@@ -10,6 +10,7 @@ import availabilityRouter from "./availability.js";
 import blockedPeriodsRouter from "./blocked-periods.js";
 import addressesRouter from "./addresses.js";
 import slotsRouter from "./slots.js";
+import appointmentsRouter from "./appointments.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(availabilityRouter);
 router.use(blockedPeriodsRouter);
 router.use(addressesRouter);
 router.use(slotsRouter);
+router.use(appointmentsRouter);
 
 export default router;

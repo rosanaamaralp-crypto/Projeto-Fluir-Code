@@ -1,11 +1,14 @@
 /**
- * P8 — Schemas separados por role para PATCH /api/clients/:id.
+ * OBS-3 corrigido: UpdateClientSchemaSelf não contém mais `name` nem `phone`.
  *
- * UpdateClientSchemaSelf: campos que o próprio CLIENT pode alterar (sem status).
+ * Razão: a tabela `clients` não possui colunas name/phone — elas existem em `users`.
+ * Aceitar name/phone no schema e não aplicá-los seria um contrato enganoso.
+ *
+ * Se no futuro um CLIENT precisar atualizar name/phone, isso deve ser feito por
+ * um endpoint dedicado que atualiza a tabela `users`.
+ *
+ * UpdateClientSchemaSelf: campos que o próprio CLIENT pode alterar (birthDate, notes).
  * UpdateClientSchemaAdmin: todos os campos, inclusive status.
- *
- * O controller seleciona o schema adequado conforme req.session.user.roleId,
- * evitando depender somente de "descartar depois" no controller.
  */
 import { z } from "zod";
 
@@ -23,10 +26,11 @@ export const CreateClientSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-/** Campos que o próprio CLIENT pode alterar — sem status. */
+/**
+ * Campos que o próprio CLIENT pode alterar — sem status, sem name, sem phone.
+ * Somente campos que existem na tabela `clients`.
+ */
 export const UpdateClientSchemaSelf = z.object({
-  name: z.string().min(2).max(255).optional(),
-  phone: z.string().max(20).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().max(2000).optional(),
 });

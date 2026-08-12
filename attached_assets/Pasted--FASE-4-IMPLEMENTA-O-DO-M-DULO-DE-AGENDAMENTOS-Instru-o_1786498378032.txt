@@ -1,0 +1,1006 @@
+# FASE 4 — IMPLEMENTAÇÃO DO MÓDULO DE AGENDAMENTOS
+
+## Instrução principal para o Replit Agent
+
+Você está trabalhando em um projeto já existente cuja Fase 3.1 foi concluída e auditada independentemente.
+
+A Fase 3.1 está oficialmente LIBERADA para a Fase 4.
+
+Antes de modificar qualquer arquivo, faça uma leitura completa da arquitetura existente, especialmente:
+
+* `artifacts/api-server/src/`
+* `@workspace/db`
+* repositories
+* services
+* controllers
+* routes
+* validators
+* middlewares
+* `lib/errors.ts`
+* `lib/db.ts`
+* `lib/db-types.ts`
+* `lib/session.ts`
+* `tests/`
+* `scripts/bootstrap-admin.ts`
+* `docs/FASE-3-ARQUITETURA.md`
+* `replit.md`
+
+NÃO recrie arquitetura já existente.
+
+NÃO substitua Drizzle por outro ORM.
+
+NÃO crie uma nova conexão PostgreSQL.
+
+NÃO crie uma nova estratégia de autenticação.
+
+NÃO introduza JWT.
+
+NÃO utilize `drizzle-orm/migrator`.
+
+NÃO altere `schema_migrations`.
+
+NÃO crie migration nova sem autorização explícita.
+
+NÃO altere triggers, EXCLUDE constraints, CHECK constraints ou FKs existentes.
+
+A infraestrutura da Fase 3.1 deve ser preservada.
+
+---
+
+# 1. OBJETIVO DA FASE 4
+
+Implementar o módulo completo de AGENDAMENTOS (`appointments`) utilizando a arquitetura existente:
+
+Request
+→ Route
+→ Middleware
+→ Validator
+→ Controller
+→ Service
+→ Repository
+→ PostgreSQL/Drizzle
+
+A regra de negócio deve ficar no service.
+
+Repositories devem conter exclusivamente queries/mutações.
+
+Controllers devem permanecer finos.
+
+Toda mutação relevante deve utilizar transaction.
+
+Toda operação de agendamento deve ser protegida contra race conditions e double-booking.
+
+O banco PostgreSQL continua sendo a autoridade definitiva de integridade.
+
+---
+
+# 2. OBSERVAÇÕES DA AUDITORIA FASE 3.1
+
+Antes de iniciar a implementação dos appointments, corrija as três observações LOW encontradas na auditoria, sem alterar comportamento funcional já aprovado.
+
+## OBS-1 — bootstrap-admin
+
+Verifique `scripts/bootstrap-admin.ts`.
+
+Existe atualmente a possibilidade de `getDatabaseClient()` ser chamado duas vezes, criando dois pools.
+
+Corrija para obter `{ db, pool }` uma única vez e reutilizar essa mesma instância durante todo o script.
+
+Ao finalizar o bootstrap, feche o pool exatamente uma vez.
+
+Não altere o comportamento funcional do bootstrap.
+
+Adicionar teste caso necessário.
+
+---
+
+## OBS-2 — audit de login/logout
+
+A auditoria identificou que login/logout utilizam audit log fire-and-forget.
+
+NÃO é necessário alterar o comportamento nesta etapa se isso introduzir risco ou retrabalho.
+
+Porém:
+
+* não replique esse padrão em appointments;
+* todo audit relacionado a appointments deve estar dentro da mesma transaction da operação de negócio;
+* se o audit falhar, a operação do appointment também deve falhar e sofrer rollback.
+
+Documente essa decisão no código/documentação.
+
+---
+
+## OBS-3 — UpdateClientSchemaSelf
+
+Verifique `UpdateClientSchemaSelf`.
+
+Atualmente ele aceita `name` e `phone`, mas o controller não os atualiza para CLIENT.
+
+Escolha a solução arquiteturalmente correta:
+
+* se CLIENT não pode alterar name/phone nessa operação, remova esses campos do schema self;
+* se deve poder alterar, implemente corretamente a atualização.
+
+Não deixe schema aceitar campos que o endpoint ignora silenciosamente.
+
+Adicione/ajuste testes.
+
+---
+
+# 3. MODELO DE APPOINTMENT
+
+Antes de implementar, leia o schema existente de `appointments` em `@workspace/db`.
+
+NÃO invente campos.
+
+NÃO altere o schema.
+
+Use exatamente os nomes, tipos, enums, constraints e relacionamentos existentes.
+
+Confirmar especialmente:
+
+* `id`
+* `client_id`
+* `professional_id`
+* `service_id`
+* `resource_id`
+* `address_id`
+* `start_datetime`
+* `end_datetime`
+* `modality`
+* `status`
+* `price_at_booking`
+* `notes`
+* `created_by`
+* timestamps
+* FK existentes
+* CHECK constraints
+* EXCLUDE constraints
+
+Antes de implementar, faça uma inspeção e documente no relatório quais campos realmente existem.
+
+---
+
+# 4. REPOSITORY
+
+Criar:
+
+`artifacts/api-server/src/repositories/appointments.repository.ts`
+
+Responsabilidade EXCLUSIVA:
+
+* findById
+* findByClient
+* findByProfessional
+* findByDate
+* findOverlapping
+* create
+* updateStatus
+* update/cancel conforme necessário
+* queries necessárias ao cálculo/conflito
+
+Não colocar no repository:
+
+* autorização
+* RBAC
+* regras de negócio
+* cálculo de slots
+* decisões de cancelamento
+* regras de preço
+* regras de resource
+
+O repository deve aceitar `DrizzleDB`/transaction usando o padrão já existente em `lib/db-types.ts`.
+
+---
+
+# 5. APPOINTMENT STATUS
+
+Respeitar EXATAMENTE os status existentes:
+
+* CONFIRMED
+* IN_PROGRESS
+* COMPLETED
+* CANCELLED
+* NO_SHOW
+
+NÃO criar `RESCHEDULED`.
+
+Remarcação será:
+
+1. cancelar appointment antigo;
+2. criar novo appointment;
+3. registrar os dois eventos em `appointment_status_history`.
+
+---
+
+# 6. ENDPOINT DE CRIAÇÃO
+
+Implementar:
+
+POST `/api/appointments`
+
+Payload:
+
+```json
+{
+  "professionalId": "UUID",
+  "serviceId": "UUID",
+  "startDatetime": "ISO-8601",
+  "modality": "IN_PERSON ou REMOTE",
+  "resourceId": "UUID opcional",
+  "addressId": "UUID opcional",
+  "notes": "string opcional"
+}
+```
+
+O validator deve rejeitar:
+
+* UUID inválido
+* datetime inválido
+* modality inválida
+* campos desconhecidos quando incompatíveis com o contrato
+* resourceId obrigatório quando a regra de negócio exigir
+* addressId incompatível com modalidade
+* notes acima do limite definido pelo schema
+
+Usar Zod.
+
+---
+
+# 7. FLUXO TRANSACIONAL OBRIGATÓRIO
+
+Toda criação de appointment deve ocorrer em:
+
+`db.transaction(async (tx) => { ... })`
+
+Fluxo:
+
+1. Validar payload antes da transaction.
+
+2. Identificar CLIENT autenticado.
+
+3. Confirmar:
+
+   * client existe;
+   * client está ACTIVE.
+
+4. Buscar professional.
+
+5. Confirmar:
+
+   * professional existe;
+   * professional está ACTIVE.
+
+6. Buscar service.
+
+7. Confirmar:
+
+   * service existe;
+   * service está ACTIVE.
+
+8. Confirmar que `professional_services.active = true`.
+
+9. Calcular:
+
+`end_datetime = start_datetime + duration_minutes`
+
+10. Validar antecedência mínima.
+
+Utilizar a configuração já adotada na Fase 3.1:
+
+`SLOT_MIN_NOTICE_HOURS`
+
+Não duplicar regra em vários lugares.
+
+11. Validar antecedência máxima:
+
+`SLOT_MAX_ADVANCE_DAYS`
+
+12. Validar disponibilidade semanal do profissional.
+
+13. Validar blocked_periods.
+
+14. Validar conflito do CLIENT.
+
+15. Validar conflito do PROFESSIONAL.
+
+16. Validar conflito do RESOURCE quando aplicável.
+
+17. Validar regras de modality.
+
+18. Capturar:
+
+`price_at_booking = services.price`
+
+O preço deve ser congelado no momento da criação.
+
+19. Inserir appointment com:
+
+`status = CONFIRMED`
+
+e:
+
+`created_by = session.userId`
+
+20. Inserir `appointment_status_history`:
+
+* old_status = NULL
+* new_status = CONFIRMED
+* changed_by = session.userId
+
+21. Inserir audit log:
+
+`APPOINTMENT_CREATED`
+
+22. COMMIT.
+
+Qualquer falha deve executar ROLLBACK.
+
+---
+
+# 8. CONCORRÊNCIA — REGRA CRÍTICA
+
+Esta é uma parte obrigatória da Fase 4.
+
+Não confiar apenas em SELECT prévio.
+
+O PostgreSQL possui EXCLUDE constraints já existentes:
+
+* `excl_professional_no_overlap`
+* `excl_resource_no_overlap`
+* `excl_client_no_overlap`
+
+Essas constraints são a garantia definitiva contra double-booking.
+
+O código deve tratar:
+
+`23P01`
+
+como:
+
+HTTP `409 Conflict`.
+
+Implementar também proteção transacional adequada contra concorrência.
+
+Não assumir que:
+
+`SELECT ... FOR UPDATE`
+
+em linhas inexistentes é suficiente para impedir duas inserções concorrentes.
+
+A solução deve respeitar as EXCLUDE constraints existentes e permitir que o banco seja a última linha de defesa.
+
+---
+
+# 9. REGRA DE OVERLAP
+
+Usar exatamente:
+
+`slot.start < occupied.end AND slot.end > occupied.start`
+
+Não usar comparação baseada somente em igualdade de horários.
+
+---
+
+# 10. RESOURCE / IN_PERSON
+
+Regra:
+
+Se:
+
+`modality = IN_PERSON`
+
+deve existir um resource compatível e disponível.
+
+O appointment deve possuir `resource_id` quando o schema/regra existente exigir.
+
+Nunca permitir que dois appointments utilizem o mesmo resource simultaneamente.
+
+A EXCLUDE constraint existente deve permanecer como garantia definitiva.
+
+Se o client não fornecer resourceId, o service deve selecionar automaticamente um resource disponível compatível, caso essa seja a regra definida pelo schema/arquitetura.
+
+Não escolher resource aleatoriamente sem verificar disponibilidade dentro da transaction.
+
+Se não houver resource disponível:
+
+`409 Conflict`
+
+---
+
+# 11. REMOTE
+
+Para:
+
+`modality = REMOTE`
+
+não consumir resource físico.
+
+Respeitar exatamente os valores permitidos pelo schema existente.
+
+Não inventar nova modalidade.
+
+---
+
+# 12. ADDRESS
+
+Verificar a regra existente no schema.
+
+Para appointment `IN_PERSON`, validar o `addressId` quando necessário.
+
+O endereço deve pertencer ao CLIENT autenticado.
+
+Nunca permitir que um CLIENT utilize endereço pertencente a outro CLIENT.
+
+ADMIN pode operar conforme RBAC existente.
+
+---
+
+# 13. AUTORIZAÇÃO
+
+Implementar RBAC utilizando os middlewares existentes.
+
+CLIENT:
+
+* pode criar appointment para si;
+* pode visualizar seus appointments;
+* pode cancelar/remarcar seus appointments conforme regras;
+* nunca pode acessar appointments de outro client.
+
+PROFESSIONAL:
+
+* pode visualizar seus próprios appointments;
+* pode alterar status dos seus appointments quando permitido;
+* nunca pode acessar appointments de outro professional.
+
+ADMIN:
+
+* acesso administrativo conforme arquitetura existente.
+
+Não duplicar autenticação dentro dos controllers quando middleware já resolver.
+
+Ownership deve ser verificado no service/repository quando necessário para garantir isolamento.
+
+---
+
+# 14. ENDPOINTS
+
+Implementar inicialmente:
+
+POST `/api/appointments`
+
+GET `/api/appointments`
+
+GET `/api/appointments/:id`
+
+PATCH `/api/appointments/:id`
+
+DELETE `/api/appointments/:id` somente se fizer sentido no contrato existente; preferir alteração para CANCELLED em vez de DELETE físico.
+
+Filtros para GET devem suportar, conforme necessidade:
+
+* status
+* date
+* clientId
+* professionalId
+
+Nunca permitir que CLIENT ou PROFESSIONAL usem filtros para escapar do ownership.
+
+Exemplo:
+
+CLIENT autenticado pedindo:
+
+`GET /api/appointments?clientId=OUTRO_UUID`
+
+deve continuar limitado ao próprio client.
+
+---
+
+# 15. CANCELAMENTO
+
+Implementar:
+
+PATCH `/api/appointments/:id`
+
+com:
+
+```json
+{
+  "status": "CANCELLED",
+  "reason": "..."
+}
+```
+
+A operação deve ser transacional.
+
+Dentro da transaction:
+
+1. buscar appointment;
+2. verificar ownership/RBAC;
+3. validar que o status atual permite cancelamento;
+4. alterar status;
+5. inserir appointment_status_history;
+6. inserir audit_logs;
+7. commit.
+
+Não permitir cancelar appointment já:
+
+* CANCELLED
+* COMPLETED
+* NO_SHOW
+
+sem uma regra explícita.
+
+---
+
+# 16. STATUS HISTORY
+
+Toda mudança de status deve criar registro em:
+
+`appointment_status_history`
+
+Registrar:
+
+* appointment_id
+* old_status
+* new_status
+* changed_by
+* reason, se existir
+* timestamps
+* campos de remarcação existentes no schema quando aplicável
+
+Não criar status sem registrar history.
+
+---
+
+# 17. REMARCAÇÃO
+
+Não criar status RESCHEDULED.
+
+Implementar remarcação como operação transacional:
+
+BEGIN
+
+1. validar appointment original;
+2. verificar autorização;
+3. validar novo horário;
+4. cancelar appointment original;
+5. inserir history do cancelamento;
+6. criar novo appointment;
+7. inserir history do novo CONFIRMED;
+8. inserir audit logs;
+9. COMMIT.
+
+Se qualquer etapa falhar:
+
+ROLLBACK completo.
+
+Os campos existentes em `appointment_status_history`:
+
+* old_start_datetime
+* new_start_datetime
+* etc.
+
+devem ser utilizados conforme o schema existente.
+
+---
+
+# 18. AUDITORIA
+
+Todas as operações de appointment devem gerar audit log dentro da transaction.
+
+Eventos mínimos:
+
+* APPOINTMENT_CREATED
+* APPOINTMENT_CANCELLED
+* APPOINTMENT_STATUS_CHANGED
+* APPOINTMENT_RESCHEDULED, somente se essa action já for compatível com o sistema de audit existente
+
+Não armazenar:
+
+* password
+* password_hash
+* dados sensíveis desnecessários
+
+Não fazer audit fire-and-forget para appointments.
+
+---
+
+# 19. ERROR HANDLING
+
+Reutilizar:
+
+`src/lib/errors.ts`
+
+Garantir:
+
+* UUID inválido → 400
+* entidade inexistente → 404
+* conflito de regra de negócio → 409
+* EXCLUDE violation 23P01 → 409
+* FK violation → semântica correta
+* CHECK violation → 400
+* permission denied → 403
+
+Não retornar stack trace.
+
+Não retornar detalhes internos do PostgreSQL.
+
+---
+
+# 20. SLOTS
+
+Reutilizar:
+
+`slots.service.ts`
+
+Não duplicar o algoritmo.
+
+O appointment deve utilizar a mesma definição de disponibilidade já implementada.
+
+Garantir consistência entre:
+
+`GET /api/slots`
+
+e:
+
+`POST /api/appointments`
+
+Mesmo que um slot tenha sido retornado anteriormente pelo endpoint de slots, o POST deve recalcular/verificar tudo novamente dentro da transaction.
+
+Nunca confiar no resultado antigo do frontend.
+
+---
+
+# 21. TIMEZONE
+
+Manter a decisão já aprovada na Fase 3.1:
+
+UTC.
+
+Não criar timezone por professional nesta fase.
+
+Não modificar schema.
+
+`start_datetime` e `end_datetime` devem ser tratados consistentemente como UTC.
+
+---
+
+# 22. PREÇO
+
+No momento da criação:
+
+`price_at_booking = services.price`
+
+Depois de criado:
+
+o appointment não deve depender do preço atual do service.
+
+O preço histórico deve permanecer congelado.
+
+Respeitar o trigger existente:
+
+`prevent_price_at_booking_change`
+
+Não modificar esse trigger.
+
+---
+
+# 23. TESTES
+
+Criar testes unitários e de integração.
+
+Obrigatórios:
+
+### Unit
+
+* cálculo de end_datetime
+* validação de antecedência
+* validação de status
+* validação de modalidade
+* regras de resource
+* regras de ownership
+* tratamento de conflitos
+* mapeamento 23P01
+
+### Integration
+
+* criação de appointment
+* GET próprio
+* GET de outro client → 403/404 conforme padrão existente
+* professional acessando appointment de outro professional → negado
+* ADMIN
+* cancelamento
+* status history
+* audit log
+* price_at_booking
+* blocked period
+* professional_service
+* service inactive
+* professional inactive
+* client inactive
+* resource indisponível
+* address de outro client
+* UUID inválido
+* payload inválido
+
+### TESTE CRÍTICO DE CONCORRÊNCIA
+
+Criar:
+
+`tests/integration/concurrency/appointments.concurrent.test.ts`
+
+Executar duas requisições simultâneas para exatamente:
+
+* mesmo professional
+* mesmo client
+* mesmo horário
+* mesmo service
+
+Resultado obrigatório:
+
+* exatamente 1 request → `201`
+* exatamente 1 request → `409`
+
+Nunca aceitar:
+
+* 2x 201
+* 2 appointments criados
+
+Verificar diretamente no banco que existe apenas um appointment válido.
+
+---
+
+# 24. NÃO MODIFICAR O BANCO ESTRUTURAL
+
+Antes de executar qualquer migration:
+
+PARE.
+
+Informe:
+
+* por que a migration seria necessária;
+* qual tabela seria alterada;
+* qual constraint seria alterada;
+* impacto na Fase 2;
+* alternativa sem migration.
+
+Aguarde autorização explícita.
+
+Por padrão:
+
+**Fase 4 deve funcionar sem nenhuma migration nova.**
+
+---
+
+# 25. TYPECHECK / BUILD / TEST
+
+Ao final:
+
+```bash
+pnpm run typecheck
+pnpm run test
+pnpm run build
+```
+
+Todos devem passar.
+
+Não aceite:
+
+* erros TypeScript;
+* testes ignorados;
+* testes desabilitados;
+* `any` usado para esconder erros;
+* `@ts-ignore` para contornar problemas;
+* alteração de testes apenas para fazê-los passar.
+
+Se um teste falhar, corrija a implementação.
+
+---
+
+# 26. REGRESSÃO DA FASE 2
+
+Depois da implementação, verificar:
+
+* schema_migrations intacto;
+* nenhuma migration nova;
+* 14 tabelas de negócio existentes;
+* 14 triggers existentes;
+* EXCLUDE constraints intactas;
+* CHECK constraints intactas;
+* FKs intactas;
+* indexes intactos;
+* trigger de price_at_booking intacto;
+* triggers append-only intactos.
+
+Não aceitar regressão.
+
+---
+
+# 27. DOCUMENTAÇÃO
+
+Atualizar:
+
+`docs/FASE-4-ARQUITETURA.md`
+
+Documentar:
+
+* endpoints;
+* fluxo transacional;
+* concorrência;
+* EXCLUDE constraints;
+* status;
+* cancelamento;
+* remarcação;
+* resource;
+* modality;
+* ownership;
+* audit;
+* testes;
+* decisões técnicas;
+* limitações conhecidas.
+
+Atualizar `replit.md`.
+
+---
+
+# 28. ORDEM DE IMPLEMENTAÇÃO
+
+Execute exatamente nesta ordem:
+
+### ETAPA 1
+
+Auditoria do schema existente de appointments.
+
+### ETAPA 2
+
+Corrigir OBS-1, OBS-2 e OBS-3 da Fase 3.1.
+
+### ETAPA 3
+
+Criar:
+
+`appointments.repository.ts`
+
+### ETAPA 4
+
+Criar validators.
+
+### ETAPA 5
+
+Criar `appointments.service.ts`.
+
+### ETAPA 6
+
+Criar controllers.
+
+### ETAPA 7
+
+Criar routes.
+
+### ETAPA 8
+
+Implementar status history.
+
+### ETAPA 9
+
+Implementar audit transacional.
+
+### ETAPA 10
+
+Implementar cancelamento.
+
+### ETAPA 11
+
+Implementar remarcação.
+
+### ETAPA 12
+
+Implementar testes unitários.
+
+### ETAPA 13
+
+Implementar testes de integração.
+
+### ETAPA 14
+
+Implementar teste de concorrência.
+
+### ETAPA 15
+
+Rodar typecheck.
+
+### ETAPA 16
+
+Rodar todos os testes.
+
+### ETAPA 17
+
+Rodar build.
+
+### ETAPA 18
+
+Executar regressão da Fase 2.
+
+### ETAPA 19
+
+Atualizar documentação.
+
+---
+
+# 29. REGRA FUNDAMENTAL DE EXECUÇÃO
+
+Não diga que uma etapa está concluída sem executar a verificação correspondente.
+
+Não considere `build OK` equivalente a `typecheck OK`.
+
+Não considere `GET /slots` funcionando equivalente a `POST /appointments` seguro.
+
+Não considere SELECT de disponibilidade suficiente contra concorrência.
+
+O banco deve continuar sendo a autoridade definitiva contra double-booking.
+
+---
+
+# 30. RELATÓRIO FINAL OBRIGATÓRIO
+
+Ao terminar, entregue um relatório contendo:
+
+## Resultado
+
+* typecheck
+* testes
+* build
+* teste de concorrência
+* regressão Fase 2
+
+## Arquivos criados
+
+Lista completa.
+
+## Arquivos modificados
+
+Lista completa.
+
+## Endpoints
+
+Tabela com método, rota, autenticação e autorização.
+
+## Segurança
+
+* RBAC
+* ownership
+* IDOR
+* concorrência
+* EXCLUDE
+* audit
+* validação
+* tratamento de erros
+
+## Banco
+
+Confirmar explicitamente:
+
+* migrations novas = 0
+* schema_migrations preservada
+* EXCLUDE preservadas
+* triggers preservados
+* FKs preservadas
+
+## Pendências
+
+Listar qualquer pendência real.
+
+Não declarar "Fase 4 concluída" se qualquer requisito obrigatório estiver falhando.
+
+---
+
+# REGRA FINAL
+
+Antes de criar ou modificar qualquer arquivo, faça a auditoria/leitura da estrutura existente e apresente um plano curto de implementação.
+
+Depois execute.
+
+Não peça aprovação a cada arquivo.
+
+Porém, se detectar necessidade de alterar schema/migration/constraint/trigger existente, PARE e solicite aprovação explícita antes de modificar o banco.

@@ -6,7 +6,8 @@
  * - Nunca imprime senha ou password_hash
  * - Verifica se já existe ADMIN antes de criar (idempotente)
  * - Executa criação em transação atômica
- * - Fecha o pool após a execução
+ * - Obtém { db, pool } UMA única vez via getDatabaseClient() (OBS-1 corrigido)
+ * - Fecha o pool exatamente uma vez ao finalizar
  *
  * Uso:
  *   BOOTSTRAP_ADMIN_NAME="Maria" \
@@ -32,73 +33,69 @@ export interface BootstrapInput {
 }
 
 /**
- * Verifica se já existe ao menos um usuário ADMIN.
- */
-async function hasExistingAdmin(): Promise<boolean> {
-  const { db } = getDatabaseClient();
-  const rows = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.roleId, ADMIN_ROLE_ID))
-    .limit(1);
-  return rows.length > 0;
-}
-
-/**
  * Cria o primeiro ADMIN em uma transação atômica.
+ * Usa uma única instância de getDatabaseClient() (OBS-1).
  * Retorna o ID do usuário criado.
  * Nunca imprime senha ou password_hash.
  */
 export async function runBootstrap(input: BootstrapInput): Promise<string> {
+  // OBS-1: getDatabaseClient() chamado UMA ÚNICA VEZ — pool fechado uma única vez ao final.
   const { db, pool } = getDatabaseClient();
 
-  // Validações mínimas
-  if (!input.name || input.name.trim().length < 2) {
-    throw new Error("Nome inválido: mínimo 2 caracteres.");
+  try {
+    // Validações mínimas
+    if (!input.name || input.name.trim().length < 2) {
+      throw new Error("Nome inválido: mínimo 2 caracteres.");
+    }
+    if (!input.email || !input.email.includes("@")) {
+      throw new Error("Email inválido.");
+    }
+    if (!input.password || input.password.length < 8) {
+      throw new Error("Senha inválida: mínimo 8 caracteres.");
+    }
+
+    // Verificar se já existe ADMIN (reutiliza o mesmo db)
+    const existingAdmins = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.roleId, ADMIN_ROLE_ID))
+      .limit(1);
+
+    if (existingAdmins.length > 0) {
+      throw new Error(
+        "ADMIN já existe. Bootstrap abortado para proteger o sistema. " +
+        "Se precisar de outro ADMIN, use um endpoint administrativo autenticado.",
+      );
+    }
+
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+
+    const userId = await db.transaction(async (tx) => {
+      const rows = await tx
+        .insert(users)
+        .values({
+          roleId: ADMIN_ROLE_ID,
+          name: input.name.trim(),
+          email: normalizedEmail,
+          passwordHash,
+        })
+        .returning({ id: users.id });
+
+      return rows[0]!.id;
+    });
+
+    return userId;
+  } finally {
+    // Fechar pool exatamente uma vez, independentemente do resultado
+    await pool.end();
   }
-  if (!input.email || !input.email.includes("@")) {
-    throw new Error("Email inválido.");
-  }
-  if (!input.password || input.password.length < 8) {
-    throw new Error("Senha inválida: mínimo 8 caracteres.");
-  }
-
-  // Verificar se já existe ADMIN
-  const exists = await hasExistingAdmin();
-  if (exists) {
-    throw new Error(
-      "ADMIN já existe. Bootstrap abortado para proteger o sistema. " +
-      "Se precisar de outro ADMIN, use um endpoint administrativo autenticado.",
-    );
-  }
-
-  const normalizedEmail = input.email.toLowerCase().trim();
-  const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
-
-  const userId = await db.transaction(async (tx) => {
-    const rows = await tx
-      .insert(users)
-      .values({
-        roleId: ADMIN_ROLE_ID,
-        name: input.name.trim(),
-        email: normalizedEmail,
-        passwordHash,
-      })
-      .returning({ id: users.id });
-
-    return rows[0]!.id;
-  });
-
-  // Fechar pool para encerrar o processo
-  await pool.end();
-
-  return userId;
 }
 
 /**
  * Ponto de entrada CLI.
  * Lê dados de variáveis de ambiente — não de argumentos de linha de comando
- * (para evitar que a senha apareça em logs de processo / historico de shell).
+ * (para evitar que a senha apareça em logs de processo / histórico de shell).
  */
 async function main(): Promise<void> {
   const name = process.env["BOOTSTRAP_ADMIN_NAME"] ?? "";
