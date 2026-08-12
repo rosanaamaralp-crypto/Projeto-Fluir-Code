@@ -1,0 +1,68 @@
+O relatório apresentado é da FASE 5.2 e não da FASE 5.3.
+
+A F5.2 já está APROVADA e NÃO deve ser reexecutada.
+
+Agora execute EXCLUSIVAMENTE a FASE 5.3 conforme a especificação abaixo:
+
+OBJETIVO:
+Fortalecer a cobertura de testes das operações de appointment já existentes, sem implementar F5.4 ou qualquer alteração de profissional/modalidade.
+
+Adicionar/verificar cobertura para:
+
+1. PROFESSIONAL cancela appointment CONFIRMED.
+2. ADMIN cancela appointment IN_PROGRESS.
+3. PROFESSIONAL: IN_PROGRESS → NO_SHOW.
+4. ADMIN: IN_PROGRESS → NO_SHOW.
+5. CLIENT não pode: IN_PROGRESS → NO_SHOW.
+6. Audit log: CONFIRMED → IN_PROGRESS.
+7. Audit log: IN_PROGRESS → COMPLETED.
+8. Audit log: IN_PROGRESS → NO_SHOW.
+9. Integridade append-only de appointment_status_history: UPDATE bloqueado.
+10. Integridade append-only de appointment_status_history: DELETE bloqueado.
+
+IMPORTANTE:
+- Primeiro leia os testes existentes e identifique quais desses casos já estão realmente cobertos.
+- NÃO duplique testes existentes.
+- NÃO remova nem enfraqueça nenhum teste.
+- NÃO altere schema.
+- NÃO crie migration.
+- NÃO altere triggers.
+- NÃO altere frontend.
+- NÃO implemente F5.4.
+- NÃO modificar produção, salvo se um teste revelar uma inconsistência real; nesse caso, PARE e relate antes de corrigir.
+
+Os testes devem ser não-vacuosos e verificar o registro/evento específico criado pelo appointment utilizado.
+
+Após implementar:
+
+1. Typecheck
+2. Testes específicos da F5.3
+3. Suite completa
+4. Build específico do api-server
+5. git diff --name-only
+6. Integridade do banco
+
+Baseline:
+238/238 testes.
+
+Ao final, entregue SOMENTE o relatório da F5.3 contendo:
+- arquivos lidos;
+- cobertura existente antes;
+- gaps encontrados;
+- testes adicionados;
+- testes já existentes que não foram duplicados;
+- arquivos modificados;
+- quantidade antes/depois;
+- typecheck;
+- testes F5.3;
+- suite completa;
+- build api-server;
+- integridade do banco;
+- migrations;
+- schema;
+- git diff;
+- confirmação de nenhum teste removido/enfraquecido;
+- ressalvas;
+- GATE F5.3: APROVADO ou REPROVADO.
+
+NÃO avance para F5.4.

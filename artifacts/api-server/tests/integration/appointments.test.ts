@@ -15,7 +15,7 @@ import {
   type AppointmentTestExtras,
 } from "../helpers/seed.js";
 import { getDatabaseClient } from "@workspace/db";
-import { auditLogs } from "@workspace/db";
+import { auditLogs, appointmentStatusHistory } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const { db } = getDatabaseClient();
@@ -710,6 +710,286 @@ describe("Audit log de appointments (verificação direta no banco)", () => {
       .where(eq(auditLogs.entityId, apptId));
 
     expect(logs.some((l) => l.action === "APPOINTMENT_CREATED")).toBe(true);
+  });
+});
+
+// ─── F5.3 — Cancelamento: PROFESSIONAL e ADMIN ────────────────────────────
+
+describe("F5.3 — cancelamento por PROFESSIONAL (CONFIRMED) e ADMIN (IN_PROGRESS)", () => {
+  let profCancelId: string;  // ficará em CONFIRMED → PROFESSIONAL cancela
+  let adminCancelId: string; // será avançado para IN_PROGRESS → ADMIN cancela
+
+  beforeAll(async () => {
+    const rA = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(rA.status).toBe(201);
+    profCancelId = rA.body.appointment.id;
+
+    const rB = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(rB.status).toBe(201);
+    adminCancelId = rB.body.appointment.id;
+
+    // Avança B para IN_PROGRESS
+    const adv = await request
+      .patch(`/api/appointments/${adminCancelId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "IN_PROGRESS" });
+    expect(adv.status).toBe(200);
+  });
+
+  it("PROFESSIONAL cancela próprio appointment CONFIRMED (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${profCancelId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "CANCELLED", reason: "Agenda cheia" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("CANCELLED");
+  });
+
+  it("ADMIN cancela appointment IN_PROGRESS (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${adminCancelId}`)
+      .set("Cookie", adminCookie)
+      .send({ status: "CANCELLED", reason: "Emergência administrativa" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("CANCELLED");
+  });
+});
+
+// ─── F5.3 — IN_PROGRESS → NO_SHOW (RBAC) ──────────────────────────────────
+
+describe("F5.3 — IN_PROGRESS → NO_SHOW (RBAC)", () => {
+  let profNoShowId: string;
+  let adminNoShowId: string;
+  let clientNoShowId: string;
+
+  beforeAll(async () => {
+    // Criar 3 appointments em slots distintos
+    const [rA, rB, rC] = await Promise.all([
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+      request.post("/api/appointments").set("Cookie", clientCookie).send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      }),
+    ]);
+    expect(rA.status).toBe(201);
+    expect(rB.status).toBe(201);
+    expect(rC.status).toBe(201);
+    profNoShowId  = rA.body.appointment.id;
+    adminNoShowId = rB.body.appointment.id;
+    clientNoShowId = rC.body.appointment.id;
+
+    // Avançar todos para IN_PROGRESS
+    const advances = await Promise.all([
+      request.patch(`/api/appointments/${profNoShowId}`).set("Cookie", profCookie).send({ status: "IN_PROGRESS" }),
+      request.patch(`/api/appointments/${adminNoShowId}`).set("Cookie", profCookie).send({ status: "IN_PROGRESS" }),
+      request.patch(`/api/appointments/${clientNoShowId}`).set("Cookie", profCookie).send({ status: "IN_PROGRESS" }),
+    ]);
+    for (const adv of advances) expect(adv.status).toBe(200);
+  });
+
+  it("CLIENT não pode IN_PROGRESS → NO_SHOW (400)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${clientNoShowId}`)
+      .set("Cookie", clientCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+    // Confirmar que permanece IN_PROGRESS
+    const check = await request
+      .get(`/api/appointments/${clientNoShowId}`)
+      .set("Cookie", adminCookie);
+    expect(check.body.appointment.status).toBe("IN_PROGRESS");
+  });
+
+  it("PROFESSIONAL consegue IN_PROGRESS → NO_SHOW (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${profNoShowId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("NO_SHOW");
+  });
+
+  it("ADMIN consegue IN_PROGRESS → NO_SHOW (200)", async () => {
+    const res = await request
+      .patch(`/api/appointments/${adminNoShowId}`)
+      .set("Cookie", adminCookie)
+      .send({ status: "NO_SHOW" });
+    expect(res.status).toBe(200);
+    expect(res.body.appointment.status).toBe("NO_SHOW");
+  });
+});
+
+// ─── F5.3 — Audit log: transições de status ───────────────────────────────
+
+describe("F5.3 — Audit log: CONFIRMED → IN_PROGRESS, IN_PROGRESS → COMPLETED, IN_PROGRESS → NO_SHOW", () => {
+  it("CONFIRMED → IN_PROGRESS gera APPOINTMENT_STATUS_CHANGED com status IN_PROGRESS", async () => {
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const apptId = createRes.body.appointment.id;
+
+    const patchRes = await request
+      .patch(`/api/appointments/${apptId}`)
+      .set("Cookie", profCookie)
+      .send({ status: "IN_PROGRESS" });
+    expect(patchRes.status).toBe(200);
+
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.entityId, apptId));
+    const statusLog = logs.find(
+      (l) => l.action === "APPOINTMENT_STATUS_CHANGED" &&
+             (l.newData as Record<string, unknown>)?.status === "IN_PROGRESS",
+    );
+    expect(statusLog).toBeDefined();
+    expect(statusLog!.newData).toMatchObject({ status: "IN_PROGRESS" });
+  });
+
+  it("IN_PROGRESS → COMPLETED gera APPOINTMENT_STATUS_CHANGED com status COMPLETED", async () => {
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const apptId = createRes.body.appointment.id;
+
+    await request.patch(`/api/appointments/${apptId}`).set("Cookie", profCookie).send({ status: "IN_PROGRESS" });
+    const patchRes = await request.patch(`/api/appointments/${apptId}`).set("Cookie", profCookie).send({ status: "COMPLETED" });
+    expect(patchRes.status).toBe(200);
+
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.entityId, apptId));
+    const completedLog = logs.find(
+      (l) => l.action === "APPOINTMENT_STATUS_CHANGED" &&
+             (l.newData as Record<string, unknown>)?.status === "COMPLETED",
+    );
+    expect(completedLog).toBeDefined();
+    expect(completedLog!.newData).toMatchObject({ status: "COMPLETED" });
+  });
+
+  it("IN_PROGRESS → NO_SHOW gera APPOINTMENT_STATUS_CHANGED com status NO_SHOW", async () => {
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const apptId = createRes.body.appointment.id;
+
+    await request.patch(`/api/appointments/${apptId}`).set("Cookie", profCookie).send({ status: "IN_PROGRESS" });
+    const patchRes = await request.patch(`/api/appointments/${apptId}`).set("Cookie", profCookie).send({ status: "NO_SHOW" });
+    expect(patchRes.status).toBe(200);
+
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.entityId, apptId));
+    const noShowLog = logs.find(
+      (l) => l.action === "APPOINTMENT_STATUS_CHANGED" &&
+             (l.newData as Record<string, unknown>)?.status === "NO_SHOW",
+    );
+    expect(noShowLog).toBeDefined();
+    expect(noShowLog!.newData).toMatchObject({ status: "NO_SHOW" });
+  });
+});
+
+// ─── F5.3 — appointment_status_history: integridade append-only ────────────
+
+describe("F5.3 — appointment_status_history: integridade append-only", () => {
+  let historyEntryId: string;
+
+  beforeAll(async () => {
+    // Criar appointment para garantir pelo menos uma entrada no histórico
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const apptId = createRes.body.appointment.id;
+
+    const entries = await db
+      .select()
+      .from(appointmentStatusHistory)
+      .where(eq(appointmentStatusHistory.appointmentId, apptId));
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+    historyEntryId = entries[0].id;
+  });
+
+  it("UPDATE em appointment_status_history é bloqueado pelo trigger", async () => {
+    // O Drizzle encapsula o erro do PostgreSQL em error.cause; verificamos a cadeia completa.
+    let caughtError: unknown = null;
+    try {
+      await db
+        .update(appointmentStatusHistory)
+        .set({ reason: "tentativa não autorizada" })
+        .where(eq(appointmentStatusHistory.id, historyEntryId));
+    } catch (e) {
+      caughtError = e;
+    }
+    expect(caughtError).not.toBeNull();
+    const err = caughtError as Error & { cause?: Error };
+    const pgMessage = err.cause?.message ?? err.message;
+    expect(pgMessage).toMatch(/append-only/);
+  });
+
+  it("DELETE em appointment_status_history é bloqueado pelo trigger", async () => {
+    let caughtError: unknown = null;
+    try {
+      await db
+        .delete(appointmentStatusHistory)
+        .where(eq(appointmentStatusHistory.id, historyEntryId));
+    } catch (e) {
+      caughtError = e;
+    }
+    expect(caughtError).not.toBeNull();
+    const err = caughtError as Error & { cause?: Error };
+    const pgMessage = err.cause?.message ?? err.message;
+    expect(pgMessage).toMatch(/append-only/);
   });
 });
 
