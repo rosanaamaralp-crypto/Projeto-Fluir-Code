@@ -1,0 +1,192 @@
+PLANO FASE 6 APROVADO — AUTORIZAÇÃO PARA IMPLEMENTAÇÃO
+
+Autorizo a implementação completa da FASE 6 — DASHBOARDS, seguindo exatamente o plano técnico analisado e aprovado.
+
+IMPLEMENTAR:
+
+1. GET /api/dashboard/admin
+   - ADMIN somente
+   - Dados calculados exclusivamente do banco real
+   - Sem números fixos/simulados
+   - appointmentsToday
+   - upcomingAppointments
+   - completedToday
+   - cancelledToday
+   - homeCareToday
+   - resourceOccupancy
+
+2. GET /api/dashboard/professional
+   - PROFESSIONAL usa automaticamente o próprio professionalId da sessão
+   - ADMIN deve informar ?professionalId=uuid
+   - CLIENT deve receber 403
+   - PROFESSIONAL NÃO pode injetar professionalId de outro profissional
+   - nextAppointment
+   - appointmentsToday
+   - upcomingAppointments
+   - completedToday
+   - cancelledToday
+
+3. GET /api/dashboard/client
+   - CLIENT usa automaticamente o próprio clientId da sessão
+   - ADMIN deve informar ?clientId=uuid
+   - PROFESSIONAL deve receber 403
+   - CLIENT NÃO pode injetar clientId de outro cliente
+   - nextAppointment
+   - upcomingAppointments
+   - pastAppointmentsCount
+
+DECISÕES APROVADAS:
+
+D1 — Dashboard CLIENT:
+- upcomingAppointments = máximo 5
+- somente status CONFIRMED
+- ordem crescente por startDatetime
+
+D2 — Notifications:
+- NÃO implementar notifications nesta Fase 6
+- não criar endpoint de notificações
+- pode omitir completamente o campo notifications da resposta
+
+D3 — Dashboard ADMIN:
+- resourceOccupancy deve considerar somente resources com status ACTIVE
+
+D4 — Dashboard PROFESSIONAL:
+- upcomingAppointments = máximo 10
+- status CONFIRMED ou IN_PROGRESS
+- ordem crescente por startDatetime
+
+D5 — ADMIN:
+- GET /api/dashboard/professional exige ?professionalId=uuid
+- GET /api/dashboard/client exige ?clientId=uuid
+- se ADMIN não informar o respectivo ID, retornar 400
+- validar se o profissional/cliente existe; se não existir, retornar 404
+
+REGRAS IMPORTANTES:
+
+- Não criar migration.
+- Não alterar schema do banco.
+- Não alterar regras existentes da Fase 5.
+- Não alterar os testes existentes, exceto se uma adaptação mínima for tecnicamente indispensável e devidamente justificada.
+- Não gerar audit log para consultas de dashboard.
+- Dashboards são somente leitura.
+- Usar dados reais do PostgreSQL/Drizzle.
+- Usar Promise.all quando apropriado para consultas independentes.
+- Respeitar completamente RBAC e proteção contra IDOR.
+- "Hoje" deve seguir o padrão temporal já utilizado pelo projeto.
+- Não inventar campos ou contratos que não estejam definidos no plano/documentação.
+
+ARQUIVOS AUTORIZADOS:
+
+NOVOS:
+src/validators/dashboard.validator.ts
+src/repositories/dashboard.repository.ts
+src/services/dashboard.service.ts
+src/controllers/dashboard.controller.ts
+src/routes/dashboard.ts
+tests/integration/dashboard.test.ts
+
+ALTERADO:
+src/routes/index.ts
+
+ANTES DE IMPLEMENTAR:
+
+1. Ler os documentos oficiais relevantes da Fase 6.
+2. Ler os padrões existentes de:
+   - routes
+   - controllers
+   - services
+   - repositories
+   - validators
+   - RBAC
+   - testes de integração
+3. Verificar o estado atual da Fase 5.7.
+4. Não começar a codificar enquanto não entender os padrões existentes.
+
+TESTES OBRIGATÓRIOS:
+
+Criar testes para:
+
+RBAC:
+- ADMIN → /dashboard/admin = 200
+- PROFESSIONAL → /dashboard/admin = 403
+- CLIENT → /dashboard/admin = 403
+- anônimo → 401
+- PROFESSIONAL → /dashboard/professional = 200
+- ADMIN → /dashboard/professional?professionalId=uuid = 200
+- CLIENT → /dashboard/professional = 403
+- CLIENT → /dashboard/client = 200
+- ADMIN → /dashboard/client?clientId=uuid = 200
+
+Dashboard ADMIN:
+- campos obrigatórios presentes
+- appointmentsToday correto
+- resourceOccupancy somente ACTIVE
+- homeCareToday correto
+
+Dashboard PROFESSIONAL:
+- nextAppointment correto
+- appointmentsToday somente do profissional correto
+- proteção contra professionalId de outro profissional
+
+Dashboard CLIENT:
+- nextAppointment correto
+- upcomingAppointments somente do próprio cliente
+- máximo 5
+- somente CONFIRMED
+- proteção contra clientId de outro cliente
+- pastAppointmentsCount correto
+
+Validações:
+- professionalId inválido → 400
+- professionalId inexistente → 404
+- clientId inválido → 400
+- clientId inexistente → 404
+- ADMIN sem professionalId → 400
+- ADMIN sem clientId → 400
+
+GATES OBRIGATÓRIOS ANTES DE FINALIZAR:
+
+1. Typecheck:
+   0 erros
+
+2. Testes:
+   - todos os testes existentes continuam passando
+   - todos os novos testes da Fase 6 passando
+   - executar a suíte completa
+
+3. Build:
+   OK
+
+4. Banco:
+   - 16 tabelas
+   - 14 triggers
+   - 3 EXCLUDE constraints
+   - 1 migration
+   - nenhuma migration nova
+
+5. Verificar:
+   git diff --name-only
+   git status --short
+
+6. Confirmar que nenhuma alteração fora do escopo foi realizada.
+
+NÃO FAZER COMMIT AUTOMATICAMENTE.
+
+Ao finalizar, entregar relatório contendo:
+
+- arquivos criados
+- arquivos modificados
+- endpoints implementados
+- regras RBAC
+- testes adicionados
+- resultado do typecheck
+- resultado da suíte completa
+- resultado do build
+- integridade do banco
+- git diff --name-only
+- git status --short
+- qualquer ressalva ou decisão técnica encontrada
+
+IMPORTANTE:
+Não considerar a tarefa concluída apenas porque o código foi escrito.
+A Fase 6 só está concluída após todos os gates acima passarem.
