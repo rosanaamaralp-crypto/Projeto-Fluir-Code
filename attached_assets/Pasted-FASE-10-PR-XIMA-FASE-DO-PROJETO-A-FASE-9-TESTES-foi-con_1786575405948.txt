@@ -1,0 +1,126 @@
+FASE 10 — PRÓXIMA FASE DO PROJETO
+
+A FASE 9 — TESTES foi concluída com sucesso:
+
+- Baseline anterior: 431/431 testes
+- Resultado F9: 488/488 testes passando
+- Typecheck: 0 erros
+- Build: OK
+- Arquivos de produção modificados: 0
+- Banco preservado:
+  - 16 tabelas
+  - 14 triggers
+  - 3 EXCLUDE constraints
+  - 1 migration
+- Commit F9 realizado
+
+IMPORTANTE:
+NÃO implemente nada ainda.
+
+Quero que você faça primeiro APENAS O PLANEJAMENTO DA FASE 10, seguindo exatamente o mesmo processo utilizado nas fases anteriores.
+
+1. Leia a documentação oficial do projeto antes de tomar qualquer decisão.
+
+2. Respeite a hierarquia de autoridade dos documentos já definida:
+   Doc 18 > Doc 17 > Doc 16 > Doc 14 > demais documentos.
+
+3. Identifique no Doc 18 / Doc 17:
+   - qual é a próxima fase oficial após a Fase 9;
+   - objetivo da fase;
+   - requisitos funcionais;
+   - regras de negócio;
+   - endpoints envolvidos;
+   - regras de autorização/RBAC;
+   - requisitos de banco;
+   - critérios de aceite;
+   - testes esperados;
+   - dependências com funcionalidades já implementadas.
+
+4. Faça uma auditoria do estado REAL atual do código:
+   - rotas existentes;
+   - controllers;
+   - services;
+   - repositories;
+   - validators;
+   - schema Drizzle;
+   - migrations;
+   - tabelas;
+   - triggers;
+   - constraints;
+   - testes existentes;
+   - fixtures/seed helpers;
+   - commits/fases anteriores.
+
+5. Compare a documentação com o código atual e identifique:
+   - o que já existe;
+   - o que está parcialmente implementado;
+   - o que falta;
+   - possíveis divergências entre documentação e implementação;
+   - riscos de regressão;
+   - dependências;
+   - funcionalidades que NÃO devem ser alteradas.
+
+6. NÃO altere nenhum arquivo de código.
+
+7. NÃO crie testes ainda.
+
+8. NÃO crie migration.
+
+9. NÃO faça commit.
+
+10. Produza um PLANO TÉCNICO COMPLETO da FASE 10, no mesmo formato dos planos anteriores, contendo obrigatoriamente:
+
+A. Documentos oficiais utilizados
+B. Objetivo da fase
+C. Estado atual do sistema
+D. Regras de negócio aplicáveis
+E. Contratos/API esperados
+F. Fluxo técnico de implementação
+G. RBAC
+H. Validações
+I. Tratamento de erros
+J. Banco de dados
+K. Concorrência/transações
+L. Audit logs
+M. Arquivos a criar/modificar
+N. Plano de testes
+O. Gates obrigatórios
+P. Riscos
+Q. Decisões pendentes
+R. Critérios objetivos de aprovação
+
+11. Para cada decisão que não estiver explicitamente definida pela documentação, NÃO invente uma regra.
+
+Marque como:
+
+DECISÃO PENDENTE
+
+e apresente:
+- a dúvida;
+- impacto técnico;
+- opções possíveis;
+- sua recomendação;
+- motivo da recomendação.
+
+12. Preserve rigorosamente o baseline atual.
+
+O planejamento deve deixar explícito que nenhuma implementação será iniciada antes da minha aprovação.
+
+13. Ao final, apresente exatamente um:
+
+GATE DE PLANEJAMENTO
+
+com:
+
+STATUS: AGUARDANDO APROVAÇÃO
+PRÓXIMA FEATURE: FASE 10 — [NOME OFICIAL]
+ESCOPO:
+ARQUIVOS NOVOS:
+ARQUIVOS ALTERADOS:
+MIGRATION: SIM/NÃO
+RISCO DE REGRESSÃO:
+DECISÕES PENDENTES:
+
+Depois disso, PARE.
+
+NÃO implemente nada até eu responder "aprovado".
