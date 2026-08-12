@@ -13,6 +13,7 @@ import slotsRouter from "./slots.js";
 import appointmentsRouter from "./appointments.js";
 import auditLogsRouter from "./audit-logs.js";
 import dashboardRouter from "./dashboard.js";
+import reportsRouter from "./reports.js";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(slotsRouter);
 router.use(appointmentsRouter);
 router.use(auditLogsRouter);
 router.use(dashboardRouter);
+router.use(reportsRouter);
 
 export default router;
