@@ -1,0 +1,120 @@
+PLANO FASE 7 — APROVADO
+
+Autorizo a implementação da FASE 7 — RELATÓRIOS.
+
+Decisões oficiais:
+
+D1 — GET /api/reports/appointments:
+startDate e endDate são OPCIONAIS.
+Se não forem informados, consultar todo o histórico disponível, mantendo paginação.
+
+D2 — GET /api/reports/resources:
+startDate e endDate são OPCIONAIS.
+Se não forem informados, consultar todo o histórico disponível.
+
+D3 — Acesso aos relatórios:
+Somente ADMIN.
+PROFESSIONAL e CLIENT não terão acesso aos endpoints de reports nesta fase.
+
+D4 — Resource report:
+Incluir TODOS os resources, tanto ACTIVE quanto INACTIVE.
+Resources sem appointments no período devem aparecer com totalAppointments = 0 e contagens por status = 0.
+
+D5 — Appointment report summary:
+Incluir:
+- total
+- byStatus com os 5 status
+- byModality com IN_PERSON e HOME_CARE
+
+D6 — clientId:
+NÃO adicionar clientId como filtro.
+Implementar somente os filtros explicitamente previstos no Doc 16 §51.
+
+D7 — Resource report period:
+A resposta deve incluir:
+period: {
+  startDate: string | null,
+  endDate: string | null
+}
+
+REGRAS DE IMPLEMENTAÇÃO:
+
+1. Antes de editar, confirme novamente o git status e o commit da F6.
+2. Não modificar migrations.
+3. Não alterar schema do banco.
+4. Não criar tabelas, triggers ou constraints.
+5. Não gerar audit log para operações de leitura.
+6. Preservar todos os 356 testes existentes.
+7. Implementar somente o escopo aprovado da Fase 7.
+8. Não adicionar funcionalidades não previstas no plano ou nos documentos oficiais.
+
+Arquivos esperados:
+
+NOVOS:
+- src/validators/reports.validator.ts
+- src/repositories/reports.repository.ts
+- src/controllers/reports.controller.ts
+- src/routes/reports.ts
+- tests/integration/reports.test.ts
+
+MODIFICADO:
+- src/routes/index.ts
+
+Endpoints:
+
+GET /api/reports/appointments
+GET /api/reports/resources
+
+RBAC obrigatório:
+
+ADMIN → 200
+PROFESSIONAL → 403
+CLIENT → 403
+não autenticado → 401
+
+Implementar os filtros, paginação, agregações, joins e validações descritos no plano aprovado.
+
+IMPORTANTE:
+Não finalize apenas porque o código compila.
+
+Após implementação, execute obrigatoriamente:
+
+1. Typecheck
+2. Testes específicos da Fase 7
+3. Suite completa
+4. Build
+5. Verificação de integridade do banco
+6. git diff --name-only
+7. git status --short
+
+Gates esperados:
+
+- Typecheck: 0 erros
+- Todos os testes Fase 7 passando
+- Todos os 356 testes anteriores preservados
+- Suite completa verde
+- Build OK
+- 16 tabelas
+- 14 triggers
+- 3 EXCLUDE constraints
+- 1 migration
+- Nenhuma migration nova
+- Nenhuma alteração fora do escopo aprovado
+
+Ao final, apresente um RELATÓRIO FINAL DA FASE 7 contendo:
+- arquivos criados/modificados
+- endpoints implementados
+- filtros
+- RBAC
+- testes adicionados
+- quantidade total de testes
+- typecheck
+- build
+- integridade do banco
+- git diff
+- git status
+- commit realizado
+
+Se qualquer gate falhar, NÃO faça commit final antes de corrigir e executar novamente os gates.
+
+Pode iniciar a implementação agora.
