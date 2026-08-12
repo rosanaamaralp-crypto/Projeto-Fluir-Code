@@ -1,3 +1,4 @@
+import { and, asc, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { auditLogs } from "@workspace/db";
 
@@ -26,6 +27,19 @@ function sanitize(data: unknown): unknown {
   return result;
 }
 
+export type AuditLogRow = typeof auditLogs.$inferSelect;
+
+export interface FindAuditLogsFilters {
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  page: number;
+  limit: number;
+}
+
 export const AuditLogsRepository = {
   async create(
     db: DB,
@@ -48,5 +62,48 @@ export const AuditLogsRepository = {
       newData: sanitize(entry.newData) as Record<string, unknown> | null ?? null,
       ipAddress: entry.ipAddress ?? null,
     });
+  },
+
+  /**
+   * Busca audit logs com filtros opcionais e paginação.
+   *
+   * F5.7 — GET /api/audit-logs (Doc 16 §53 / RN-063, RN-064)
+   * Ordenação: createdAt DESC.
+   * Retorna: { data, total } — total para paginação.
+   */
+  async findMany(
+    db: DB,
+    filters: FindAuditLogsFilters,
+  ): Promise<{ data: AuditLogRow[]; total: number }> {
+    const { page, limit, action, entityType, entityId, userId, startDate, endDate } = filters;
+    const offset = (page - 1) * limit;
+
+    const conds: SQL[] = [];
+    if (action) conds.push(eq(auditLogs.action, action));
+    if (entityType) conds.push(eq(auditLogs.entityType, entityType));
+    if (entityId) conds.push(eq(auditLogs.entityId, entityId));
+    if (userId) conds.push(eq(auditLogs.userId, userId));
+    if (startDate) conds.push(gte(auditLogs.createdAt, new Date(startDate)));
+    if (endDate) conds.push(lte(auditLogs.createdAt, new Date(endDate)));
+
+    const where = conds.length > 0 ? and(...conds) : undefined;
+
+    const [data, countResult] = await Promise.all([
+      db
+        .select()
+        .from(auditLogs)
+        .where(where)
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(auditLogs)
+        .where(where),
+    ]);
+
+    const total = countResult[0]?.count ?? 0;
+
+    return { data, total };
   },
 };

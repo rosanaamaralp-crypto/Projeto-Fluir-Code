@@ -1,0 +1,115 @@
+F5.7 — PLANO APROVADO.
+
+Autorizo a implementação conforme o plano apresentado, com as seguintes decisões:
+
+U1 — oldData/newData:
+APROVADO retornar ambos os campos completos na resposta.
+Utilizar os dados já armazenados e sanitizados pelo AuditLogsRepository.create().
+Não criar nova transformação nem alterar o formato persistido.
+
+U2 — action:
+APROVADO utilizar string livre no filtro.
+Não criar enum fixo de actions.
+
+Agora implemente a F5.7 completa.
+
+REGRAS OBRIGATÓRIAS:
+
+1. Implementar somente o escopo da F5.7:
+   GET /api/audit-logs
+
+2. Não alterar schema do banco.
+
+3. Não criar migration.
+
+4. Não alterar frontend.
+
+5. Não alterar funcionalidades anteriores F5.4/F5.5/F5.6, exceto o mínimo indispensável para que o endpoint F5.7 funcione corretamente.
+
+6. Preservar todos os 296 testes existentes.
+
+7. Adicionar os testes específicos previstos no plano da F5.7.
+
+8. Endpoint obrigatoriamente protegido:
+   requireAuth → requireAdmin.
+
+9. Manter o padrão existente de erros e middleware do projeto.
+
+10. Implementar paginação:
+    page default 1
+    limit default 20
+    limit máximo 100
+
+11. Implementar os filtros definidos no plano:
+    action
+    entityType
+    entityId
+    userId
+    startDate
+    endDate
+
+12. Validar:
+    UUIDs
+    page >= 1
+    limit entre 1 e 100
+    endDate >= startDate
+
+13. Ordenar por createdAt DESC.
+
+14. Retornar:
+    data
+    pagination:
+      page
+      limit
+      total
+      totalPages
+
+15. Retornar oldData e newData completos na resposta.
+
+16. Não gerar audit log ao consultar audit logs.
+
+17. Não adicionar testes falsos, não remover testes existentes e não enfraquecer assertions.
+
+18. Executar os gates somente após concluir a implementação:
+
+    - typecheck
+    - testes específicos F5.7
+    - suite completa
+    - build api-server
+    - integridade do banco
+    - git diff --name-only
+    - git status --short
+
+19. Confirmar:
+    16 tabelas
+    14 triggers
+    3 EXCLUDE constraints
+    1 migration
+
+20. Se qualquer teste falhar, investigar e corrigir a implementação.
+    NÃO remover ou alterar testes apenas para obter aprovação.
+
+21. Não criar commit/checkpoint enquanto os gates não estiverem verdes.
+
+Ao final entregar:
+
+RELATÓRIO FINAL — FASE 5.7
+
+incluindo:
+- arquivos modificados
+- arquivos criados
+- implementação
+- filtros
+- RBAC
+- paginação
+- testes adicionados
+- total de testes
+- typecheck
+- build
+- integridade do banco
+- git diff
+- git status
+- ressalvas
+
+GATE F5.7:
+APROVADO ou REPROVADO.
