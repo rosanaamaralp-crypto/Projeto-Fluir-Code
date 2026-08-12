@@ -18,15 +18,18 @@ import { request, loginAs } from "../helpers/app.js";
 import {
   seedTestData,
   seedAppointmentExtras,
+  seedConcurrencyExtras,
   cleanTestData,
   TEST_EMAILS,
   TEST_PASSWORDS,
   type TestUsers,
   type AppointmentTestExtras,
+  type ConcurrencyExtras,
 } from "../helpers/seed.js";
 
 let ids: TestUsers;
 let extras: AppointmentTestExtras;
+let extras2: ConcurrencyExtras;
 let clientCookie: string;
 let adminCookie: string;
 
@@ -53,6 +56,7 @@ function slotAt(daysFromNow: number, hourUtc = 10): string {
 beforeAll(async () => {
   ids = await seedTestData();
   extras = await seedAppointmentExtras(ids);
+  extras2 = await seedConcurrencyExtras(ids);
   clientCookie = await loginAs(TEST_EMAILS.client, TEST_PASSWORDS.client);
   adminCookie = await loginAs(TEST_EMAILS.admin, TEST_PASSWORDS.admin);
 });
@@ -163,10 +167,36 @@ describe("OBS-D — GET /api/slots filtra conflitos do próprio CLIENT por sess�
     expect(adminRes.body.slots.length).toBeGreaterThan(0);
   });
 
-  it("4b. ADMIN vê slot que CLIENT tem ocupado — ADMIN não sofre filtragem por client", async () => {
-    // O client já tem um appointment em d+8 10:00 (criado no teste 2)
-    const date = futureDate(8); // mesmo dia do appointment criado no teste 2
+  it("4b. ADMIN vê slot que CLIENT não vê — CLIENT filtrado por conflito do próprio appointment com prof2", async () => {
+    /**
+     * Cenário controlado:
+     * - CLIENT cria appointment com prof2 às 11:00 UTC do d+30
+     * - prof1 está livre nesse horário (sem appointment)
+     * - ADMIN consulta slots de prof1 em d+30 → vê o slot das 11:00 (sem filtro de cliente)
+     * - CLIENT consulta slots de prof1 em d+30 → NÃO vê o slot das 11:00
+     *   porque o SlotsService detecta conflito de cliente (appointment com prof2 no mesmo horário)
+     *
+     * Isso prova que a derivação de clientId por sessão filtra corretamente conflitos do cliente
+     * independentemente do profissional — e que ADMIN não é afetado por esse filtro.
+     */
+    const targetDays = 30;
+    const targetHour = 11; // 11:00 UTC — dentro da janela 08:00-20:00
+    const conflictSlot = slotAt(targetDays, targetHour);
+    const date = futureDate(targetDays);
 
+    // CLIENT cria appointment com prof2 às 11:00 UTC do d+30 (não bloqueia prof1)
+    const apptRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: extras2.prof2Id,
+        serviceId: ids.serviceId,
+        startDatetime: conflictSlot,
+        modality: "IN_PERSON",
+      });
+    expect(apptRes.status).toBe(201);
+
+    // ADMIN consulta slots de prof1 em d+30 — prof1 livre, sem filtro de cliente
     const adminRes = await request
       .get(
         `/api/slots?professionalId=${ids.professionalId}&serviceId=${ids.serviceId}&date=${date}`,
@@ -174,10 +204,28 @@ describe("OBS-D — GET /api/slots filtra conflitos do próprio CLIENT por sess�
       .set("Cookie", adminCookie);
 
     expect(adminRes.status).toBe(200);
-    // ADMIN não tem clientId injetado → o slot das 10:00 NÃO aparece para ele também
-    // porque o PROFISSIONAL está ocupado naquele horário (appointment CONFIRMED)
-    // Mas isso é filtro do profissional, não do cliente.
-    // Independentemente, ADMIN não faz filtro de clientId.
     expect(Array.isArray(adminRes.body.slots)).toBe(true);
+
+    // ADMIN vê o slot das 11:00 de prof1 (prof1 está livre, ADMIN não filtra por cliente)
+    const adminSeesSlot = adminRes.body.slots.some(
+      (s: { startDatetime: string }) => s.startDatetime === conflictSlot,
+    );
+    expect(adminSeesSlot).toBe(true);
+
+    // CLIENT consulta slots de prof1 em d+30 — prof1 livre, mas CLIENT tem conflito com prof2
+    const clientRes = await request
+      .get(
+        `/api/slots?professionalId=${ids.professionalId}&serviceId=${ids.serviceId}&date=${date}`,
+      )
+      .set("Cookie", clientCookie);
+
+    expect(clientRes.status).toBe(200);
+    expect(Array.isArray(clientRes.body.slots)).toBe(true);
+
+    // CLIENT NÃO vê o slot das 11:00 de prof1 (conflito detectado via clientId da sessão)
+    const clientSeesSlot = clientRes.body.slots.some(
+      (s: { startDatetime: string }) => s.startDatetime === conflictSlot,
+    );
+    expect(clientSeesSlot).toBe(false);
   });
 });

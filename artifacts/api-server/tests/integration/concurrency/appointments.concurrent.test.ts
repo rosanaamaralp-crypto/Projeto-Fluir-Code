@@ -27,7 +27,7 @@ import {
 } from "../../helpers/seed.js";
 import { getDatabaseClient } from "@workspace/db";
 import { appointments } from "@workspace/db";
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 const { db } = getDatabaseClient();
 
@@ -220,9 +220,13 @@ describe("Caso B — mesmo professional, clientes diferentes, mesmo horário →
       const statuses = [r1.status, r2.status].sort();
       expect(statuses).toEqual([201, 409]);
 
-      // Banco: exatamente 1 appointment ativo para o profissional neste slot
-      const active = await db
-        .select({ id: appointments.id, clientId: appointments.clientId })
+      // Banco: buscar todos os appointments ativos do profissional com timestamps reais
+      const allActive = await db
+        .select({
+          id: appointments.id,
+          startDatetime: appointments.startDatetime,
+          endDatetime: appointments.endDatetime,
+        })
         .from(appointments)
         .where(
           and(
@@ -231,13 +235,21 @@ describe("Caso B — mesmo professional, clientes diferentes, mesmo horário →
           ),
         );
 
-      // Nenhuma sobreposição entre appointments do mesmo profissional
-      for (let i = 0; i < active.length; i++) {
-        for (let j = i + 1; j < active.length; j++) {
-          // active tem apenas id e clientId — verificação de overlap feita pela DB constraint
-          // Este test verifica que o banco não permitiu dois registros para o mesmo professional
-          // O fato de status ser [201, 409] já prova isso
-          expect(active[i]!.id).not.toBe(active[j]!.id);
+      // Exatamente 1 appointment ativo no horário exato do Caso B (d+12 14:00)
+      const slotStart = new Date(startDatetime);
+      const atSlot = allActive.filter(
+        (a) => a.startDatetime.getTime() === slotStart.getTime(),
+      );
+      expect(atSlot.length).toBe(1);
+
+      // Nenhum par de appointments ativos do mesmo profissional se sobrepõe em tempo
+      for (let i = 0; i < allActive.length; i++) {
+        for (let j = i + 1; j < allActive.length; j++) {
+          const a = allActive[i]!;
+          const b = allActive[j]!;
+          const overlapping =
+            a.startDatetime < b.endDatetime && a.endDatetime > b.startDatetime;
+          expect(overlapping).toBe(false);
         }
       }
     },
@@ -280,31 +292,52 @@ describe("Caso C — mesmo resource, client+professional diferentes, mesmo horá
   );
 
   it("banco confirma: excl_resource_no_overlap impediu dupla ocupação", async () => {
-    // Verificar que não há dois appointments ATIVOS no mesmo resource com sobreposição
-    const allWithResource = await db
+    const slotStart = new Date(fixedSlot(13, 14));
+
+    // Buscar todos os appointments ATIVOS dos profissionais do Caso C (prof1 e prof2)
+    // com timestamps reais para identificar o vencedor e verificar o resource usado
+    const candidateAppts = await db
       .select({
         id: appointments.id,
+        professionalId: appointments.professionalId,
         resourceId: appointments.resourceId,
         startDatetime: appointments.startDatetime,
         endDatetime: appointments.endDatetime,
-        status: appointments.status,
       })
       .from(appointments)
       .where(
         and(
-          eq(appointments.resourceId, extras.resourceId),
           notInArray(appointments.status, [...NON_BLOCKING]),
+          inArray(appointments.professionalId, [
+            ids.professionalId,
+            extras2.prof2Id,
+          ]),
         ),
       );
 
-    // Para cada par, verificar ausência de sobreposição
-    for (let i = 0; i < allWithResource.length; i++) {
-      for (let j = i + 1; j < allWithResource.length; j++) {
-        const a = allWithResource[i]!;
-        const b = allWithResource[j]!;
-        const overlaps =
+    // Filtrar em JS para o horário exato do Caso C (d+13 14:00 UTC)
+    const atSlot = candidateAppts.filter(
+      (a) => a.startDatetime.getTime() === slotStart.getTime(),
+    );
+
+    // Exatamente 1 appointment vencedor — o banco bloqueou o segundo via excl_resource_no_overlap
+    expect(atSlot.length).toBe(1);
+
+    // O appointment vencedor é IN_PERSON (tem resource_id)
+    const winner = atSlot[0]!;
+    expect(winner.resourceId).not.toBeNull();
+
+    // Verificar que nenhum outro appointment ativo usa o mesmo resource no mesmo intervalo
+    const allWithSameResource = candidateAppts.filter(
+      (a) => a.resourceId === winner.resourceId,
+    );
+    for (let i = 0; i < allWithSameResource.length; i++) {
+      for (let j = i + 1; j < allWithSameResource.length; j++) {
+        const a = allWithSameResource[i]!;
+        const b = allWithSameResource[j]!;
+        const overlapping =
           a.startDatetime < b.endDatetime && a.endDatetime > b.startDatetime;
-        expect(overlaps).toBe(false);
+        expect(overlapping).toBe(false);
       }
     }
   });

@@ -592,11 +592,12 @@ export const AppointmentsService = {
         );
       }
 
-      // 2. Ownership (CLIENT próprio ou ADMIN)
-      await assertAppointmentOwnership(tx, original, sessionUserId, sessionRoleId);
+      // 2. Verificar role e ownership
+      // PROFESSIONAL é bloqueado imediatamente — sem query desnecessária ao banco.
       if (sessionRoleId === ROLES.PROFESSIONAL) {
         throw new ForbiddenError("Profissionais não podem remarcar agendamentos.");
       }
+      await assertAppointmentOwnership(tx, original, sessionUserId, sessionRoleId);
 
       // 3. Validar novo horário
       const service = await ServicesRepository.findById(tx, original.serviceId);

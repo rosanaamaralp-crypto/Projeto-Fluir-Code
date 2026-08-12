@@ -1,0 +1,317 @@
+FASE 4.2 — FECHAMENTO DAS RESSALVAS DA AUDITORIA DA FASE 4.1
+
+Objetivo:
+Corrigir exclusivamente as 4 ressalvas identificadas na auditoria independente da Fase 4.1.
+
+NÃO implementar novas funcionalidades.
+NÃO alterar o schema de produção.
+NÃO criar migration.
+NÃO alterar regras de negócio já aprovadas.
+NÃO refatorar arquivos sem necessidade.
+Preservar integralmente o comportamento já aprovado da Fase 4/Fase 4.1.
+
+Antes de modificar qualquer coisa, leia os arquivos relevantes e confirme exatamente onde cada problema está.
+
+==================================================
+ETAPA 1 — AUDITORIA PRÉVIA OBRIGATÓRIA
+==================================================
+
+Leia:
+
+1. tests/integration/concurrency/appointments.concurrent.test.ts
+2. tests/integration/slots-client-filter.test.ts
+3. src/services/appointments.service.ts
+4. appointments.service.ts — especificamente reschedule()
+5. tests/helpers/seed.ts
+6. configuração atual do Vitest
+7. qualquer helper utilizado pelos testes de concorrência
+
+Depois confirme:
+
+- Caso B realmente possui uma assertion trivial baseada apenas em IDs.
+- Caso C realmente possui uma assertion que pode ser vacuosa.
+- Teste 4b de slots realmente não comprova a diferença de comportamento necessária.
+- reschedule() realmente verifica ownership antes de bloquear PROFESSIONAL.
+
+Não escreva código antes dessa auditoria.
+
+==================================================
+ETAPA 2 — CORRIGIR OBS-C / CASO B
+==================================================
+
+Arquivo:
+
+tests/integration/concurrency/appointments.concurrent.test.ts
+
+Problema:
+
+A assertion atual baseada em:
+
+active[i].id !== active[j].id
+
+não testa concorrência nem overlap, pois IDs são UUIDs e naturalmente diferentes.
+
+Substitua essa assertion por uma verificação real de sobreposição de horários.
+
+O teste deve provar que, para o mesmo PROFESSIONAL:
+
+- somente uma das requests concorrentes foi criada;
+- a outra recebeu 409;
+- não existem dois appointments ativos do mesmo professional no intervalo testado;
+- a verificação deve comparar startDatetime/endDatetime reais.
+
+Não alterar o primeiro teste que já verifica:
+
+[201, 409]
+
+Esse continua sendo obrigatório.
+
+A nova assertion secundária deve ser semanticamente útil e nunca trivial.
+
+==================================================
+ETAPA 3 — CORRIGIR OBS-C / CASO C
+==================================================
+
+Arquivo:
+
+tests/integration/concurrency/appointments.concurrent.test.ts
+
+Problema:
+
+A assertion:
+
+for (...) {
+  for (...) {
+    expect(overlaps).toBe(false)
+  }
+}
+
+pode ser vacuosa quando allWithResource.length <= 1.
+
+Corrigir de forma determinística.
+
+O teste deve primeiro garantir que existe pelo menos um appointment ativo associado ao resource utilizado no Caso C.
+
+IMPORTANTE:
+
+Não faça uma assertion artificial apenas para satisfazer o teste.
+
+A consulta deve ser relacionada ao horário/resource utilizado pelo próprio Caso C.
+
+O teste deve provar:
+
+- [201, 409];
+- existe exatamente um appointment vencedor para o resource/horário testado;
+- não existem dois appointments ativos sobrepostos para aquele resource naquele intervalo.
+
+Se o teste atual depende de dados residuais ou de resources escolhidos de forma não determinística, ajuste o seed/setup do teste para tornar o cenário determinístico.
+
+Não modificar a EXCLUDE constraint.
+
+Não criar migration.
+
+==================================================
+ETAPA 4 — CORRIGIR OBS-D / TESTE 4B
+==================================================
+
+Arquivo:
+
+tests/integration/slots-client-filter.test.ts
+
+Problema:
+
+O Teste 4b atualmente verifica apenas:
+
+Array.isArray(adminRes.body.slots)
+
+Isso não prova o comportamento específico do endpoint.
+
+Criar uma assertion que realmente demonstre que:
+
+ADMIN:
+- consulta slots sem filtro de client;
+- não sofre o bloqueio de disponibilidade causado por um appointment pertencente ao CLIENT.
+
+CLIENT:
+- consulta slots usando automaticamente seu próprio clientId derivado da session;
+- não deve receber como disponível um horário em conflito com seu próprio appointment.
+
+IMPORTANTE:
+
+Não permitir que o teste fique dependente de um horário em que o PROFESSIONAL já esteja ocupado, pois isso faria ADMIN e CLIENT apresentarem o mesmo resultado.
+
+Use um cenário controlado em um dia/horário em que:
+
+- o professional esteja disponível;
+- exista um appointment ativo do CLIENT naquele horário;
+- ADMIN e CLIENT consultem exatamente a mesma janela;
+- ADMIN possa enxergar o slot;
+- CLIENT não possa enxergar aquele slot devido ao próprio appointment.
+
+As assertions devem verificar a presença/ausência do horário específico ou uma diferença inequívoca entre as respostas.
+
+Não alterar a regra de produção já existente no SlotsController.
+
+A implementação de OBS-D já está correta segundo a auditoria.
+
+Estamos apenas fortalecendo a cobertura de teste.
+
+==================================================
+ETAPA 5 — OTIMIZAR ORDEM DO CHECK DE PROFESSIONAL
+==================================================
+
+Arquivo:
+
+src/services/appointments.service.ts
+
+Método:
+
+reschedule()
+
+Situação atual:
+
+await assertAppointmentOwnership(...)
+
+if (sessionRoleId === ROLES.PROFESSIONAL) {
+  throw new ForbiddenError(...)
+}
+
+Alterar a ordem para:
+
+1. verificar imediatamente se sessionRoleId === ROLES.PROFESSIONAL;
+2. lançar ForbiddenError;
+3. somente depois executar assertAppointmentOwnership() para CLIENT/ADMIN.
+
+Objetivo:
+
+Evitar uma query desnecessária ao banco quando o usuário é PROFESSIONAL.
+
+IMPORTANTE:
+
+Não alterar o comportamento HTTP.
+
+PROFESSIONAL deve continuar recebendo:
+
+403
+
+tanto sendo dono quanto não sendo dono do appointment.
+
+Adicionar/ajustar teste se necessário para preservar essa regra.
+
+Não alterar as regras de ownership de CLIENT ou ADMIN.
+
+==================================================
+ETAPA 6 — NÃO TOCAR NESTES ITENS
+==================================================
+
+Não modificar:
+
+- schema do banco;
+- migrations;
+- EXCLUDE constraints;
+- triggers;
+- appointments table;
+- status machine;
+- RBAC já aprovado;
+- lógica HOME_CARE;
+- lógica IN_PERSON;
+- audit log já implementado;
+- price_at_booking;
+- transações;
+- mapDbError();
+- SlotsController, salvo se a auditoria revelar uma regressão real;
+- API pública;
+- contratos dos endpoints.
+
+OBS-B continua sem ação.
+
+A tabela addresses não possui status e isso é BY DESIGN no schema atual.
+
+==================================================
+ETAPA 7 — TESTES
+==================================================
+
+Depois das alterações executar obrigatoriamente:
+
+1. pnpm run typecheck
+2. pnpm run test
+3. pnpm run build
+
+Além disso, executar especificamente:
+
+- testes de concorrência A/B/C/D;
+- tests/integration/slots-client-filter.test.ts;
+- tests/integration/appointments.test.ts
+
+Não aceitar solução que simplesmente remova assertions para fazer os testes passarem.
+
+==================================================
+ETAPA 8 — GATE DE REGRESSÃO
+==================================================
+
+Esperado:
+
+Typecheck: 0 erros
+Testes: todos passando
+Build: OK
+Migrations novas: 0
+Alterações no schema: 0
+EXCLUDE constraints: 3 intactas
+Triggers: intactos
+
+Comparar também com o baseline atual:
+
+231/231 testes
+
+Nenhum teste existente pode ser removido ou enfraquecido.
+
+==================================================
+ETAPA 9 — AUDITORIA FINAL
+==================================================
+
+Após implementar, faça uma pequena auditoria independente das próprias alterações.
+
+Verifique especificamente:
+
+OBS-C Caso B:
+[201,409] + assertion real de overlap
+
+OBS-C Caso C:
+[201,409] + resource correto + assertion não vacuosa
+
+OBS-D:
+ADMIN consegue enxergar o slot controlado
+CLIENT não consegue enxergar o mesmo slot quando conflita com seu próprio appointment
+
+PROFESSIONAL:
+403 sem query desnecessária de ownership no reschedule
+
+==================================================
+FORMATO OBRIGATÓRIO DO RELATÓRIO FINAL
+==================================================
+
+Apresente:
+
+1. Arquivos modificados
+2. O que foi corrigido em cada arquivo
+3. Testes adicionados/alterados
+4. Resultado do typecheck
+5. Resultado dos testes
+6. Resultado do build
+7. Confirmação de migrations = 0
+8. Confirmação de schema inalterado
+9. Confirmação das 3 EXCLUDE constraints
+10. Confirmação de que nenhum teste existente foi removido
+11. Eventuais ressalvas restantes
+
+IMPORTANTE:
+
+Se durante a implementação você descobrir que alguma das ressalvas já foi corrigida no código atual, NÃO faça alteração desnecessária.
+
+Nesse caso, apenas fortaleça o teste correspondente, se necessário.
+
+Se qualquer teste falhar por motivo não relacionado às 4 ressalvas, pare e diagnostique antes de alterar outras partes do sistema.
+
+NÃO avance para uma nova fase funcional.
+
+O objetivo desta etapa é somente fechar tecnicamente as ressalvas da auditoria Fase 4.1 e deixar o projeto com um GATE limpo.
