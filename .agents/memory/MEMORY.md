@@ -3,3 +3,4 @@
 - [Fase 4 — Appointments module](fase4-appointments.md) — concurrency strategy, slot test rules, modality rules, addressId order, status transitions
 - [Fase 5.6 — ALTER in-place](fase56-alter.md) — update() no service; AlterAppointmentSchema integrado ao union; resolveResource com excludeAppointmentId; resourceId em UpdateAppointmentFieldsData
 - [Fase 8 — Notificações](fase8-notifications.md) — session.userId (não .id); seed FK order; concurrency test flaky pré-existente
+- [Fase 10 — Segurança](fase10-security.md) — PayloadTooLargeError precisa handler explícito; CORS+credentials exige origin não-wildcard; trust proxy antes do rate limiter
