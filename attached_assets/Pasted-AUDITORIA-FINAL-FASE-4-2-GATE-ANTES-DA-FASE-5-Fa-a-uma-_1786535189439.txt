@@ -1,0 +1,225 @@
+AUDITORIA FINAL — FASE 4.2
+GATE ANTES DA FASE 5
+
+Faça uma auditoria independente e somente de leitura da Fase 4.2.
+
+IMPORTANTE:
+- NÃO modificar nenhum arquivo.
+- NÃO criar migration.
+- NÃO alterar banco.
+- NÃO corrigir nada durante esta execução.
+- NÃO assumir que o relatório anterior está correto.
+- Verificar diretamente código, testes e banco.
+- Se encontrar problema, apenas documentar.
+
+Objetivo:
+
+Confirmar independentemente que a Fase 4.2 realmente fechou todas as ressalvas da auditoria da Fase 4.1 sem introduzir regressões.
+
+==================================================
+1. GATES
+==================================================
+
+Executar:
+
+pnpm run typecheck
+pnpm run test
+pnpm run build
+
+Confirmar:
+
+- typecheck = 0 erros
+- todos os testes passando
+- build = OK
+
+Comparar quantidade de testes com o baseline atual.
+
+==================================================
+2. OBS-C — CASO B
+==================================================
+
+Auditar:
+
+tests/integration/concurrency/appointments.concurrent.test.ts
+
+Confirmar que o Caso B:
+
+- usa Promise.all;
+- gera exatamente [201, 409];
+- testa o mesmo professional;
+- utiliza startDatetime/endDatetime reais;
+- não possui mais assertion baseada apenas em IDs;
+- verifica efetivamente overlap temporal;
+- não contém assertion vacuosa.
+
+Não aceitar:
+
+expect(id1).not.toBe(id2)
+
+como prova de concorrência.
+
+==================================================
+3. OBS-C — CASO C
+==================================================
+
+Auditar o Caso C.
+
+Confirmar que:
+
+- usa Promise.all;
+- produz [201, 409];
+- identifica o appointment vencedor real;
+- não depende de um resource específico que o resolveResource() possa não selecionar;
+- a assertion não pode passar com zero registros;
+- verifica resourceId real do vencedor;
+- verifica overlap temporal real;
+- a proteção continua sendo garantida pela EXCLUDE constraint do banco.
+
+Confirmar especialmente que a existência de múltiplos resources no banco não torna o teste falso positivo ou vacuoso.
+
+==================================================
+4. OBS-D — SLOTS
+==================================================
+
+Auditar:
+
+tests/integration/slots-client-filter.test.ts
+
+Confirmar que o teste 4b realmente prova:
+
+ADMIN:
+- consegue visualizar o slot controlado quando o professional está disponível;
+
+CLIENT:
+- não visualiza o mesmo slot quando existe conflito com seu próprio appointment;
+
+e que isso ocorre porque o CLIENT utiliza clientId derivado da sessão.
+
+Confirmar que o teste não depende acidentalmente de o PROFESSIONAL estar ocupado.
+
+Também verificar o código de produção:
+
+SlotsController
+SlotsQuerySchema
+SlotsService
+
+Confirmar que CLIENT não consegue injetar outro clientId via query string.
+
+==================================================
+5. RESCHEDULE — PROFESSIONAL
+==================================================
+
+Auditar:
+
+src/services/appointments.service.ts
+
+Confirmar que reschedule():
+
+1. verifica PROFESSIONAL antes de assertAppointmentOwnership();
+2. retorna 403 para PROFESSIONAL;
+3. não executa query de ownership antes do bloqueio;
+4. CLIENT continua passando pelo ownership check;
+5. ADMIN continua com acesso permitido.
+
+Confirmar que não houve alteração indevida nas demais regras.
+
+==================================================
+6. REGRESSÃO DA FASE 4
+==================================================
+
+Verificar que continuam intactos:
+
+- RBAC
+- IDOR
+- ownership CLIENT
+- ownership PROFESSIONAL
+- ADMIN unrestricted
+- status machine
+- estados terminais
+- IN_PERSON
+- HOME_CARE
+- address ownership
+- resource selection
+- availability
+- minimum notice
+- maximum advance
+- UTC
+- EXCLUDE constraints
+- mapDbError 23P01 → 409
+- transactions
+- rollback de reschedule
+- audit logs
+- price_at_booking
+- append-only audit/status history
+- proteção contra mass assignment
+- ausência de SQL concatenado
+- ausência de new Pool() fora do db package
+
+==================================================
+7. BANCO
+==================================================
+
+Consultar diretamente o banco.
+
+Confirmar:
+
+- tabelas = 16
+- migrations = 1
+- triggers = 14
+- indexes = 43
+- FKs = 20
+- EXCLUDE constraints = 3
+
+Confirmar especificamente:
+
+excl_client_no_overlap
+excl_professional_no_overlap
+excl_resource_no_overlap
+
+Não modificar nada no banco.
+
+==================================================
+8. AUDITORIA DE ALTERAÇÕES
+==================================================
+
+Verificar exatamente o diff da Fase 4.2.
+
+Esperado:
+
+src/services/appointments.service.ts
+tests/integration/concurrency/appointments.concurrent.test.ts
+tests/integration/slots-client-filter.test.ts
+
+Confirmar que não houve alteração fora do escopo sem justificativa.
+
+==================================================
+9. RESULTADO FINAL
+==================================================
+
+Produzir um relatório objetivo:
+
+A. Gates
+B. Caso B
+C. Caso C
+D. Slots
+E. PROFESSIONAL reschedule
+F. Regressão
+G. Banco
+H. Diff
+I. Problemas encontrados
+J. GATE FINAL
+
+Classificação final obrigatória:
+
+GATE LIMPO
+ou
+GATE APROVADO COM RESSALVAS
+ou
+GATE REPROVADO
+
+Critério:
+
+Só declarar GATE LIMPO se nenhuma nova falha, assertion vacuosa, regressão ou inconsistência for encontrada.
+
+NÃO corrigir problemas encontrados.
+Apenas relatar.
