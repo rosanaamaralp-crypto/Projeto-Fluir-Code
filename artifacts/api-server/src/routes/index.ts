@@ -15,6 +15,7 @@ import auditLogsRouter from "./audit-logs.js";
 import dashboardRouter from "./dashboard.js";
 import reportsRouter from "./reports.js";
 import notificationsRouter from "./notifications.js";
+import meRouter from "./me.js";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(auditLogsRouter);
 router.use(dashboardRouter);
 router.use(reportsRouter);
 router.use(notificationsRouter);
+router.use(meRouter);
 
 export default router;

@@ -1025,6 +1025,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ── Me / Professional Clients (T-023 / T-025) ────────────────────────────────
+
+  /me/professional/clients:
+    get:
+      operationId: listMyProfessionalClients
+      tags: [professionals]
+      summary: List clients related to the authenticated professional
+      description: >
+        Returns distinct clients who have appointments with the authenticated professional.
+        professionalId is derived exclusively from the session — never from a query parameter.
+        Requires PROFESSIONAL role (or ADMIN).
+      responses:
+        "200":
+          description: Clients list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalClientsListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /me/professional/clients/{clientId}:
+    get:
+      operationId: getMyProfessionalClient
+      tags: [professionals]
+      summary: Get client detail for the authenticated professional
+      description: >
+        Returns a single client with address and appointment history.
+        IDOR-safe: returns 404 if the client has no appointments with this professional.
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Client detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalClientDetailResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Services ─────────────────────────────────────────────────────────────────
 
   /services:
@@ -3297,3 +3368,91 @@ components:
       required:
         - data
         - pagination
+
+    # ── Me / Professional Clients (T-023 / T-025) ─────────────────────────────
+
+    ProfessionalClientItem:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - status
+        - createdAt
+        - updatedAt
+
+    ProfessionalClientsListResponse:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfessionalClientItem"
+      required:
+        - clients
+
+    ProfessionalClientAppointmentItem:
+      type: object
+      properties:
+        id:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        modality:
+          type: string
+        serviceId:
+          type: string
+      required:
+        - id
+        - startDatetime
+        - endDatetime
+        - status
+        - modality
+        - serviceId
+
+    ProfessionalClientDetailResponse:
+      type: object
+      properties:
+        client:
+          $ref: "#/components/schemas/ProfessionalClientItem"
+        address:
+          allOf:
+            - $ref: "#/components/schemas/AddressRow"
+          nullable: true
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfessionalClientAppointmentItem"
+      required:
+        - client
+        - appointments

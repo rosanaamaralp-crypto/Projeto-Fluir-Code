@@ -61,6 +61,8 @@ import type {
   NotificationsListResponse,
   PatchAppointmentRequest,
   PatchAppointmentResponse,
+  ProfessionalClientDetailResponse,
+  ProfessionalClientsListResponse,
   ProfessionalDashboardResponse,
   ProfessionalResponse,
   ProfessionalServiceItemResponse,
@@ -2301,6 +2303,162 @@ export const useMarkNotificationRead = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getMarkNotificationReadMutationOptions(options));
     }
+
+export const getListMyProfessionalClientsUrl = () => {
+
+
+
+
+  return `/api/me/professional/clients`
+}
+
+/**
+ * Returns distinct clients who have appointments with the authenticated professional. professionalId is derived exclusively from the session — never from a query parameter. Requires PROFESSIONAL role (or ADMIN).
+ * @summary List clients related to the authenticated professional
+ */
+export const listMyProfessionalClients = async ( options?: Parameters<typeof customFetch>[1]): Promise<ProfessionalClientsListResponse> => {
+
+  return customFetch<ProfessionalClientsListResponse>(getListMyProfessionalClientsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyProfessionalClientsQueryKey = () => {
+    return [
+    `/api/me/professional/clients`
+    ] as const;
+    }
+
+
+export const getListMyProfessionalClientsQueryOptions = <TData = Awaited<ReturnType<typeof listMyProfessionalClients>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyProfessionalClients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyProfessionalClientsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyProfessionalClients>>> = ({ signal }) => listMyProfessionalClients({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyProfessionalClients>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMyProfessionalClientsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyProfessionalClients>>>
+export type ListMyProfessionalClientsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List clients related to the authenticated professional
+ */
+
+export function useListMyProfessionalClients<TData = Awaited<ReturnType<typeof listMyProfessionalClients>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyProfessionalClients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMyProfessionalClientsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetMyProfessionalClientUrl = (clientId: string,) => {
+
+
+
+
+  return `/api/me/professional/clients/${clientId}`
+}
+
+/**
+ * Returns a single client with address and appointment history. IDOR-safe: returns 404 if the client has no appointments with this professional.
+ * @summary Get client detail for the authenticated professional
+ */
+export const getMyProfessionalClient = async (clientId: string, options?: Parameters<typeof customFetch>[1]): Promise<ProfessionalClientDetailResponse> => {
+
+  return customFetch<ProfessionalClientDetailResponse>(getGetMyProfessionalClientUrl(clientId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyProfessionalClientQueryKey = (clientId: string,) => {
+    return [
+    `/api/me/professional/clients/${clientId}`
+    ] as const;
+    }
+
+
+export const getGetMyProfessionalClientQueryOptions = <TData = Awaited<ReturnType<typeof getMyProfessionalClient>>, TError = ErrorType<ErrorResponse>>(clientId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyProfessionalClient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyProfessionalClientQueryKey(clientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfessionalClient>>> = ({ signal }) => getMyProfessionalClient(clientId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientId !== null && clientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyProfessionalClient>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyProfessionalClientQueryResult = NonNullable<Awaited<ReturnType<typeof getMyProfessionalClient>>>
+export type GetMyProfessionalClientQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get client detail for the authenticated professional
+ */
+
+export function useGetMyProfessionalClient<TData = Awaited<ReturnType<typeof getMyProfessionalClient>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyProfessionalClient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyProfessionalClientQueryOptions(clientId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListServicesUrl = () => {
 

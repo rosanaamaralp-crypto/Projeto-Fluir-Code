@@ -3,7 +3,7 @@
  * Sem regras de negócio, sem RBAC, sem cálculo de slots.
  * Usa DrizzleDB (NodePgDatabase | PgTransaction) conforme lib/db-types.ts.
  */
-import { and, eq, gte, lte, notInArray, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, lte, notInArray, type SQL } from "drizzle-orm";
 import type { DrizzleDB as DB } from "../lib/db-types.js";
 import { appointments } from "@workspace/db";
 
@@ -266,6 +266,30 @@ export const AppointmentsRepository = {
           gte(appointments.endDatetime, rangeStart),
         ),
       );
+  },
+
+  /**
+   * T-023/T-025: Histórico de atendimentos de um cliente com um profissional específico.
+   * Ownership garantido: ambos clientId e professionalId são filtros obrigatórios.
+   * Ordenado do mais recente para o mais antigo.
+   */
+  async findByClientAndProfessional(
+    db: DB,
+    clientId: string,
+    professionalId: string,
+  ): Promise<Array<{ id: string; startDatetime: Date; endDatetime: Date; status: string; modality: string; serviceId: string }>> {
+    return db
+      .select({
+        id: appointments.id,
+        startDatetime: appointments.startDatetime,
+        endDatetime: appointments.endDatetime,
+        status: appointments.status,
+        modality: appointments.modality,
+        serviceId: appointments.serviceId,
+      })
+      .from(appointments)
+      .where(and(eq(appointments.clientId, clientId), eq(appointments.professionalId, professionalId)))
+      .orderBy(desc(appointments.startDatetime));
   },
 
   /**

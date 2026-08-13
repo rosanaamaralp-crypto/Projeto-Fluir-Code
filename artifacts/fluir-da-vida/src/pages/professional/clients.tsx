@@ -1,119 +1,88 @@
 /**
  * T-023 — Meus Clientes (Profissional)
  *
- * Doc 15 §29: lista de clientes relacionados aos atendimentos do profissional.
- * RN-012: profissional vê informações de clientes necessárias para seus atendimentos.
+ * Doc 08 §22 (TELA 24): Lista de clientes relacionados aos atendimentos do profissional.
+ * Busca por nome e telefone. Acesso ao detalhe do cliente.
  *
- * NOTA DE IMPLEMENTAÇÃO (F14):
- * Não existe endpoint que retorne clientes filtrados por profissional com dados enriquecidos
- * (nome, contato). GET /api/clients retorna apenas o registro do próprio usuário para
- * não-ADMIN. GET /api/appointments (auto-escopado ao profissional) retorna clientId (UUID)
- * mas sem clientName no AppointmentRow.
- *
- * Esta tela exibe os atendimentos únicos por cliente (clientId) com os dados disponíveis
- * no contrato existente. Um endpoint enriquecido (/api/me/clients ou similar) seria
- * necessário para exibir nomes — documentado como pendência para fase futura.
+ * Endpoint: GET /api/me/professional/clients
+ * Hook: useListMyProfessionalClients — professionalId derivado da sessão no backend.
+ * Ownership: garantido no servidor; o profissional vê somente seus próprios clientes.
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "wouter";
-import { useListAppointments } from "@workspace/api-client-react";
+import { useListMyProfessionalClients } from "@workspace/api-client-react";
 import { AppLayout } from "@/layouts/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ChevronRight } from "lucide-react";
-
-const STATUS_LABELS: Record<string, string> = {
-  CONFIRMED: "Confirmado",
-  IN_PROGRESS: "Em Atendimento",
-  COMPLETED: "Concluído",
-  CANCELLED: "Cancelado",
-  NO_SHOW: "Ausência",
-};
-
-function formatDatetime(dt: string) {
-  return new Date(dt).toLocaleString("pt-BR", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
-
-function modalityLabel(m: string) {
-  return m === "HOME_CARE" ? "🏠 Home Care" : "Presencial";
-}
-
-interface ClientGroup {
-  clientId: string;
-  appointments: Array<{
-    id: string;
-    startDatetime: string;
-    status: string;
-    modality: string;
-  }>;
-}
+import { Input } from "@/components/ui/input";
+import { Users, ChevronRight, Search } from "lucide-react";
 
 export default function ProfessionalClients() {
-  const [showAll, setShowAll] = useState(false);
+  const [searchName, setSearchName] = useState("");
+  const [searchPhone, setSearchPhone] = useState("");
 
-  // Backend auto-escopa ao profissional autenticado (PROFESSIONAL role)
-  const { data, isLoading, isError, error, refetch } = useListAppointments();
+  const { data, isLoading, isError, error, refetch } = useListMyProfessionalClients();
 
-  // Agrupar por clientId e ordenar pelo atendimento mais recente
-  const clientGroups: ClientGroup[] = [];
-  if (data?.appointments) {
-    const map = new Map<string, ClientGroup>();
-    for (const apt of data.appointments) {
-      if (!map.has(apt.clientId)) {
-        map.set(apt.clientId, { clientId: apt.clientId, appointments: [] });
-      }
-      map.get(apt.clientId)!.appointments.push({
-        id: apt.id,
-        startDatetime: apt.startDatetime,
-        status: apt.status,
-        modality: apt.modality,
-      });
-    }
-    // Ordenar appointments dentro de cada grupo (mais recente primeiro)
-    for (const group of map.values()) {
-      group.appointments.sort(
-        (a, b) => new Date(b.startDatetime).getTime() - new Date(a.startDatetime).getTime(),
-      );
-      clientGroups.push(group);
-    }
-    // Ordenar grupos pelo atendimento mais recente
-    clientGroups.sort(
-      (a, b) =>
-        new Date(b.appointments[0]!.startDatetime).getTime() -
-        new Date(a.appointments[0]!.startDatetime).getTime(),
-    );
-  }
-
-  const displayed = showAll ? clientGroups : clientGroups.slice(0, 20);
+  const clients = useMemo(() => {
+    const all = data?.clients ?? [];
+    return all.filter((c) => {
+      const name = (c.name ?? "").toLowerCase();
+      const phone = (c.phone ?? "").replace(/\D/g, "");
+      const queryName = searchName.trim().toLowerCase();
+      const queryPhone = searchPhone.trim().replace(/\D/g, "");
+      if (queryName && !name.includes(queryName)) return false;
+      if (queryPhone && !phone.includes(queryPhone)) return false;
+      return true;
+    });
+  }, [data, searchName, searchPhone]);
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-2xl">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <Users className="h-6 w-6" />
             Meus Clientes
           </h1>
           <p className="text-sm text-muted-foreground">
-            Clientes com atendimentos relacionados à sua agenda
+            Clientes relacionados aos seus atendimentos
           </p>
+        </div>
+
+        {/* Busca */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar por nome…"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+            />
+          </div>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar por telefone…"
+              value={searchPhone}
+              onChange={(e) => setSearchPhone(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* LOADING */}
         {isLoading && (
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
         )}
 
         {/* ERROR */}
-        {isError && (
+        {isError && !isLoading && (
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between">
               <span>
@@ -126,65 +95,50 @@ export default function ProfessionalClients() {
           </Alert>
         )}
 
-        {/* EMPTY */}
-        {!isLoading && !isError && clientGroups.length === 0 && (
+        {/* EMPTY — sem clientes na conta */}
+        {!isLoading && !isError && (data?.clients ?? []).length === 0 && (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Nenhum cliente encontrado. Os clientes aparecem aqui após o primeiro agendamento.
+              Nenhum cliente encontrado. Os clientes aparecerão aqui após agendamentos.
+            </CardContent>
+          </Card>
+        )}
+
+        {/* EMPTY — com clientes mas sem resultado de busca */}
+        {!isLoading && !isError && (data?.clients ?? []).length > 0 && clients.length === 0 && (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              Nenhum cliente encontrado com os filtros informados.
             </CardContent>
           </Card>
         )}
 
         {/* SUCCESS */}
-        {!isLoading && !isError && clientGroups.length > 0 && (
-          <>
-            <p className="text-sm text-muted-foreground">
-              {clientGroups.length} cliente(s) encontrado(s)
-            </p>
-            <div className="space-y-3 overflow-x-auto">
-              {displayed.map((group) => {
-                const last = group.appointments[0]!;
-                return (
-                  <Link
-                    key={group.clientId}
-                    href={`/professional/schedule/${last.id}`}
-                  >
-                    <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                      <CardContent className="py-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <p className="font-medium text-sm">
-                              Cliente #{group.clientId.slice(0, 8)}…
-                            </p>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs text-muted-foreground">
-                                Último: {formatDatetime(last.startDatetime)}
-                              </span>
-                              <Badge variant="outline">
-                                {modalityLabel(last.modality)}
-                              </Badge>
-                              <Badge variant="secondary">
-                                {STATUS_LABELS[last.status] ?? last.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {group.appointments.length} atendimento(s) no total
-                            </p>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-            {clientGroups.length > 20 && !showAll && (
-              <Button variant="outline" className="w-full" onClick={() => setShowAll(true)}>
-                Ver todos ({clientGroups.length})
-              </Button>
-            )}
-          </>
+        {!isLoading && !isError && clients.length > 0 && (
+          <div className="space-y-2">
+            {clients.map((client) => (
+              <Link key={client.id} href={`/professional/clients/${client.id}`}>
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                  <CardContent className="py-4 px-5 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-sm">
+                        {client.name ?? "Nome não informado"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {client.phone ? client.phone : "Telefone não informado"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={client.status === "ACTIVE" ? "default" : "secondary"} className="text-xs">
+                        {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </AppLayout>

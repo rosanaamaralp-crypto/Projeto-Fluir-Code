@@ -631,6 +631,37 @@ export interface AuditLogsResponse {
   pagination: Pagination;
 }
 
+export interface ProfessionalClientItem {
+  id: string;
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  birthDate?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfessionalClientsListResponse {
+  clients: ProfessionalClientItem[];
+}
+
+export interface ProfessionalClientAppointmentItem {
+  id: string;
+  startDatetime: string;
+  endDatetime: string;
+  status: string;
+  modality: string;
+  serviceId: string;
+}
+
+export interface ProfessionalClientDetailResponse {
+  client: ProfessionalClientItem;
+  address?: AddressRow | null;
+  appointments: ProfessionalClientAppointmentItem[];
+}
+
 export type GetProfessionalDashboardParams = {
 /**
  * Required for ADMIN role; ignored for PROFESSIONAL (uses session)

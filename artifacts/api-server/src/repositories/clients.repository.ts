@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { DrizzleDB as DB } from "../lib/db-types.js";
-import { clients, users } from "@workspace/db";
+import { appointments, clients, users } from "@workspace/db";
 
 export interface ClientRow {
   id: string;
@@ -104,6 +104,66 @@ export const ClientsRepository = {
       })
       .returning();
     return rows[0]!;
+  },
+
+  /**
+   * T-023: Retorna clientes distintos relacionados aos atendimentos do profissional.
+   * A query faz JOIN em appointments → clients → users, garantindo que somente
+   * clientes com relacionamento real com o profissional sejam retornados.
+   * Ownership: professionalId vem exclusivamente da sessão (nunca de param do frontend).
+   */
+  async findByProfessionalId(db: DB, professionalId: string): Promise<ClientWithUser[]> {
+    return db
+      .selectDistinct({
+        id: clients.id,
+        userId: clients.userId,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        birthDate: clients.birthDate,
+        notes: clients.notes,
+        status: clients.status,
+        createdAt: clients.createdAt,
+        updatedAt: clients.updatedAt,
+      })
+      .from(appointments)
+      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .innerJoin(users, eq(clients.userId, users.id))
+      .where(eq(appointments.professionalId, professionalId));
+  },
+
+  /**
+   * T-025: Retorna um cliente específico, verificando via JOIN em appointments que
+   * ele possui relacionamento real com o profissional. Retorna null se o cliente
+   * não existir ou não tiver atendimentos com esse profissional (IDOR safe).
+   */
+  async findByIdForProfessional(
+    db: DB,
+    clientId: string,
+    professionalId: string,
+  ): Promise<ClientWithUser | null> {
+    const rows = await db
+      .selectDistinct({
+        id: clients.id,
+        userId: clients.userId,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        birthDate: clients.birthDate,
+        notes: clients.notes,
+        status: clients.status,
+        createdAt: clients.createdAt,
+        updatedAt: clients.updatedAt,
+      })
+      .from(appointments)
+      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .innerJoin(users, eq(clients.userId, users.id))
+      .where(and(
+        eq(appointments.clientId, clientId),
+        eq(appointments.professionalId, professionalId),
+      ))
+      .limit(1);
+    return rows[0] ?? null;
   },
 
   async update(

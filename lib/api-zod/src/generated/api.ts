@@ -696,6 +696,73 @@ export const MarkNotificationReadResponse = zod.object({
 
 
 /**
+ * Returns distinct clients who have appointments with the authenticated professional. professionalId is derived exclusively from the session — never from a query parameter. Requires PROFESSIONAL role (or ADMIN).
+ * @summary List clients related to the authenticated professional
+ */
+export const ListMyProfessionalClientsResponse = zod.object({
+  "clients": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "birthDate": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * Returns a single client with address and appointment history. IDOR-safe: returns 404 if the client has no appointments with this professional.
+ * @summary Get client detail for the authenticated professional
+ */
+export const GetMyProfessionalClientParams = zod.object({
+  "clientId": zod.coerce.string()
+})
+
+export const GetMyProfessionalClientResponse = zod.object({
+  "client": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "birthDate": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),
+  "address": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "street": zod.string(),
+  "number": zod.string(),
+  "complement": zod.string().nullish(),
+  "neighborhood": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "postalCode": zod.string(),
+  "reference": zod.string().nullish(),
+  "latitude": zod.string().nullish(),
+  "longitude": zod.string().nullish(),
+  "isDefault": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullish(),
+  "appointments": zod.array(zod.object({
+  "id": zod.string(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string(),
+  "modality": zod.string(),
+  "serviceId": zod.string()
+}))
+})
+
+
+/**
  * ADMIN sees all; other roles see only ACTIVE services.
  * @summary List services
  */

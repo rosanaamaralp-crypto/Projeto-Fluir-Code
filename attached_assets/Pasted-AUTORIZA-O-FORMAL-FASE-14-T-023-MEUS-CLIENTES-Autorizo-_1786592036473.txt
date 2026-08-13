@@ -1,0 +1,166 @@
+AUTORIZAÇÃO FORMAL — FASE 14 / T-023 — MEUS CLIENTES
+
+Autorizo exclusivamente a implementação do T-023 — "Meus Clientes" do módulo Profissional.
+
+IMPORTANTE: NÃO altere qualquer outra funcionalidade fora do escopo necessário para T-023.
+
+ANTES DE IMPLEMENTAR:
+1. Leia novamente os documentos oficiais da Fase 14 na hierarquia definida:
+   Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+2. Revise o relatório de auditoria da Fase 14 e os bloqueadores registrados.
+3. Verifique os contratos atuais de:
+   - appointments
+   - clients
+   - users
+   - professional
+   - histórico de appointments
+   - endereço/Home Care
+   - autenticação e ownership.
+4. Não faça nenhuma alteração até confirmar que a solução proposta atende exatamente à documentação.
+
+PROBLEMA AUTORIZADO:
+O T-023 atualmente não possui endpoint que forneça ao PROFESSIONAL os clientes relacionados aos seus próprios atendimentos com dados humanos suficientes.
+
+O workaround anterior foi removido/não deve ser recriado.
+
+SOLUÇÃO PREFERENCIAL:
+Criar um endpoint específico para os clientes relacionados ao profissional autenticado, preferencialmente no formato:
+
+GET /api/me/professional/clients
+
+O endpoint deve determinar o profissional exclusivamente pela sessão autenticada.
+
+NÃO aceitar professionalId fornecido pelo frontend como mecanismo de autorização/ownership.
+
+REGRA DE OWNERSHIP:
+O profissional somente pode visualizar clientes que tenham relacionamento real com seus próprios atendimentos.
+
+Nunca permitir que um PROFESSIONAL informe o ID de outro profissional para obter seus clientes.
+
+O backend deve ser a autoridade final dessa regra.
+
+DADOS MÍNIMOS DA LISTAGEM T-023:
+- nome do cliente
+- telefone
+- identificador interno necessário para abrir o detalhe
+
+A implementação deve considerar também os requisitos da TELA 25 / detalhe do cliente documentados oficialmente:
+- nome
+- data de nascimento
+- telefone
+- e-mail
+- histórico de atendimentos permitidos
+- endereço quando necessário para Home Care
+
+ANTES DE CRIAR UM SEGUNDO ENDPOINT:
+Verifique se é tecnicamente melhor que o endpoint T-023 já retorne os dados necessários para o detalhe, ou se um endpoint de detalhe específico é necessário.
+
+Não duplicar APIs desnecessariamente.
+
+SEGURANÇA:
+- PROFESSIONAL: somente seus clientes relacionados aos seus atendimentos.
+- ADMIN: não quebrar o acesso administrativo existente.
+- CLIENT: não ganhar acesso indevido.
+- Não alterar requireAdmin, requireProfessional, requireClient ou PrivateRoute sem necessidade comprovada.
+- Não expor dados de clientes que não sejam necessários ao profissional.
+- Não permitir IDOR.
+
+OPENAPI / CODEGEN:
+Se houver alteração ou criação de endpoint:
+1. Atualizar lib/api-spec/openapi.yaml.
+2. Não utilizar formatos proibidos já estabelecidos pelo projeto.
+3. Executar Orval.
+4. Confirmar os hooks gerados.
+5. Não editar manualmente arquivos gerados.
+
+FRONTEND:
+Implementar T-023 utilizando exclusivamente o novo contrato gerado pela API.
+
+A tela deve conter:
+- lista de clientes relacionados aos atendimentos do profissional;
+- nome;
+- telefone;
+- busca por nome;
+- busca por telefone;
+- acesso ao detalhe do cliente;
+- estados LOADING;
+- EMPTY;
+- ERROR com tentativa novamente;
+- SUCCESS;
+- layout responsivo.
+
+NÃO exibir UUID truncado como substituto de nome.
+
+DETALHE DO CLIENTE:
+Implementar a TELA 25 somente se o contrato/backend autorizado nesta tarefa fornecer os dados necessários.
+
+O detalhe deve respeitar estritamente os dados permitidos ao profissional.
+
+Não inventar dados, mocks ou fallbacks que escondam ausência de contrato.
+
+HISTÓRICO:
+O histórico deve conter somente atendimentos permitidos daquele profissional e/ou os dados explicitamente autorizados pela documentação.
+
+HOME CARE:
+Endereço somente quando necessário e conforme as regras de acesso existentes.
+
+BANCO:
+Não criar migration se nenhuma alteração estrutural no banco for necessária.
+
+PRESERVAÇÃO:
+Não alterar:
+- autenticação;
+- dashboards;
+- módulo administrativo;
+- módulo cliente;
+- regras de agendamento;
+- regras de slots;
+- notificações;
+- bloqueios;
+- disponibilidade;
+- funcionalidades F1–F13;
+- B2 — edição de disponibilidade;
+- B3 — serviços no perfil.
+
+NÃO fazer refatorações fora do escopo.
+
+TESTES OBRIGATÓRIOS:
+Ao finalizar:
+- pnpm typecheck
+- testes backend
+- build real do frontend
+- verificar ownership/IDOR
+- verificar permissões por role
+- verificar OpenAPI
+- verificar Orval/codegen
+- verificar migrations
+- verificar que F1–F13 continuam preservadas.
+
+NÃO FAZER COMMIT.
+
+RELATÓRIO FINAL OBRIGATÓRIO:
+Apresente:
+1. arquivos modificados;
+2. endpoint(s) criados/alterados;
+3. contratos e schemas;
+4. OpenAPI;
+5. hooks gerados;
+6. telas implementadas;
+7. regras de ownership;
+8. permissões;
+9. testes;
+10. typecheck;
+11. build;
+12. migrations;
+13. impacto sobre F1–F13;
+14. pendências restantes;
+15. qualquer divergência em relação à documentação.
+
+CRITÉRIO DE PARADA:
+Se qualquer requisito da T-023 não puder ser atendido com os contratos atuais ou se surgir necessidade de alterar uma regra fora deste escopo, PARE imediatamente e informe o bloqueio antes de continuar.
+
+Não faça workaround.
+
+Não faça commit.
+
+Comece somente pela investigação dos contratos e, depois de confirmar a solução, implemente o T-023.
