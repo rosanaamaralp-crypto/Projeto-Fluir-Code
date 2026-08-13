@@ -1,0 +1,168 @@
+# AUTHDOC F20 — PUBLICAÇÃO DA F19 E VALIDAÇÃO MÍNIMA EM PRODUÇÃO
+
+## FLUIR DA VIDA OFICIAL
+
+### OBJETIVO
+
+Publicar em produção as alterações já concluídas na F19 — "Agendamento pelo Profissional em nome do Cliente" — e realizar somente a validação operacional mínima necessária.
+
+A F19 já foi concluída e validada:
+
+- 526/526 testes passando;
+- TypeScript = 0 erros;
+- banco/schema sem alterações;
+- OpenAPI/codegen sem alterações;
+- segurança/RBAC testados;
+- Git limpo;
+- commits F19: `4bc3076` e `2ec83ad`.
+
+NÃO reabrir F1–F19.
+
+NÃO fazer nova auditoria geral.
+
+NÃO procurar melhorias.
+
+NÃO alterar código nesta fase, salvo se houver falha diretamente causada pelo processo de publicação.
+
+---
+
+## 1. PUBLICAÇÃO
+
+Publicar a versão atual que contém a F19 no deployment de produção.
+
+Antes de publicar, confirmar apenas:
+
+- branch/commit contém a F19;
+- working tree está limpo;
+- não existem alterações não commitadas.
+
+Não modificar arquivos.
+
+---
+
+## 2. VALIDAÇÃO PÓS-PUBLISH
+
+Após o Publish, verificar somente:
+
+1. frontend público responde HTTP 200;
+2. `/api/healthz` responde HTTP 200;
+3. login ADMIN continua funcionando;
+4. sessão `/me` continua funcionando;
+5. logout continua funcionando;
+6. aplicação continua acessível via HTTPS.
+
+Não executar testes destrutivos em produção.
+
+Não criar dados fictícios.
+
+---
+
+## 3. VALIDAÇÃO DA F19
+
+Não criar clientes, profissionais ou agendamentos fictícios apenas para testar.
+
+Como a produção pode não possuir dados reais suficientes, validar a presença da funcionalidade por inspeção mínima:
+
+- menu PROFESSIONAL contém "Novo Agendamento";
+- rota `/professional/book` está publicada;
+- rota está protegida para PROFESSIONAL;
+- frontend carregou corretamente;
+- endpoint POST `/api/appointments` continua com a autorização da F19.
+
+Se houver dados reais adequados já existentes, pode-se fazer apenas um smoke test não destrutivo ou um agendamento real somente se explicitamente solicitado posteriormente pelo proprietário.
+
+---
+
+## 4. REGRA DE SEGURANÇA
+
+Não alterar:
+
+- RBAC;
+- ownership;
+- banco;
+- migrations;
+- constraints;
+- OpenAPI;
+- codegen;
+- autenticação;
+- SESSION_SECRET;
+- funcionalidades ADMIN;
+- funcionalidades CLIENT;
+- funcionalidades PROFESSIONAL fora da F19.
+
+A regra da F19 deve permanecer:
+
+- PROFESSIONAL só agenda para si mesmo;
+- `professionalId` enviado pelo cliente/frontend não pode permitir spoofing;
+- `clientId` é obrigatório para PROFESSIONAL;
+- profissional só agenda para seus próprios clientes;
+- cliente sem relacionamento deve continuar retornando 404;
+- serviço precisa estar vinculado ao profissional;
+- regras de disponibilidade, bloqueios, modalidade, endereço e maca permanecem intactas.
+
+---
+
+## 5. TESTES
+
+Não executar novamente a suíte completa de 526 testes apenas para economizar créditos, pois ela já foi validada na F19.
+
+Executar somente os testes mínimos necessários caso a plataforma exija validação pós-build.
+
+Se houver qualquer erro diretamente relacionado ao deploy:
+
+1. diagnosticar;
+2. não alterar código automaticamente;
+3. informar o erro e parar.
+
+---
+
+## 6. DOCUMENTAÇÃO
+
+Se o processo de publicação não exigir alteração documental, não alterar nenhum arquivo.
+
+Não criar documentação adicional nesta fase.
+
+---
+
+## 7. RELATÓRIO FINAL
+
+Ao terminar, informar somente:
+
+1. Publish: sucesso/falha;
+2. URL de produção;
+3. frontend HTTP;
+4. `/api/healthz`;
+5. login ADMIN;
+6. `/me`;
+7. logout;
+8. presença da rota `/professional/book`;
+9. presença de "Novo Agendamento" no menu PROFESSIONAL;
+10. commit publicado;
+11. arquivos alterados durante F20;
+12. eventuais problemas.
+
+### CRITÉRIO DE CONCLUSÃO
+
+F20 será considerada concluída quando:
+
+- F19 estiver publicada;
+- produção responder corretamente;
+- `/api/healthz` = 200;
+- login ADMIN continuar funcionando;
+- rota `/professional/book` estiver publicada e protegida;
+- nenhum dado fictício for criado;
+- nenhum código adicional for alterado sem necessidade.
+
+## IMPORTANTE
+
+Esta é uma fase de PUBLICAÇÃO, não de desenvolvimento.
+
+Não implementar novas funcionalidades.
+
+Não corrigir problemas antigos.
+
+Não iniciar F21.
+
+Se encontrar qualquer problema fora deste escopo, apenas registrar no relatório final.
+
+Executar com o mínimo possível de ações e consumo de créditos.
