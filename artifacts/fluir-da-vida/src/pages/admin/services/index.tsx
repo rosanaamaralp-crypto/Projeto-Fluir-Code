@@ -93,9 +93,6 @@ export default function AdminServices() {
       header: "",
       cell: (row) => (
         <div className="flex gap-1">
-          <Link href={`/admin/services/${row.id}`}>
-            <Button variant="ghost" size="sm">Ver</Button>
-          </Link>
           <Button
             variant="ghost"
             size="sm"

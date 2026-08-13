@@ -1,0 +1,292 @@
+FASE 13 — CORREÇÕES PÓS-AUDITORIA
+
+A auditoria final da Fase 13 foi concluída e o resultado foi:
+
+FASE 13 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS.
+
+IMPORTANTE:
+Esta solicitação NÃO autoriza uma nova fase.
+NÃO faça commit.
+NÃO faça migration.
+NÃO altere F1–F11.
+NÃO altere regras de negócio existentes.
+NÃO crie endpoints novos.
+NÃO altere o backend nesta etapa.
+NÃO tente resolver os bloqueadores de backend por conta própria.
+
+Apenas corrija os problemas de FRONTEND/UI que podem ser resolvidos sem alteração do backend.
+
+==================================================
+CORREÇÕES AUTORIZADAS
+==================================================
+
+1. T-013 — REMOVER DEAD LINK
+
+Arquivo:
+src/pages/admin/services/index.tsx
+
+Problema identificado pela auditoria:
+
+Existe um botão/link "Ver" apontando para:
+
+/admin/services/:id
+
+Essa rota NÃO faz parte das rotas oficiais da Fase 13 e não está registrada no App.tsx.
+
+Não criar essa rota.
+
+Não criar uma nova tela de detalhes de serviço.
+
+CORREÇÃO:
+Remover o botão/link "Ver" de T-013.
+
+Manter intactas:
+- listagem de serviços
+- ativar/desativar serviço
+- dados reais da API
+- paginação
+- estados LOADING/EMPTY/ERROR/SUCCESS
+- confirmação para desativação
+- permissões ADMIN
+- demais funcionalidades existentes.
+
+==================================================
+
+2. RESPONSIVIDADE — DATA TABLE
+
+Arquivo:
+src/components/data-table.tsx
+
+Problema identificado:
+
+Em viewport mobile, especialmente 375px, tabelas com muitas colunas podem causar overflow horizontal.
+
+CORREÇÃO:
+Adicionar um container com overflow horizontal apropriado ao redor da tabela.
+
+Exemplo conceitual:
+
+<div className="overflow-x-auto">
+  <Table>
+    ...
+  </Table>
+</div>
+
+Use a implementação compatível com os componentes/shadcn/ui já existentes no projeto.
+
+NÃO alterar:
+- dados
+- paginação
+- ordenação
+- filtros
+- contratos da API
+- comportamento das tabelas
+- componentes das fases anteriores.
+
+==================================================
+NÃO CORRIGIR NESTA ETAPA
+==================================================
+
+Os seguintes problemas foram identificados na auditoria, mas NÃO estão autorizados para implementação agora:
+
+1. T-005 — filtros clientId e resourceId
+
+O backend atualmente não aceita esses parâmetros.
+
+NÃO alterar:
+- ReportAppointmentsQuerySchema
+- repositories
+- controllers
+- services
+- endpoints
+- banco
+- migrations.
+
+NÃO criar endpoint.
+
+NÃO implementar workaround client-side carregando todos os agendamentos.
+
+Apenas registrar que continua pendente.
+
+--------------------------------------------------
+
+2. T-012 — períodos bloqueados
+
+O endpoint:
+
+GET /api/professionals/:id/blocked-periods
+
+existe no backend, mas não está documentado no OpenAPI atual.
+
+NÃO alterar openapi.yaml nesta etapa.
+
+NÃO executar codegen novamente.
+
+NÃO criar hook manual.
+
+NÃO implementar a aba "Períodos Bloqueados".
+
+Deixar como pendência.
+
+--------------------------------------------------
+
+3. Clientes/profissionais sem nome/e-mail/telefone
+
+NÃO criar JOIN.
+
+NÃO criar endpoint.
+
+NÃO alterar backend.
+
+NÃO alterar banco.
+
+NÃO inventar dados.
+
+Deixar como limitação de contrato documentada.
+
+--------------------------------------------------
+
+4. T-006 — seleção visual de cliente
+
+NÃO substituir UUID por dados fictícios.
+
+NÃO criar endpoint.
+
+NÃO alterar backend.
+
+NÃO criar workaround que carregue dados inexistentes.
+
+Manter o comportamento atual.
+
+--------------------------------------------------
+
+5. foundation.test.js
+
+NÃO alterar, remover ou ignorar o teste nesta etapa.
+
+A falha continua registrada como pré-existente desde a Fase 2.
+
+--------------------------------------------------
+
+6. OpenAPI / Orval
+
+NÃO alterar openapi.yaml nesta etapa.
+
+NÃO executar codegen novamente.
+
+Preservar o estado validado na auditoria:
+
+- sem format: uuid
+- sem format: email
+- sem type: integer
+- api-client-react funcionando
+- api-zod funcionando
+- lib/api-zod/src/index.ts correto.
+
+==================================================
+VALIDAÇÃO OBRIGATÓRIA APÓS AS DUAS CORREÇÕES
+==================================================
+
+Depois de corrigir somente os dois problemas frontend acima:
+
+1. Executar:
+
+pnpm typecheck
+
+Esperado:
+0 erros.
+
+2. Executar:
+
+pnpm test
+
+Não modificar os testes.
+
+Informar exatamente:
+- testes aprovados
+- testes falhos
+- se foundation.test.js continua sendo a falha pré-existente.
+
+3. Executar o build pelo procedimento oficial do ambiente Replit.
+
+Não afirmar que o build passou apenas porque o TypeScript passou.
+
+Se o ambiente exigir PORT ou BASE_PATH, identificar o procedimento correto já utilizado pelo projeto/Replit e executar o build com esses parâmetros.
+
+Informar:
+- comando utilizado
+- resultado
+- tempo do build, se disponível.
+
+4. Verificar as rotas:
+
+/admin
+/admin/schedule
+/admin/appointments/new
+/admin/appointments/:id
+/admin/clients
+/admin/clients/new
+/admin/clients/:id
+/admin/professionals
+/admin/professionals/:id
+/admin/services
+/admin/services/new
+/admin/resources
+/admin/resources/:id
+/admin/reports
+/admin/audit
+/admin/settings
+/admin/notifications
+
+Confirmar que nenhuma dessas rotas foi quebrada.
+
+5. Verificar T-013:
+
+Confirmar que o botão/link "Ver" inexistente/dead link foi removido.
+
+6. Verificar DataTable em viewport de aproximadamente 375px.
+
+Confirmar que a tabela pode sofrer scroll horizontal sem quebrar o layout da página.
+
+7. Verificar git diff.
+
+IMPORTANTE:
+Não fazer commit.
+
+Ao final, NÃO diga apenas "concluído".
+
+==================================================
+RELATÓRIO FINAL OBRIGATÓRIO
+==================================================
+
+Entregar:
+
+1. Arquivos modificados
+2. Correção aplicada em T-013
+3. Correção aplicada em DataTable
+4. Arquivos que NÃO foram modificados
+5. Confirmação de que backend não foi alterado
+6. Confirmação de que nenhuma migration foi criada/modificada
+7. Confirmação de que OpenAPI não foi alterado
+8. Confirmação de que Orval/codegen não foi executado
+9. Resultado do pnpm typecheck
+10. Resultado do pnpm test
+11. Situação do foundation.test.js
+12. Resultado do build real
+13. Rotas verificadas
+14. Responsividade verificada
+15. Pendências que continuam abertas
+16. Confirmação de que F1–F11 permanecem preservadas
+17. Confirmação de que NÃO houve commit
+
+STATUS FINAL:
+
+Se as duas correções frontend estiverem implementadas e todas as validações passarem:
+
+FASE 13 — CORREÇÕES DE CONFORMIDADE APLICADAS
+
+Caso qualquer uma das duas correções ou validações falhe:
+
+FASE 13 — CORREÇÕES PARCIAIS — PENDÊNCIAS IDENTIFICADAS
+
+NÃO aprovar a Fase 13 definitivamente enquanto os bloqueadores de backend identificados na auditoria continuarem sem decisão/aprovação específica.
