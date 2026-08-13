@@ -1,0 +1,277 @@
+FASE 15 — PREPARAÇÃO DO AUTHDOC E AUTORIZAÇÃO FORMAL
+
+Recebi e revisei sua análise somente-leitura da Fase 15.
+
+CONFIRMAÇÃO:
+
+Fase 14 permanece oficialmente:
+APROVADA / CONCLUÍDA.
+
+NÃO reabrir a Fase 14.
+
+NÃO alterar qualquer arquivo da F14.
+
+NÃO implementar nada da F15 ainda.
+
+A análise da F15 identificou corretamente que o principal bloqueador atual é a ausência de um AuthDoc formal específico da Fase 15.
+
+Portanto, antes de qualquer implementação, vamos formalizar o escopo da F15.
+
+DECISÕES DE ESCOPO PROPOSTAS:
+
+D1 — ENDEREÇOS
+
+AUTORIZADO:
+Endereço único por cliente no MVP.
+
+Não implementar múltiplos endereços nesta fase.
+
+Consequências:
+- não criar migration;
+- não refatorar AddressesRepository para múltiplos endereços;
+- manter a estrutura atual de endereço único;
+- T-038 deve trabalhar com o endereço único existente;
+- NÃO criar campo isDefault;
+- NÃO criar lista de endereços nesta fase.
+
+D2 — ALTERAÇÃO DE AGENDAMENTO PELO CLIENTE
+
+AUTORIZADO:
+O cliente poderá:
+- cancelar o próprio agendamento quando permitido;
+- remarcar o próprio agendamento para outra data/horário quando permitido.
+
+NÃO autorizar nesta fase:
+- troca de profissional;
+- alteração de serviço;
+- alteração arbitrária de modalidade;
+- alteração arbitrária de endereço;
+- alteração de outros campos do atendimento.
+
+O backend deve permanecer como autoridade final sobre:
+- ownership;
+- status permitido;
+- disponibilidade;
+- conflitos de horário;
+- regras de reagendamento.
+
+Não criar novo endpoint se o PATCH existente puder atender ao escopo autorizado sem ampliar permissões indevidamente.
+
+D3 — DASHBOARD DO CLIENTE
+
+AUTORIZADO:
+O Dashboard do Cliente deve apresentar:
+
+- próximo atendimento;
+- próximos atendimentos;
+- últimos atendimentos/histórico resumido.
+
+Não criar alteração de backend automaticamente.
+
+Primeiro verificar se o GET /api/appointments existente pode fornecer os últimos atendimentos como segunda consulta no frontend.
+
+Somente criar/alterar endpoint se isso for realmente necessário e somente após registrar explicitamente a necessidade técnica.
+
+D4 — FLUXO DE NOVO AGENDAMENTO
+
+AUTORIZADO:
+Implementar como wizard em uma única rota:
+
+/client/book
+
+Etapas:
+
+1. Serviço
+2. Modalidade
+3. Profissional
+4. Data
+5. Horário
+6. Confirmação
+7. Sucesso
+
+Não criar múltiplas rotas para cada etapa.
+
+O estado do wizard pode permanecer no frontend.
+
+O backend deve validar novamente os dados no POST final.
+
+Regras importantes:
+- Home Care deve exigir endereço válido;
+- horário deve ser obtido dos slots disponíveis;
+- não aceitar slot indisponível;
+- não confiar exclusivamente na validação do frontend.
+
+D5 — PERFIL DO CLIENTE
+
+AUTORIZADO:
+
+Editáveis pelo CLIENT:
+- nome;
+- telefone;
+- data de nascimento.
+
+Somente leitura:
+- e-mail.
+
+Não permitir ao CLIENT alterar:
+- clientId;
+- userId;
+- role;
+- status;
+- qualquer campo de autorização;
+- qualquer vínculo administrativo.
+
+O backend deve continuar validando ownership do próprio cliente.
+
+ESCOPO DA FASE 15
+
+Implementar:
+
+T-027 — Dashboard Cliente
+/client
+
+T-028 — Novo Agendamento
+/client/book
+
+T-034 — Confirmação do Agendamento
+integrada ao fluxo /client/book
+
+T-035 — Sucesso do Agendamento
+integrada ao fluxo /client/book
+
+T-036 — Meus Agendamentos
+/client/appointments
+
+T-037 — Detalhe do Agendamento
+/client/appointments/:id
+
+T-038 — Meus Endereços
+/client/addresses
+
+T-039 — Meu Perfil
+/client/profile
+
+T-040 — Notificações
+/client/notifications
+
+REQUISITOS GERAIS:
+
+Todas as telas devem possuir:
+- LOADING;
+- EMPTY;
+- ERROR;
+- SUCCESS;
+- responsividade;
+- tratamento de erros;
+- dados reais da API;
+- nenhum mock;
+- nenhum UUID técnico apresentado onde a documentação exige informação legível.
+
+OWNERSHIP / SEGURANÇA:
+
+O CLIENT somente poderá acessar:
+- seus próprios agendamentos;
+- seus próprios dados;
+- seu próprio endereço;
+- suas próprias notificações.
+
+Nunca aceitar clientId como autoridade de ownership.
+
+O backend deve continuar sendo a autoridade.
+
+O frontend não pode contornar:
+- ownership;
+- status;
+- disponibilidade;
+- regras de agendamento;
+- permissões.
+
+REGRAS DE IMPLEMENTAÇÃO:
+
+ANTES DE ESCREVER CÓDIGO:
+
+1. Verifique novamente os contratos dos endpoints existentes.
+2. Verifique os hooks já gerados.
+3. Verifique os validators existentes.
+4. Verifique as regras de autorização.
+5. Verifique se algum endpoint realmente precisa ser alterado.
+
+Se uma alteração de backend for necessária:
+- NÃO faça automaticamente;
+- informe antes;
+- explique por que o endpoint existente não é suficiente.
+
+OPENAPI / CODEGEN:
+
+Não alterar OpenAPI se os contratos existentes forem suficientes.
+
+Não executar codegen desnecessariamente.
+
+Se algum endpoint novo ou alteração de contrato for realmente necessário, pare antes da alteração e apresente a justificativa.
+
+BANCO:
+
+Prioridade:
+NÃO criar migrations.
+
+O escopo aprovado utiliza endereço único.
+
+Qualquer necessidade de migration deve ser interrompida e apresentada para autorização antes da implementação.
+
+FASES ANTERIORES:
+
+Preservar integralmente F1–F14.
+
+Não modificar funcionalidades já aprovadas sem necessidade objetiva.
+
+Não alterar:
+- módulo Admin;
+- módulo Profissional;
+- autenticação;
+- autorização existente;
+- regras de F1–F14.
+
+ORDEM DE EXECUÇÃO:
+
+Não implemente tudo de uma vez.
+
+Primeiro faça uma nova análise somente-leitura confirmando que as decisões D1–D5 acima são compatíveis com:
+- AuthDoc/Fase 15;
+- Doc 18;
+- Doc 17;
+- Doc 15;
+- Doc 16;
+- Doc 14;
+- Doc 08;
+- Doc 03.
+
+Depois apresente:
+
+# AUTORIZAÇÃO F15 — VALIDAÇÃO PRÉ-IMPLEMENTAÇÃO
+
+1. Escopo confirmado
+2. Conflitos restantes
+3. Endpoints reutilizados
+4. Alterações de backend necessárias
+5. Alterações de frontend necessárias
+6. OpenAPI/codegen
+7. Migrations
+8. Riscos F1–F14
+9. Bloqueadores
+10. Confirmação de que a implementação pode começar
+
+IMPORTANTE:
+
+Nesta etapa, NÃO escreva código.
+
+NÃO altere arquivos.
+
+NÃO instale dependências.
+
+NÃO crie migrations.
+
+NÃO execute migrations.
+
+NÃO faça commit.
+
+Após apresentar a validação, aguarde minha autorização explícita para iniciar a implementação da Fase 15.
