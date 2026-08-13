@@ -1,0 +1,637 @@
+FASE 13 — RESOLUÇÃO DOS BLOQUEADORES DE CONFORMIDADE
+
+A Fase 13 já foi implementada e passou por auditoria. As correções puramente frontend já foram aplicadas.
+
+Agora AUTORIZO EXPLICITAMENTE a correção dos bloqueadores de contrato/API identificados na auditoria.
+
+IMPORTANTE:
+
+- NÃO criar uma nova fase funcional.
+- NÃO fazer commit.
+- NÃO fazer alterações fora do escopo abaixo.
+- Preservar integralmente F1–F13 já implementadas.
+- NÃO refatorar código que não seja necessário para estas correções.
+- NÃO instalar dependências novas.
+- NÃO alterar regras de negócio existentes sem necessidade.
+- NÃO criar migrations, salvo se for tecnicamente indispensável — e, neste caso, PARE e peça aprovação antes.
+- Não inventar dados.
+- Não utilizar mocks.
+- Dados funcionais devem continuar vindo exclusivamente da API real.
+- Backend continua sendo a autoridade definitiva.
+- Frontend continua fazendo apenas validação para UX.
+- Manter requireAuth/requireAdmin e todas as proteções existentes.
+
+==================================================
+OBJETIVO
+==================================================
+
+Resolver os seguintes bloqueadores identificados na auditoria:
+
+1. T-005 Agenda:
+   adicionar suporte server-side aos filtros:
+   - clientId
+   - resourceId
+
+2. T-012 Perfil do Profissional:
+   documentar o endpoint existente:
+   GET /api/professionals/:id/blocked-periods
+   no OpenAPI e gerar os hooks correspondentes.
+
+3. T-008/T-010/T-011/T-012/T-006:
+   permitir identificação amigável de clientes e profissionais utilizando dados reais de users, sem mocks.
+
+==================================================
+ANTES DE ALTERAR QUALQUER ARQUIVO
+==================================================
+
+Primeiro faça uma investigação completa.
+
+Leia e respeite a hierarquia documental:
+
+Doc 18
+>
+Doc 17
+>
+Doc 15
+>
+Doc 16
+>
+Doc 14
+
+Depois inspecione o código real:
+
+- controllers
+- validators/schemas
+- services
+- repositories
+- routes
+- OpenAPI
+- hooks gerados
+- páginas admin existentes
+- schemas/tabelas Drizzle
+- relações entre users, clients e professionals.
+
+NÃO escreva nenhum arquivo durante esta etapa de investigação.
+
+Primeiro apresente um resumo técnico:
+
+1. Como GET /api/reports/appointments atualmente processa filtros.
+2. Onde estão definidos os filtros/validator.
+3. Onde a query ao banco é construída.
+4. Como clientId pode ser aplicado.
+5. Como resourceId pode ser aplicado.
+6. Estrutura real das tabelas users, clients e professionals.
+7. Como GET /api/clients atualmente monta sua resposta.
+8. Como GET /api/professionals atualmente monta sua resposta.
+9. Como GET /api/professionals/:id/blocked-periods já funciona.
+10. Por que ele não está disponível no frontend atualmente.
+11. Quais arquivos precisarão ser alterados.
+
+Se descobrir que alguma correção exige migration, mudança estrutural de banco ou alteração incompatível com F1–F12, PARE e peça aprovação.
+
+Se não houver necessidade de migration, prossiga.
+
+==================================================
+CORREÇÃO 1 — T-005 AGENDA
+==================================================
+
+Requisito oficial:
+
+A Agenda Administrativa deve permitir filtros server-side:
+
+- data
+- profissional
+- cliente
+- serviço
+- modalidade
+- status
+- recurso
+
+Atualmente estão disponíveis:
+
+- startDate
+- endDate
+- professionalId
+- serviceId
+- modality
+- status
+
+Adicionar:
+
+- clientId
+- resourceId
+
+IMPORTANTE:
+
+Os filtros devem ser aplicados no backend.
+
+NÃO carregar todos os agendamentos para filtrar no browser.
+
+NÃO fazer filtragem client-side como workaround.
+
+Implementar somente o necessário nos pontos reais do backend:
+
+- query validator/schema
+- controller/query params
+- service, se necessário
+- repository/query builder
+- OpenAPI
+- frontend hook/client gerado
+- T-005 UI.
+
+Utilizar os nomes dos campos já existentes no banco e nos relacionamentos.
+
+Não inventar nomes de colunas.
+
+Depois verificar que:
+
+GET /api/reports/appointments
+
+aceita:
+
+startDate
+endDate
+professionalId
+clientId
+serviceId
+modality
+status
+resourceId
+page
+limit
+
+e que cada filtro realmente altera a consulta no banco.
+
+==================================================
+CORREÇÃO 2 — T-012 PERÍODOS BLOQUEADOS
+==================================================
+
+O backend já possui:
+
+GET /api/professionals/:id/blocked-periods
+
+NÃO criar outro endpoint.
+
+NÃO duplicar funcionalidade.
+
+NÃO alterar a regra de negócio existente.
+
+Adicionar o endpoint ao:
+
+lib/api-spec/openapi.yaml
+
+utilizando EXATAMENTE o contrato real do backend.
+
+Antes de escrever o schema OpenAPI, verificar:
+
+- response real
+- parâmetros reais
+- status codes reais
+- campos reais
+- tipos reais.
+
+IMPORTANTE — REGRAS DO ORVAL:
+
+NÃO utilizar:
+
+format: uuid
+format: email
+type: integer
+
+em qualquer novo trecho do OpenAPI.
+
+Após atualizar o OpenAPI:
+
+1. executar o codegen oficial já utilizado pelo projeto;
+2. verificar api-client-react;
+3. verificar api-zod;
+4. verificar obrigatoriamente:
+
+lib/api-zod/src/index.ts
+
+Esse arquivo deve permanecer compatível com o padrão estabelecido na Fase 11:
+
+export * from "./generated/api"
+
+Se o Orval adicionar conteúdo indevido nesse arquivo, corrigir conforme o padrão já estabelecido.
+
+Depois gerar o hook para blocked-periods.
+
+No T-012, adicionar a aba/área de:
+
+"Períodos bloqueados"
+
+utilizando exclusivamente dados reais do endpoint.
+
+Não criar dados fictícios.
+
+Implementar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+==================================================
+CORREÇÃO 3 — IDENTIFICAÇÃO REAL DE CLIENTES
+E PROFISSIONAIS
+==================================================
+
+Problema identificado:
+
+GET /api/clients e GET /api/professionals atualmente retornam principalmente dados das entidades clients/professionals, enquanto nome/e-mail/telefone estão relacionados à tabela users.
+
+A especificação exige interfaces administrativas utilizáveis com dados reais.
+
+Antes de criar qualquer endpoint novo, verificar se os endpoints existentes podem ser ajustados de forma compatível para retornar os dados necessários.
+
+PREFERÊNCIA:
+
+Utilizar JOIN/relação existente entre:
+
+users
+clients
+professionals
+
+sem alterar o modelo de banco.
+
+Não criar migration.
+
+Não duplicar dados no banco.
+
+Não criar novo endpoint se o endpoint existente puder ser enriquecido de forma compatível.
+
+Os campos devem continuar sendo reais.
+
+Avaliar cuidadosamente compatibilidade com consumidores existentes.
+
+Para CLIENTES, avaliar retorno compatível contendo, quando existentes:
+
+id
+userId
+name
+email
+phone
+birthDate
+status
+createdAt
+
+Para PROFISSIONAIS, avaliar retorno compatível contendo, quando existentes:
+
+id
+userId
+name
+email
+phone
+specialty
+status
+bio
+createdAt
+
+NÃO inventar campos.
+
+Se algum desses campos não existir ou estiver armazenado de outra forma, NÃO assumir.
+
+Informe primeiro onde realmente estão armazenados.
+
+==================================================
+T-006 — NOVO AGENDAMENTO
+==================================================
+
+Depois que a API de clientes puder fornecer identificação amigável real:
+
+Substituir o campo UUID manual por um seletor de cliente apropriado.
+
+O fluxo deve permanecer:
+
+CLIENTE
+→ PROFISSIONAL
+→ SERVIÇO
+→ MODALIDADE
+→ DATA
+→ SLOT
+→ CRIAÇÃO
+
+O cliente deve ser carregado pela API real.
+
+NÃO usar:
+
+- mocks
+- nomes fictícios
+- UUIDs hardcoded
+- lista local
+- dados estáticos.
+
+Ao selecionar o cliente, enviar ao POST /api/appointments o ID real correspondente.
+
+Preservar todos os filtros/dependências existentes:
+
+professionalId
+serviceId
+modality
+date
+
+e o endpoint real de slots:
+
+GET /api/slots
+
+Não alterar esse endpoint.
+
+==================================================
+T-008 — CLIENTES
+==================================================
+
+Atualizar a tela para usar os dados reais retornados pela API.
+
+A lista deve permitir identificar adequadamente o cliente.
+
+Manter:
+
+- paginação server-side
+- status
+- loading
+- empty
+- error
+- success
+- permissões ADMIN.
+
+Não carregar todos os clientes para filtrar no browser.
+
+==================================================
+T-010 — PERFIL DO CLIENTE
+==================================================
+
+Exibir os dados reais disponíveis no contrato.
+
+Preservar as abas existentes.
+
+Manter:
+
+- endereço
+- agendamentos
+- ativação/desativação
+- ConfirmDialog
+- estados de carregamento
+- estados de erro
+- estado vazio.
+
+Não alterar regras de negócio.
+
+==================================================
+T-011 — PROFISSIONAIS
+==================================================
+
+Atualizar a listagem para utilizar os dados reais disponíveis.
+
+Permitir identificação adequada do profissional.
+
+Preservar:
+
+- paginação
+- status
+- criação
+- estados LOADING/EMPTY/ERROR/SUCCESS
+- permissões ADMIN.
+
+==================================================
+T-012 — PERFIL DO PROFISSIONAL
+==================================================
+
+Preservar as funcionalidades existentes:
+
+- informações
+- disponibilidade
+- serviços
+- agendamentos.
+
+Adicionar somente:
+
+- períodos bloqueados
+
+utilizando o endpoint real já existente.
+
+Não criar funcionalidade adicional.
+
+==================================================
+OPENAPI / ORVAL
+==================================================
+
+Após todas as alterações necessárias:
+
+Verificar que TODOS os endpoints utilizados pelo frontend estão documentados.
+
+Verificar:
+
+- nenhum endpoint inventado;
+- nenhum endpoint duplicado;
+- nenhum format: uuid;
+- nenhum format: email;
+- nenhum type: integer;
+- schemas compatíveis com o backend real.
+
+Executar codegen somente depois de o OpenAPI estar completo.
+
+Depois verificar:
+
+lib/api-client-react/src/generated/
+lib/api-zod/src/generated/
+lib/api-zod/src/index.ts
+
+==================================================
+TESTES OBRIGATÓRIOS
+==================================================
+
+Executar separadamente:
+
+1. pnpm typecheck
+
+2. pnpm test
+
+3. Build real utilizando o procedimento oficial do ambiente Replit.
+
+Não afirmar build OK apenas por TypeScript.
+
+4. Verificar rotas:
+
+/admin
+/admin/schedule
+/admin/appointments/new
+/admin/appointments/:id
+/admin/clients
+/admin/clients/new
+/admin/clients/:id
+/admin/professionals
+/admin/professionals/:id
+/admin/services
+/admin/services/new
+/admin/resources
+/admin/resources/:id
+/admin/reports
+/admin/audit
+/admin/settings
+/admin/notifications
+
+5. Testar T-005:
+
+- filtro por data
+- profissional
+- cliente
+- serviço
+- modalidade
+- status
+- recurso
+
+Confirmar que os parâmetros chegam ao backend e são aplicados server-side.
+
+6. Testar T-006 ponta a ponta:
+
+cliente
+→ profissional
+→ serviço
+→ modalidade
+→ data
+→ slot
+→ POST /appointments
+
+7. Testar T-012:
+
+- disponibilidade
+- serviços
+- agendamentos
+- períodos bloqueados
+
+8. Testar permissões:
+
+ADMIN → permitido
+
+PROFESSIONAL → bloqueado / 403 quando aplicável
+
+CLIENT → bloqueado / 403 quando aplicável
+
+Não autenticado → 401 no backend.
+
+9. Verificar responsividade em aproximadamente:
+
+375px
+768px
+desktop
+
+10. Verificar estados:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+==================================================
+FOUNDATION.TEST.JS
+==================================================
+
+NÃO alterar esse teste automaticamente.
+
+Se continuar falhando:
+
+"business schemas are intentionally absent in Phase 1"
+
+informar separadamente:
+
+- resultado
+- causa
+- confirmação de que não foi causado por esta alteração.
+
+Não modificar o teste sem autorização.
+
+==================================================
+F1–F11
+==================================================
+
+Antes de finalizar:
+
+Verificar git diff.
+
+Confirmar que não foram alterados indevidamente:
+
+- autenticação
+- login
+- logout
+- AuthContext
+- PrivateRoute
+- dashboards
+- regras de negócio anteriores
+- endpoints anteriores não relacionados
+- migrations.
+
+Se encontrar alteração inesperada, investigar e reverter antes de finalizar.
+
+==================================================
+MIGRATIONS
+==================================================
+
+Não criar migration.
+
+Não modificar:
+
+lib/db/migrations/0001_initial_schema.sql
+
+Se alguma alteração exigir migration:
+
+PARE IMEDIATAMENTE.
+
+Não execute a migration.
+
+Não prossiga.
+
+Informe exatamente por que ela seria necessária e aguarde aprovação.
+
+==================================================
+COMMIT
+==================================================
+
+NÃO fazer commit.
+
+==================================================
+RELATÓRIO FINAL OBRIGATÓRIO
+==================================================
+
+Ao terminar, apresentar:
+
+1. Arquivos modificados
+2. Arquivos criados
+3. Alterações de backend
+4. Alterações de frontend
+5. Alterações no OpenAPI
+6. Codegen executado
+7. Situação do api-zod/src/index.ts
+8. Endpoints utilizados
+9. T-005 — filtros e confirmação server-side
+10. T-006 — fluxo completo
+11. T-008 — clientes
+12. T-010 — perfil cliente
+13. T-011 — profissionais
+14. T-012 — períodos bloqueados
+15. Testes
+16. pnpm typecheck
+17. pnpm test
+18. foundation.test.js
+19. Build real
+20. Responsividade
+21. Estados LOADING/EMPTY/ERROR/SUCCESS
+22. Permissões ADMIN/PROFESSIONAL/CLIENT
+23. Migrations
+24. Impacto sobre F1–F11
+25. git diff
+26. Confirmação de que não houve commit
+27. Problemas restantes
+
+STATUS FINAL:
+
+Se todas as correções forem implementadas e validadas:
+
+FASE 13 — BLOQUEADORES DE CONFORMIDADE RESOLVIDOS
+
+Se qualquer requisito não puder ser implementado sem uma decisão adicional:
+
+FASE 13 — BLOQUEADORES PARCIALMENTE RESOLVIDOS
+
+Nesse caso, NÃO invente solução.
+Informe exatamente o bloqueio e aguarde nova aprovação.

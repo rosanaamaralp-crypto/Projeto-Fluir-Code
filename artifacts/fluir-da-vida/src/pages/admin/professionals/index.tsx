@@ -1,10 +1,7 @@
 /**
  * T-011 — Profissionais
  *
- * Lista todos os profissionais (ADMIN vê ativos e inativos).
- * LIMITAÇÃO CONHECIDA: A API GET /api/professionals retorna apenas dados da tabela
- * `professionals` (id, userId, specialty, bio, status). Nome e email ficam na tabela
- * `users` e não são retornados — não é possível exibir sem um novo endpoint.
+ * Lista todos os profissionais (ADMIN vê ativos e inativos) com nome e e-mail reais.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -81,9 +78,18 @@ export default function AdminProfessionals() {
 
   const columns: Column<ProfessionalRow>[] = [
     {
-      key: "id",
-      header: "ID",
-      cell: (row) => <span className="text-xs font-mono text-muted-foreground">{row.id.slice(0, 8)}…</span>,
+      key: "name",
+      header: "Nome",
+      cell: (row) => (
+        <span className="text-sm font-medium">{row.name || <span className="text-muted-foreground italic">—</span>}</span>
+      ),
+    },
+    {
+      key: "email",
+      header: "E-mail",
+      cell: (row) => (
+        <span className="text-sm text-muted-foreground">{row.email || "—"}</span>
+      ),
     },
     {
       key: "specialty",

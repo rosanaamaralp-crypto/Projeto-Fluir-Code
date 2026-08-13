@@ -1,13 +1,10 @@
 /**
  * T-006 — Novo Agendamento
  *
- * Cria um agendamento como ADMIN (pode especificar qualquer clientId).
- * Fluxo: profissional → serviço → data → slot → modalidade → submit.
+ * Cria um agendamento como ADMIN.
+ * Fluxo: cliente → profissional → serviço → modalidade → data → slot → criação.
  *
- * LIMITAÇÃO: GET /api/professionals retorna apenas id/specialty (sem nome).
- * O dropdown de profissionais exibe especialidade como identificador.
- * GET /api/clients retorna apenas id/status (sem nome).
- * O campo clientId é um input de texto (UUID).
+ * Cliente selecionado via dropdown com nome real (API enriquecida com users JOIN).
  */
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -15,6 +12,7 @@ import {
   useListProfessionals,
   useListServices,
   useListSlots,
+  useListClients,
   useCreateAppointment,
 } from "@workspace/api-client-react";
 import type { AvailableSlot } from "@workspace/api-client-react";
@@ -44,21 +42,20 @@ function todayISO() {
 export default function AdminAppointmentNew() {
   const [, navigate] = useLocation();
 
-  // Step state
+  const [clientId, setClientId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [date, setDate] = useState(todayISO());
   const [modality, setModality] = useState<"IN_PERSON" | "HOME_CARE" | "">("");
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
-  const [clientId, setClientId] = useState("");
   const [addressId, setAddressId] = useState("");
   const [notes, setNotes] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const clientsQ = useListClients();
   const profsQ = useListProfessionals();
   const svcsQ = useListServices();
 
-  // Only load slots when professional + service + date + modality are selected
   const slotsEnabled = !!(professionalId && serviceId && date);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slotsQ = useListSlots(
@@ -70,11 +67,9 @@ export default function AdminAppointmentNew() {
 
   const { mutate: createAppt, isPending, isError, error } = useCreateAppointment();
 
-  // Filter services by modality if set
   const services = svcsQ.data?.services ?? [];
   const selectedService = services.find((s) => s.id === serviceId);
 
-  // Determine allowed modalities for selected service
   const allowedModalities: Array<"IN_PERSON" | "HOME_CARE"> =
     selectedService?.allowedModalities === "IN_PERSON"
       ? ["IN_PERSON"]
@@ -84,12 +79,12 @@ export default function AdminAppointmentNew() {
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
+    if (!clientId) errs.clientId = "Selecione um cliente.";
     if (!professionalId) errs.professionalId = "Selecione um profissional.";
     if (!serviceId) errs.serviceId = "Selecione um serviço.";
     if (!date) errs.date = "Selecione uma data.";
     if (!modality) errs.modality = "Selecione a modalidade.";
     if (!selectedSlot) errs.slot = "Selecione um horário disponível.";
-    if (!clientId.trim()) errs.clientId = "Informe o ID do cliente.";
     if (modality === "HOME_CARE" && !addressId.trim()) {
       errs.addressId = "Para Home Care, informe o ID do endereço do cliente.";
     }
@@ -104,11 +99,11 @@ export default function AdminAppointmentNew() {
     createAppt(
       {
         data: {
+          clientId,
           professionalId,
           serviceId,
           startDatetime: selectedSlot.startDatetime,
           modality,
-          clientId: clientId.trim(),
           addressId: modality === "HOME_CARE" ? addressId.trim() : undefined,
           notes: notes || undefined,
         },
@@ -143,9 +138,33 @@ export default function AdminAppointmentNew() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Profissional */}
+          {/* 1. Cliente */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">1. Profissional</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">1. Cliente</CardTitle></CardHeader>
+            <CardContent>
+              {clientsQ.isLoading ? (
+                <p className="text-sm text-muted-foreground">Carregando clientes…</p>
+              ) : (
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(clientsQ.data?.clients ?? []).filter((c) => c.status === "ACTIVE").map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name} — {c.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {fieldErrors.clientId && <p className="text-xs text-destructive mt-1">{fieldErrors.clientId}</p>}
+            </CardContent>
+          </Card>
+
+          {/* 2. Profissional */}
+          <Card>
+            <CardHeader><CardTitle className="text-sm">2. Profissional</CardTitle></CardHeader>
             <CardContent>
               <Select value={professionalId} onValueChange={(v) => { setProfessionalId(v); setSelectedSlot(null); }}>
                 <SelectTrigger>
@@ -154,7 +173,7 @@ export default function AdminAppointmentNew() {
                 <SelectContent>
                   {(profsQ.data?.professionals ?? []).filter((p) => p.status === "ACTIVE").map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.specialty ? `${p.specialty} (${p.id.slice(0, 8)}…)` : p.id.slice(0, 16) + "…"}
+                      {p.name}{p.specialty ? ` — ${p.specialty}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -163,9 +182,9 @@ export default function AdminAppointmentNew() {
             </CardContent>
           </Card>
 
-          {/* Serviço */}
+          {/* 3. Serviço */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">2. Serviço</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">3. Serviço</CardTitle></CardHeader>
             <CardContent>
               <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setModality(""); setSelectedSlot(null); }}>
                 <SelectTrigger>
@@ -183,10 +202,10 @@ export default function AdminAppointmentNew() {
             </CardContent>
           </Card>
 
-          {/* Modalidade */}
+          {/* 4. Modalidade */}
           {serviceId && (
             <Card>
-              <CardHeader><CardTitle className="text-sm">3. Modalidade</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-sm">4. Modalidade</CardTitle></CardHeader>
               <CardContent className="flex gap-3">
                 {allowedModalities.map((m) => (
                   <button
@@ -207,9 +226,9 @@ export default function AdminAppointmentNew() {
             </Card>
           )}
 
-          {/* Data e Slots */}
+          {/* 5. Data e Slots */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">4. Data e Horário</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">5. Data e Horário</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1">
                 <Label>Data</Label>
@@ -265,28 +284,11 @@ export default function AdminAppointmentNew() {
             </CardContent>
           </Card>
 
-          {/* Cliente */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">5. Cliente</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Informe o UUID do cliente (disponível na tela de{" "}
-                <Link href="/admin/clients"><span className="underline">Clientes</span></Link>).
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-1">
-                <Label>ID do Cliente (UUID)</Label>
-                <Input
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  disabled={isPending}
-                />
-                {fieldErrors.clientId && <p className="text-xs text-destructive">{fieldErrors.clientId}</p>}
-              </div>
-
-              {modality === "HOME_CARE" && (
+          {/* 6. Home Care address */}
+          {modality === "HOME_CARE" && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">6. Endereço (Home Care)</CardTitle></CardHeader>
+              <CardContent>
                 <div className="space-y-1">
                   <Label>ID do Endereço (UUID)</Label>
                   <Input
@@ -297,13 +299,13 @@ export default function AdminAppointmentNew() {
                   />
                   {fieldErrors.addressId && <p className="text-xs text-destructive">{fieldErrors.addressId}</p>}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Observações */}
+          {/* 7. Observações */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">6. Observações (opcional)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{modality === "HOME_CARE" ? "7." : "6."} Observações (opcional)</CardTitle></CardHeader>
             <CardContent>
               <Input
                 value={notes}

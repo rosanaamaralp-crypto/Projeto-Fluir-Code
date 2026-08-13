@@ -29,6 +29,7 @@ import type {
   AuditLogsResponse,
   AvailabilityItemResponse,
   AvailabilityListResponse,
+  BlockedPeriodsListResponse,
   ClientDashboardResponse,
   ClientResponse,
   ClientsListResponse,
@@ -1841,6 +1842,84 @@ export const useRemoveProfessionalService = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getRemoveProfessionalServiceMutationOptions(options));
     }
+
+export const getListProfessionalBlockedPeriodsUrl = (profId: string,) => {
+
+
+
+
+  return `/api/professionals/${profId}/blocked-periods`
+}
+
+/**
+ * ADMIN and the owning PROFESSIONAL can list blocked periods.
+ * @summary List blocked periods for a professional
+ */
+export const listProfessionalBlockedPeriods = async (profId: string, options?: Parameters<typeof customFetch>[1]): Promise<BlockedPeriodsListResponse> => {
+
+  return customFetch<BlockedPeriodsListResponse>(getListProfessionalBlockedPeriodsUrl(profId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProfessionalBlockedPeriodsQueryKey = (profId: string,) => {
+    return [
+    `/api/professionals/${profId}/blocked-periods`
+    ] as const;
+    }
+
+
+export const getListProfessionalBlockedPeriodsQueryOptions = <TData = Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>, TError = ErrorType<ErrorResponse>>(profId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProfessionalBlockedPeriodsQueryKey(profId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>> = ({ signal }) => listProfessionalBlockedPeriods(profId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: profId !== null && profId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProfessionalBlockedPeriodsQueryResult = NonNullable<Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>>
+export type ListProfessionalBlockedPeriodsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List blocked periods for a professional
+ */
+
+export function useListProfessionalBlockedPeriods<TData = Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>, TError = ErrorType<ErrorResponse>>(
+ profId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProfessionalBlockedPeriods>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProfessionalBlockedPeriodsQueryOptions(profId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListServicesUrl = () => {
 

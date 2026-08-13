@@ -780,6 +780,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ── Blocked Periods ───────────────────────────────────────────────────────────
+
+  /professionals/{profId}/blocked-periods:
+    get:
+      operationId: listProfessionalBlockedPeriods
+      tags: [professionals]
+      summary: List blocked periods for a professional
+      description: ADMIN and the owning PROFESSIONAL can list blocked periods.
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blocked periods list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockedPeriodsListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Professional not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Services ─────────────────────────────────────────────────────────────────
 
   /services:
@@ -1368,7 +1408,17 @@ paths:
             type: string
           required: false
         - in: query
+          name: clientId
+          schema:
+            type: string
+          required: false
+        - in: query
           name: serviceId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: resourceId
           schema:
             type: string
           required: false
@@ -1817,14 +1867,19 @@ components:
     ClientRow:
       type: object
       description: >
-        Raw client record from the clients table.
-        Name, email, and phone are stored in the users table (accessible via userId).
-        The full user object is only returned by POST /clients (create).
+        Client record joined with users table — includes name, email, phone.
       properties:
         id:
           type: string
         userId:
           type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
         birthDate:
           type: string
           nullable: true
@@ -1842,6 +1897,8 @@ components:
       required:
         - id
         - userId
+        - name
+        - email
         - status
         - createdAt
         - updatedAt
@@ -2039,14 +2096,19 @@ components:
     ProfessionalRow:
       type: object
       description: >
-        Raw professional record from the professionals table.
-        Name, email, and phone are stored in the users table (accessible via userId).
-        The full user object is only returned by POST /professionals (create).
+        Professional record joined with users table — includes name, email, phone.
       properties:
         id:
           type: string
         userId:
           type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
         specialty:
           type: string
           nullable: true
@@ -2064,6 +2126,8 @@ components:
       required:
         - id
         - userId
+        - name
+        - email
         - status
         - createdAt
         - updatedAt
@@ -2133,6 +2197,53 @@ components:
             $ref: "#/components/schemas/ProfessionalRow"
       required:
         - professionals
+
+    # ── Blocked Periods ───────────────────────────────────────────────────────
+    BlockedPeriodRow:
+      type: object
+      properties:
+        id:
+          type: string
+        professionalId:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - professionalId
+        - startDatetime
+        - endDatetime
+        - status
+        - createdBy
+        - createdAt
+        - updatedAt
+
+    BlockedPeriodsListResponse:
+      type: object
+      properties:
+        blockedPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlockedPeriodRow"
+      required:
+        - blockedPeriods
 
     # ── Availability ──────────────────────────────────────────────────────────
     AvailabilityRow:

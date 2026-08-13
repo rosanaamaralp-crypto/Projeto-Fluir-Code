@@ -1,9 +1,8 @@
 /**
  * T-012 — Perfil do Profissional
  *
- * Exibe dados do profissional, disponibilidade, serviços vinculados e agendamentos.
- * LIMITAÇÃO: nome/email do profissional não retornados por GET /api/professionals/:id
- * (ficam na tabela users).
+ * Exibe dados do profissional (com nome, e-mail e telefone reais via JOIN com users),
+ * disponibilidade, serviços vinculados, agendamentos e períodos bloqueados.
  */
 import { useState } from "react";
 import { Link, useParams } from "wouter";
@@ -12,6 +11,7 @@ import {
   useUpdateProfessional,
   useListProfessionalAvailability,
   useListProfessionalServices,
+  useListProfessionalBlockedPeriods,
   useListAppointments,
   useListServices,
 } from "@workspace/api-client-react";
@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ModalityBadge } from "@/components/admin/modality-badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { ArrowLeft, Calendar, Briefcase, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, Briefcase, Clock, Ban } from "lucide-react";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -38,11 +38,11 @@ export default function AdminProfessionalDetail() {
   const availQ = useListProfessionalAvailability(id!);
   const psQ = useListProfessionalServices(id!);
   const apptQ = useListAppointments({ professionalId: id! });
+  const blockedQ = useListProfessionalBlockedPeriods(id!);
   const svcsQ = useListServices();
 
   const { mutate: updateProf, isPending: isUpdating } = useUpdateProfessional();
 
-  // Build service name map
   const serviceMap: Record<string, string> = {};
   (svcsQ.data?.services ?? []).forEach((s) => { serviceMap[s.id] = s.name; });
 
@@ -98,9 +98,9 @@ export default function AdminProfessionalDetail() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              Perfil do Profissional
+              {prof.name || "Perfil do Profissional"}
             </h1>
-            <p className="text-xs font-mono text-muted-foreground">{prof.id}</p>
+            <p className="text-xs text-muted-foreground">{prof.email}</p>
           </div>
         </div>
 
@@ -110,6 +110,7 @@ export default function AdminProfessionalDetail() {
             <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
             <TabsTrigger value="services">Serviços</TabsTrigger>
             <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
+            <TabsTrigger value="blocked">Períodos Bloqueados</TabsTrigger>
           </TabsList>
 
           {/* Info */}
@@ -137,8 +138,16 @@ export default function AdminProfessionalDetail() {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-xs text-muted-foreground">ID do Usuário</p>
-                    <p className="font-mono text-xs">{prof.userId}</p>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="font-medium">{prof.name || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">E-mail</p>
+                    <p>{prof.email || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Telefone</p>
+                    <p>{prof.phone || "—"}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Especialidade</p>
@@ -249,6 +258,55 @@ export default function AdminProfessionalDetail() {
                             <Button variant="ghost" size="sm">Ver</Button>
                           </Link>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Blocked Periods */}
+          <TabsContent value="blocked" className="pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Ban className="h-4 w-4" />
+                  Períodos Bloqueados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {blockedQ.isLoading ? (
+                  <div className="space-y-2">{[1, 2].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                ) : blockedQ.isError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {blockedQ.error instanceof Error ? blockedQ.error.message : "Erro ao carregar períodos bloqueados."}
+                    </AlertDescription>
+                  </Alert>
+                ) : (blockedQ.data?.blockedPeriods ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum período bloqueado cadastrado.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {blockedQ.data?.blockedPeriods.map((bp) => (
+                      <div key={bp.id} className="flex items-center justify-between py-2 border-b last:border-0 gap-2">
+                        <div className="text-sm">
+                          <p className="font-medium">
+                            {new Date(bp.startDatetime).toLocaleDateString("pt-BR")}
+                            {" "}
+                            {new Date(bp.startDatetime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            {" → "}
+                            {new Date(bp.endDatetime).toLocaleDateString("pt-BR")}
+                            {" "}
+                            {new Date(bp.endDatetime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          {bp.reason && (
+                            <p className="text-xs text-muted-foreground">{bp.reason}</p>
+                          )}
+                        </div>
+                        <Badge variant={bp.status === "ACTIVE" ? "destructive" : "secondary"} className="text-xs shrink-0">
+                          {bp.status === "ACTIVE" ? "Ativo" : "Cancelado"}
+                        </Badge>
                       </div>
                     ))}
                   </div>

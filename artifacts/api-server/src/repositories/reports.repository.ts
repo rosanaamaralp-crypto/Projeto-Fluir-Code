@@ -65,7 +65,9 @@ export interface AppointmentReportFilters {
   startDate?: string;
   endDate?: string;
   professionalId?: string;
+  clientId?: string;
   serviceId?: string;
+  resourceId?: string;
   modality?: string;
   status?: string;
   page: number;
@@ -119,7 +121,7 @@ export const ReportsRepository = {
     db: DB,
     filters: AppointmentReportFilters,
   ): Promise<{ data: AppointmentReportRow[]; summary: AppointmentReportSummary; total: number }> {
-    const { page, limit, startDate, endDate, professionalId, serviceId, modality, status } = filters;
+    const { page, limit, startDate, endDate, professionalId, clientId, serviceId, resourceId, modality, status } = filters;
     const offset = (page - 1) * limit;
 
     // Condições WHERE — aplicadas em ambas as queries
@@ -127,7 +129,9 @@ export const ReportsRepository = {
     if (startDate) conds.push(gte(appointments.startDatetime, toStartOfDay(startDate)));
     if (endDate) conds.push(lte(appointments.startDatetime, toEndOfDay(endDate)));
     if (professionalId) conds.push(eq(appointments.professionalId, professionalId));
+    if (clientId) conds.push(eq(appointments.clientId, clientId));
     if (serviceId) conds.push(eq(appointments.serviceId, serviceId));
+    if (resourceId) conds.push(eq(appointments.resourceId, resourceId));
     if (modality) conds.push(eq(appointments.modality, modality));
     if (status) conds.push(eq(appointments.status, status));
 

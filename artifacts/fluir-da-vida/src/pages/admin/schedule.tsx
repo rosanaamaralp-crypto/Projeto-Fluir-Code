@@ -2,13 +2,18 @@
  * T-005 — Agenda Administrativa
  *
  * Lista filtrada de agendamentos com dados enriquecidos (nomes via reports endpoint).
- * Filtros server-side: data, profissional, serviço, modalidade, status.
+ * Filtros server-side: data, profissional, cliente, serviço, modalidade, status, recurso.
  * DP-002: NÃO usa react-big-calendar. Lista filtrada por data.
- * DP-002: Filtros "cliente" e "recurso" não estão disponíveis via /reports/appointments.
  */
 import { useState } from "react";
 import { Link } from "wouter";
-import { useGetReportAppointments, useListProfessionals, useListServices } from "@workspace/api-client-react";
+import {
+  useGetReportAppointments,
+  useListProfessionals,
+  useListServices,
+  useListClients,
+  useListResources,
+} from "@workspace/api-client-react";
 import type { GetReportAppointmentsParams } from "@workspace/api-client-react";
 import { AppLayout } from "@/layouts/app-layout";
 import { Button } from "@/components/ui/button";
@@ -16,7 +21,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ModalityBadge } from "@/components/admin/modality-badge";
 import { DataTable } from "@/components/admin/data-table";
@@ -34,7 +38,9 @@ export default function AdminSchedule() {
   const today = todayISO();
   const [date, setDate] = useState(today);
   const [professionalId, setProfessionalId] = useState("");
+  const [clientId, setClientId] = useState("");
   const [serviceId, setServiceId] = useState("");
+  const [resourceId, setResourceId] = useState("");
   const [modality, setModality] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
@@ -43,7 +49,9 @@ export default function AdminSchedule() {
     startDate: date || undefined,
     endDate: date || undefined,
     professionalId: professionalId || undefined,
+    clientId: clientId || undefined,
     serviceId: serviceId || undefined,
+    resourceId: resourceId || undefined,
     modality: modality || undefined,
     status: status || undefined,
     page,
@@ -53,6 +61,8 @@ export default function AdminSchedule() {
   const { data, isLoading, isError, error, refetch } = useGetReportAppointments(params);
   const { data: profsData } = useListProfessionals();
   const { data: svcsData } = useListServices();
+  const { data: clientsData } = useListClients();
+  const { data: resourcesData } = useListResources();
 
   function handleFilter() {
     setPage(1);
@@ -61,7 +71,9 @@ export default function AdminSchedule() {
   function handleClear() {
     setDate(today);
     setProfessionalId("");
+    setClientId("");
     setServiceId("");
+    setResourceId("");
     setModality("");
     setStatus("");
     setPage(1);
@@ -152,7 +164,7 @@ export default function AdminSchedule() {
         {/* Filtros */}
         <Card>
           <CardContent className="pt-4">
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Data</label>
                 <Input
@@ -172,7 +184,24 @@ export default function AdminSchedule() {
                     <SelectItem value="">Todos</SelectItem>
                     {profsData?.professionals.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.specialty || p.id.slice(0, 8)}
+                        {p.name || p.id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Cliente</label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {clientsData?.clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name || c.id.slice(0, 8)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -190,6 +219,23 @@ export default function AdminSchedule() {
                     {svcsData?.services.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Recurso</label>
+                <Select value={resourceId} onValueChange={setResourceId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {resourcesData?.resources.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

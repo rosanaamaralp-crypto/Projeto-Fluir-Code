@@ -1,9 +1,8 @@
 /**
  * T-010 — Perfil do Cliente
  *
- * Exibe dados do cliente, endereço e agendamentos.
- * LIMITAÇÃO: nome/email do cliente não retornados por GET /api/clients/:id
- * (ficam na tabela users). Exibe dados disponíveis da tabela clients.
+ * Exibe dados do cliente (com nome, e-mail e telefone reais via JOIN com users),
+ * endereço e agendamentos.
  */
 import { useState } from "react";
 import { Link, useParams } from "wouter";
@@ -101,9 +100,9 @@ export default function AdminClientDetail() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <User className="h-5 w-5" />
-              Perfil do Cliente
+              {client.name || "Perfil do Cliente"}
             </h1>
-            <p className="text-xs font-mono text-muted-foreground">{client.id}</p>
+            <p className="text-xs text-muted-foreground">{client.email}</p>
           </div>
         </div>
 
@@ -143,8 +142,16 @@ export default function AdminClientDetail() {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-xs text-muted-foreground">ID do Usuário</p>
-                    <p className="font-mono text-xs">{client.userId}</p>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="font-medium">{client.name || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">E-mail</p>
+                    <p>{client.email || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Telefone</p>
+                    <p>{client.phone || "—"}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Data de Nascimento</p>

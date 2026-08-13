@@ -29,8 +29,12 @@ export const ReportAppointmentsQuerySchema = z
     endDate: DateString.optional(),
     /** Filtro por UUID do profissional. */
     professionalId: UUID.optional(),
+    /** Filtro por UUID do cliente. */
+    clientId: UUID.optional(),
     /** Filtro por UUID do serviço. */
     serviceId: UUID.optional(),
+    /** Filtro por UUID do recurso. */
+    resourceId: UUID.optional(),
     /** Filtro por modalidade. */
     modality: z.enum(["IN_PERSON", "HOME_CARE"]).optional(),
     /** Filtro por status. */

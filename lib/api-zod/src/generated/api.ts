@@ -153,12 +153,15 @@ export const ListClientsResponse = zod.object({
   "clients": zod.array(zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "birthDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n'))
+}).describe('Client record joined with users table — includes name, email, phone.\n'))
 })
 
 
@@ -189,12 +192,15 @@ export const CreateClientResponse = zod.object({
   "client": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "birthDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+}).describe('Client record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -209,12 +215,15 @@ export const GetClientResponse = zod.object({
   "client": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "birthDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+}).describe('Client record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -236,12 +245,15 @@ export const UpdateClientResponse = zod.object({
   "client": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "birthDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+}).describe('Client record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -323,12 +335,15 @@ export const ListProfessionalsResponse = zod.object({
   "professionals": zod.array(zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "specialty": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n'))
+}).describe('Professional record joined with users table — includes name, email, phone.\n'))
 })
 
 
@@ -358,12 +373,15 @@ export const CreateProfessionalResponse = zod.object({
   "professional": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "specialty": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+}).describe('Professional record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -378,12 +396,15 @@ export const GetProfessionalResponse = zod.object({
   "professional": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "specialty": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+}).describe('Professional record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -406,12 +427,15 @@ export const UpdateProfessionalResponse = zod.object({
   "professional": zod.object({
   "id": zod.string(),
   "userId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
   "specialty": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "status": zod.string(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
-}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+}).describe('Professional record joined with users table — includes name, email, phone.\n')
 })
 
 
@@ -543,6 +567,29 @@ export const RemoveProfessionalServiceParams = zod.object({
 
 export const RemoveProfessionalServiceResponse = zod.object({
   "message": zod.string()
+})
+
+
+/**
+ * ADMIN and the owning PROFESSIONAL can list blocked periods.
+ * @summary List blocked periods for a professional
+ */
+export const ListProfessionalBlockedPeriodsParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const ListProfessionalBlockedPeriodsResponse = zod.object({
+  "blockedPeriods": zod.array(zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "reason": zod.string().nullish(),
+  "status": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
 })
 
 
@@ -948,7 +995,9 @@ export const GetReportAppointmentsQueryParams = zod.object({
   "startDate": zod.coerce.string().optional().describe('YYYY-MM-DD'),
   "endDate": zod.coerce.string().optional().describe('YYYY-MM-DD'),
   "professionalId": zod.coerce.string().optional(),
+  "clientId": zod.coerce.string().optional(),
   "serviceId": zod.coerce.string().optional(),
+  "resourceId": zod.coerce.string().optional(),
   "modality": zod.coerce.string().optional(),
   "status": zod.coerce.string().optional(),
   "page": zod.coerce.number().optional(),

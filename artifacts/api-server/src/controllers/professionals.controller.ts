@@ -3,6 +3,9 @@
  *     Atomicidade garantida: users + professionals + audit_logs em uma única tx.
  * P3: Usa os dados já validados pelo UpdateProfessionalSchema (name e phone
  *     incluídos), sem segundo cast de req.body.
+ *
+ * Fase 13 — Resolução de bloqueadores:
+ * list() e get() retornam dados enriquecidos (com name/email/phone via JOIN com users).
  */
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../lib/db.js";
@@ -25,23 +28,23 @@ async function assertOwnership(req: Request, profId: string): Promise<void> {
 }
 
 export const ProfessionalsController = {
-  /** GET /api/professionals */
+  /** GET /api/professionals — enriquecido com name/email/phone */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const session = req.session.user!;
       const onlyActive = session.roleId !== ROLES.ADMIN;
-      const all = await ProfessionalsRepository.findAll(db, onlyActive);
+      const all = await ProfessionalsRepository.findAllWithUser(db, onlyActive);
       res.json({ professionals: all });
     } catch (err) {
       next(err);
     }
   },
 
-  /** GET /api/professionals/:id */
+  /** GET /api/professionals/:id — enriquecido com name/email/phone */
   async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params as { id: string };
-      const prof = await ProfessionalsRepository.findById(db, id);
+      const prof = await ProfessionalsRepository.findByIdWithUser(db, id);
       if (!prof) throw new NotFoundError("Profissional não encontrado.");
       res.json({ professional: prof });
     } catch (err) {
@@ -114,8 +117,6 @@ export const ProfessionalsController = {
       const prof = await ProfessionalsRepository.findById(db, id);
       if (!prof) throw new NotFoundError("Profissional não encontrado.");
 
-      // req.body já foi validado pelo validateBody(UpdateProfessionalSchema) na rota
-      // que inclui name, phone, specialty, bio, status com limites corretos
       const { name, phone, specialty, bio, status } = req.body as UpdateProfessionalInput;
 
       const profUpdateData: Partial<{ specialty: string | null; bio: string | null; status: string }> = {};
@@ -126,9 +127,7 @@ export const ProfessionalsController = {
       const hasUserUpdate = name !== undefined || phone !== undefined;
       const hasProfUpdate = Object.keys(profUpdateData).length > 0;
 
-      // Executar todas as operações dentro de uma única transação (P2)
       const updated = await db.transaction(async (tx) => {
-        // 1. Atualizar users (name/phone) — dentro da mesma tx
         if (hasUserUpdate) {
           await UsersRepository.update(tx, prof.userId, {
             ...(name !== undefined ? { name } : {}),
@@ -136,12 +135,10 @@ export const ProfessionalsController = {
           });
         }
 
-        // 2. Atualizar professionals (specialty/bio/status)
         const updated = hasProfUpdate
           ? await ProfessionalsRepository.update(tx, id, profUpdateData)
           : await ProfessionalsRepository.findById(tx, id);
 
-        // 3. Audit log — dentro da mesma tx
         await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "PROFESSIONAL_UPDATED",

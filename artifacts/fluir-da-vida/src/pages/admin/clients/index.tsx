@@ -1,10 +1,7 @@
 /**
  * T-008 — Clientes
  *
- * Lista todos os clientes (ADMIN).
- * LIMITAÇÃO CONHECIDA: A API GET /api/clients retorna apenas dados da tabela `clients`
- * (id, userId, birthDate, notes, status). Nome e email estão na tabela `users` e
- * não são retornados por este endpoint — não é possível exibir sem um novo endpoint.
+ * Lista todos os clientes (ADMIN) com nome e e-mail reais via JOIN com users.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -30,10 +27,24 @@ export default function AdminClients() {
 
   const columns: Column<ClientRow>[] = [
     {
-      key: "id",
-      header: "ID",
+      key: "name",
+      header: "Nome",
       cell: (row) => (
-        <span className="text-xs font-mono text-muted-foreground">{row.id.slice(0, 8)}…</span>
+        <span className="text-sm font-medium">{row.name || <span className="text-muted-foreground italic">—</span>}</span>
+      ),
+    },
+    {
+      key: "email",
+      header: "E-mail",
+      cell: (row) => (
+        <span className="text-sm text-muted-foreground">{row.email || "—"}</span>
+      ),
+    },
+    {
+      key: "phone",
+      header: "Telefone",
+      cell: (row) => (
+        <span className="text-sm">{row.phone || <span className="text-muted-foreground">—</span>}</span>
       ),
     },
     {
@@ -43,26 +54,6 @@ export default function AdminClients() {
         <Badge variant={row.status === "ACTIVE" ? "default" : "secondary"}>
           {row.status === "ACTIVE" ? "Ativo" : "Inativo"}
         </Badge>
-      ),
-    },
-    {
-      key: "birthDate",
-      header: "Data de Nascimento",
-      cell: (row) => (
-        <span className="text-sm">
-          {row.birthDate
-            ? new Date(row.birthDate + "T12:00:00").toLocaleDateString("pt-BR")
-            : <span className="text-muted-foreground">—</span>}
-        </span>
-      ),
-    },
-    {
-      key: "notes",
-      header: "Observações",
-      cell: (row) => (
-        <span className="text-sm text-muted-foreground truncate max-w-xs block">
-          {row.notes || "—"}
-        </span>
       ),
     },
     {

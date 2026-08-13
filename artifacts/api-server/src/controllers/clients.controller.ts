@@ -3,6 +3,9 @@
  * UpdateClientSchemaSelf (sem status) para CLIENT.
  * UpdateClientSchemaAdmin (com status) para ADMIN.
  * O schema é selecionado no controller antes da validação.
+ *
+ * Fase 13 — Resolução de bloqueadores:
+ * list() e get() retornam dados enriquecidos (com name/email/phone via JOIN com users).
  */
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../lib/db.js";
@@ -29,17 +32,17 @@ async function assertOwnership(req: Request, clientId: string): Promise<void> {
 }
 
 export const ClientsController = {
-  /** GET /api/clients — ADMIN lista todos; CLIENT vê o próprio */
+  /** GET /api/clients — ADMIN lista todos (com nome/email/phone); CLIENT vê o próprio */
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const session = req.session.user!;
       if (session.roleId === ROLES.ADMIN) {
-        const all = await ClientsRepository.findAll(db);
+        const all = await ClientsRepository.findAllWithUser(db);
         res.json({ clients: all });
         return;
       }
-      // CLIENT: retorna apenas o próprio
-      const own = await ClientsRepository.findByUserId(db, session.userId);
+      // CLIENT: retorna apenas o próprio, enriquecido
+      const own = await ClientsRepository.findByUserIdWithUser(db, session.userId);
       res.json({ clients: own ? [own] : [] });
     } catch (err) {
       next(err);
@@ -51,7 +54,7 @@ export const ClientsController = {
     try {
       const { id } = req.params as { id: string };
       await assertOwnership(req, id);
-      const client = await ClientsRepository.findById(db, id);
+      const client = await ClientsRepository.findByIdWithUser(db, id);
       if (!client) throw new NotFoundError("Cliente não encontrado.");
       res.json({ client });
     } catch (err) {
@@ -113,9 +116,6 @@ export const ClientsController = {
    * Seleção de schema por role (P8):
    * - ADMIN: UpdateClientSchemaAdmin (inclui status)
    * - CLIENT/outros: UpdateClientSchemaSelf (sem status)
-   *
-   * A validação ocorre aqui, no controller, para que o schema correto
-   * seja aplicado antes de qualquer processamento.
    */
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -125,7 +125,6 @@ export const ClientsController = {
       const session = req.session.user!;
       const isAdmin = session.roleId === ROLES.ADMIN;
 
-      // Selecionar schema adequado ao role
       const schema = isAdmin ? UpdateClientSchemaAdmin : UpdateClientSchemaSelf;
       const parseResult = schema.safeParse(req.body);
       if (!parseResult.success) {
@@ -140,10 +139,8 @@ export const ClientsController = {
       const updateData: Record<string, unknown> = {};
       if (body.birthDate !== undefined) updateData["birthDate"] = body.birthDate;
       if (body.notes !== undefined) updateData["notes"] = body.notes;
-      // status só existe no UpdateClientSchemaAdmin — type-safe via "status" in body
       if ("status" in body && body.status !== undefined) updateData["status"] = body.status;
 
-      // Nenhum campo permitido foi enviado — retornar cliente atual sem atualizar
       if (Object.keys(updateData).length === 0) {
         res.json({ client });
         return;

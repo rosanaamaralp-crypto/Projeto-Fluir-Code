@@ -127,11 +127,14 @@ export interface ClientDashboardResponse {
 }
 
 /**
- * Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST /clients (create).
+ * Client record joined with users table — includes name, email, phone.
  */
 export interface ClientRow {
   id: string;
   userId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
   birthDate?: string | null;
   notes?: string | null;
   status: string;
@@ -218,11 +221,14 @@ export interface AddressResponse {
 }
 
 /**
- * Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST /professionals (create).
+ * Professional record joined with users table — includes name, email, phone.
  */
 export interface ProfessionalRow {
   id: string;
   userId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
   specialty?: string | null;
   bio?: string | null;
   status: string;
@@ -258,6 +264,22 @@ export interface ProfessionalResponse {
 
 export interface ProfessionalsListResponse {
   professionals: ProfessionalRow[];
+}
+
+export interface BlockedPeriodRow {
+  id: string;
+  professionalId: string;
+  startDatetime: string;
+  endDatetime: string;
+  reason?: string | null;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlockedPeriodsListResponse {
+  blockedPeriods: BlockedPeriodRow[];
 }
 
 export interface AvailabilityRow {
@@ -618,7 +640,9 @@ startDate?: string;
  */
 endDate?: string;
 professionalId?: string;
+clientId?: string;
 serviceId?: string;
+resourceId?: string;
 modality?: string;
 status?: string;
 page?: number;
