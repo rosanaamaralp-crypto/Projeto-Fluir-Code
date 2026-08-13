@@ -7,3 +7,4 @@
 - [Fase 11 — Frontend Marco Visual](fase11-frontend.md) — orval v8.23 quirks (Zod v3 vs v4, schemas option, index.ts append); AuthContext shape normalization login vs /me
 - [Fase 13 — Admin Module](fase13-admin.md) — orval mutations use `{ data }` key always; Empty sub-components; useListSlots enabled cast; client/prof API name limitation
 - [Fase 13 — Bloqueadores de Conformidade](fase13-corrections.md) — Drizzle leftJoin → string | null; filtros reports; enriquecimento users JOIN; blocked-periods openapi
+- [Fase 14 — Módulo Profissional](fase14-professional.md) — useProfessionalSelf hook; enabled as any; T-023 gap; DELETE /blocked-periods/:id sem profId; schemas OpenAPI

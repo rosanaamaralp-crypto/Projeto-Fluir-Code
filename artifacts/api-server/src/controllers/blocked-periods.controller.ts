@@ -76,6 +76,43 @@ export const BlockedPeriodsController = {
   },
 
   /**
+   * DELETE /api/blocked-periods/:id
+   * Soft-delete: altera status para CANCELLED.
+   * ADMIN pode deletar qualquer um; PROFESSIONAL somente os próprios.
+   */
+  async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params as { id: string };
+      const session = req.session.user!;
+
+      const bp = await BlockedPeriodsRepository.findById(db, id);
+      if (!bp) throw new NotFoundError("Período bloqueado não encontrado.");
+
+      // Ownership check: professional só pode remover os próprios
+      if (session.roleId !== ROLES.ADMIN) {
+        const prof = await ProfessionalsRepository.findByUserId(db, session.userId);
+        if (!prof || prof.id !== bp.professionalId) throw new ForbiddenError();
+      }
+
+      await db.transaction(async (tx) => {
+        await BlockedPeriodsRepository.updateStatus(tx, id, "CANCELLED");
+        await AuditLogsRepository.create(tx, {
+          userId: session.userId,
+          action: "BLOCKED_PERIOD_DELETED",
+          entityType: "blocked_periods",
+          entityId: id,
+          oldData: bp,
+          ipAddress: getClientIp(req),
+        });
+      });
+
+      res.json({ message: "Período bloqueado removido com sucesso." });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
    * PATCH /api/professionals/:profId/blocked-periods/:id
    * Exclusivo para ADMIN — verificação de role feita no middleware da rota (requireAdmin).
    */

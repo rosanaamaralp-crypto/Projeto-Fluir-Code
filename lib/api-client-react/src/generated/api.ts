@@ -29,12 +29,14 @@ import type {
   AuditLogsResponse,
   AvailabilityItemResponse,
   AvailabilityListResponse,
+  BlockedPeriodItemResponse,
   BlockedPeriodsListResponse,
   ClientDashboardResponse,
   ClientResponse,
   ClientsListResponse,
   CreateAppointmentRequest,
   CreateAvailabilityRequest,
+  CreateBlockedPeriodRequest,
   CreateClientRequest,
   CreateClientResponse,
   CreateProfessionalRequest,
@@ -49,11 +51,14 @@ import type {
   HealthStatus,
   ListAppointmentsParams,
   ListAuditLogsParams,
+  ListNotificationsParams,
   ListSlotsParams,
   LoginRequest,
   LoginResponse,
   MeResponse,
   MessageResponse,
+  NotificationReadResponse,
+  NotificationsListResponse,
   PatchAppointmentRequest,
   PatchAppointmentResponse,
   ProfessionalDashboardResponse,
@@ -1621,6 +1626,80 @@ export const useUpdateProfessionalAvailability = <TError = ErrorType<ErrorRespon
       return useMutation(getUpdateProfessionalAvailabilityMutationOptions(options));
     }
 
+export const getDeleteProfessionalAvailabilityUrl = (profId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/professionals/${profId}/availability/${id}`
+}
+
+/**
+ * ADMIN and the owning PROFESSIONAL can deactivate an availability window.
+ * @summary Deactivate availability window (soft delete)
+ */
+export const deleteProfessionalAvailability = async (profId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getDeleteProfessionalAvailabilityUrl(profId,id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProfessionalAvailabilityMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalAvailability>>, TError,{profId: string;id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalAvailability>>, TError,{profId: string;id: string}, TContext> => {
+
+const mutationKey = ['deleteProfessionalAvailability'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProfessionalAvailability>>, {profId: string;id: string}> = (props) => {
+          const {profId,id} = props ?? {};
+
+          return  deleteProfessionalAvailability(profId,id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProfessionalAvailabilityMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProfessionalAvailability>>>
+
+    export type DeleteProfessionalAvailabilityMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Deactivate availability window (soft delete)
+ */
+export const useDeleteProfessionalAvailability = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalAvailability>>, TError,{profId: string;id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProfessionalAvailability>>,
+        TError,
+        {profId: string;id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteProfessionalAvailabilityMutationOptions(options));
+    }
+
 export const getListProfessionalServicesUrl = (profId: string,) => {
 
 
@@ -1920,6 +1999,308 @@ export function useListProfessionalBlockedPeriods<TData = Awaited<ReturnType<typ
 
 
 
+
+export const getCreateProfessionalBlockedPeriodUrl = (profId: string,) => {
+
+
+
+
+  return `/api/professionals/${profId}/blocked-periods`
+}
+
+/**
+ * ADMIN and the owning PROFESSIONAL can create blocked periods.
+ * @summary Create a blocked period for a professional
+ */
+export const createProfessionalBlockedPeriod = async (profId: string,
+    createBlockedPeriodRequest: CreateBlockedPeriodRequest, options?: Parameters<typeof customFetch>[1]): Promise<BlockedPeriodItemResponse> => {
+
+  return customFetch<BlockedPeriodItemResponse>(getCreateProfessionalBlockedPeriodUrl(profId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createBlockedPeriodRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateProfessionalBlockedPeriodMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>, TError,{profId: string;data: BodyType<CreateBlockedPeriodRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>, TError,{profId: string;data: BodyType<CreateBlockedPeriodRequest>}, TContext> => {
+
+const mutationKey = ['createProfessionalBlockedPeriod'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>, {profId: string;data: BodyType<CreateBlockedPeriodRequest>}> = (props) => {
+          const {profId,data} = props ?? {};
+
+          return  createProfessionalBlockedPeriod(profId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProfessionalBlockedPeriodMutationResult = NonNullable<Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>>
+    export type CreateProfessionalBlockedPeriodMutationBody = BodyType<CreateBlockedPeriodRequest>
+    export type CreateProfessionalBlockedPeriodMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a blocked period for a professional
+ */
+export const useCreateProfessionalBlockedPeriod = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>, TError,{profId: string;data: BodyType<CreateBlockedPeriodRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProfessionalBlockedPeriod>>,
+        TError,
+        {profId: string;data: BodyType<CreateBlockedPeriodRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateProfessionalBlockedPeriodMutationOptions(options));
+    }
+
+export const getDeleteProfessionalBlockedPeriodUrl = (id: string,) => {
+
+
+
+
+  return `/api/blocked-periods/${id}`
+}
+
+/**
+ * ADMIN can remove any; PROFESSIONAL can remove their own.
+ * @summary Remove a blocked period (soft-delete, sets status to CANCELLED)
+ */
+export const deleteProfessionalBlockedPeriod = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getDeleteProfessionalBlockedPeriodUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProfessionalBlockedPeriodMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteProfessionalBlockedPeriod'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteProfessionalBlockedPeriod(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProfessionalBlockedPeriodMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>>
+
+    export type DeleteProfessionalBlockedPeriodMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove a blocked period (soft-delete, sets status to CANCELLED)
+ */
+export const useDeleteProfessionalBlockedPeriod = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProfessionalBlockedPeriod>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteProfessionalBlockedPeriodMutationOptions(options));
+    }
+
+export const getListNotificationsUrl = (params?: ListNotificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/notifications?${stringifiedParams}` : `/api/notifications`
+}
+
+/**
+ * Returns notifications for the session user with pagination. Supports unread filter.
+ * @summary List notifications for the authenticated user
+ */
+export const listNotifications = async (params?: ListNotificationsParams, options?: Parameters<typeof customFetch>[1]): Promise<NotificationsListResponse> => {
+
+  return customFetch<NotificationsListResponse>(getListNotificationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListNotificationsQueryKey = (params?: ListNotificationsParams,) => {
+    return [
+    `/api/notifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<ErrorResponse>>(params?: ListNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListNotificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotifications>>> = ({ signal }) => listNotifications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listNotifications>>>
+export type ListNotificationsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List notifications for the authenticated user
+ */
+
+export function useListNotifications<TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getMarkNotificationReadUrl = (id: string,) => {
+
+
+
+
+  return `/api/notifications/${id}/read`
+}
+
+/**
+ * Idempotent. Returns 403 if the notification does not belong to the session user.
+ * @summary Mark a notification as read
+ */
+export const markNotificationRead = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<NotificationReadResponse> => {
+
+  return customFetch<NotificationReadResponse>(getMarkNotificationReadUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMarkNotificationReadMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['markNotificationRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markNotificationRead>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markNotificationRead(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkNotificationReadMutationResult = NonNullable<Awaited<ReturnType<typeof markNotificationRead>>>
+
+    export type MarkNotificationReadMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mark a notification as read
+ */
+export const useMarkNotificationRead = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationRead>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markNotificationRead>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getMarkNotificationReadMutationOptions(options));
+    }
 
 export const getListServicesUrl = () => {
 

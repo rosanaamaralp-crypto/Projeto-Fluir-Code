@@ -11,6 +11,7 @@ import { requireAdmin, requireProfessional } from "../middlewares/require-role.j
 import { validateBody, validateParams } from "../middlewares/validate.js";
 import { CreateBlockedPeriodSchema, UpdateBlockedPeriodSchema } from "../validators/blocked-periods.validator.js";
 import {
+  ParamsIdSchema,
   ParamsProfIdSchema,
   ParamsProfIdAndIdSchema,
 } from "../validators/params.validator.js";
@@ -23,5 +24,8 @@ router.post("/professionals/:profId/blocked-periods", requireAuth, requireProfes
 
 // P9: requireAdmin na rota — somente ADMIN pode alterar blocked_periods
 router.patch("/professionals/:profId/blocked-periods/:id", requireAuth, requireAdmin, validateParams(ParamsProfIdAndIdSchema), validateBody(UpdateBlockedPeriodSchema), BlockedPeriodsController.update);
+
+// F14: PROFESSIONAL pode remover (soft-delete) seus próprios bloqueios; ADMIN pode remover qualquer um
+router.delete("/blocked-periods/:id", requireAuth, requireProfessional, validateParams(ParamsIdSchema), BlockedPeriodsController.remove);
 
 export default router;

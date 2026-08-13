@@ -1,0 +1,346 @@
+/**
+ * T-022 — Detalhes do Atendimento (Profissional)
+ *
+ * Doc 15 §28: informações do atendimento, ações Iniciar / Concluir / Ausência / Cancelar.
+ * Doc 16 §42-44: status transitions via PATCH /appointments/:id.
+ * RN-083: validação definitiva no backend; frontend apenas dispara a requisição.
+ *
+ * Transições permitidas:
+ *   CONFIRMED  → IN_PROGRESS  (Iniciar)
+ *   IN_PROGRESS → COMPLETED   (Concluir)
+ *   CONFIRMED  → NO_SHOW      (Registrar Ausência)
+ *   CONFIRMED/IN_PROGRESS → CANCELLED (Cancelar — requer confirmação)
+ */
+import { useState } from "react";
+import { useParams, useLocation } from "wouter";
+import {
+  useGetAppointment,
+  useGetAppointmentHistory,
+  usePatchAppointment,
+} from "@workspace/api-client-react";
+import { AppLayout } from "@/layouts/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
+import { ArrowLeft, Clock, MapPin, Home } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+
+const STATUS_LABELS: Record<string, string> = {
+  CONFIRMED: "Confirmado",
+  IN_PROGRESS: "Em Atendimento",
+  COMPLETED: "Concluído",
+  CANCELLED: "Cancelado",
+  NO_SHOW: "Ausência",
+};
+
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  CONFIRMED: "default",
+  IN_PROGRESS: "secondary",
+  COMPLETED: "outline",
+  CANCELLED: "destructive",
+  NO_SHOW: "destructive",
+};
+
+function formatDatetime(dt: string) {
+  return new Date(dt).toLocaleString("pt-BR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function modalityLabel(m: string) {
+  return m === "HOME_CARE" ? "🏠 Home Care" : "🛏️ Presencial";
+}
+
+export default function ProfessionalAppointmentDetail() {
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  const {
+    data: aptData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetAppointment(id!);
+
+  const {
+    data: histData,
+    isLoading: histLoading,
+  } = useGetAppointmentHistory(id!);
+
+  const patchMutation = usePatchAppointment({
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ["getAppointment"] });
+        void queryClient.invalidateQueries({ queryKey: ["listAppointments"] });
+        void queryClient.invalidateQueries({ queryKey: ["getProfessionalDashboard"] });
+        setConfirmCancel(false);
+      },
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : "Erro ao atualizar o atendimento.";
+        toast({ variant: "destructive", title: "Erro", description: message });
+      },
+    },
+  });
+
+  function applyStatus(status: string, reason?: string) {
+    patchMutation.mutate({
+      id: id!,
+      data: { status, ...(reason ? { reason } : {}) },
+    });
+  }
+
+  const apt = aptData?.appointment;
+
+  return (
+    <AppLayout>
+      <div className="space-y-6 max-w-2xl">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/professional/schedule")}
+            className="gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Agenda
+          </Button>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Detalhes do Atendimento
+          </h1>
+        </div>
+
+        {/* LOADING */}
+        {isLoading && (
+          <div className="space-y-4">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        )}
+
+        {/* ERROR */}
+        {isError && (
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                {error instanceof Error ? error.message : "Erro ao carregar o atendimento."}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+                Tentar novamente
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* SUCCESS */}
+        {apt && (
+          <>
+            {/* Dados do atendimento */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-base">
+                  <span>Atendimento</span>
+                  <Badge variant={STATUS_VARIANTS[apt.status] ?? "outline"}>
+                    {STATUS_LABELS[apt.status] ?? apt.status}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {formatDatetime(apt.startDatetime)} — {formatDatetime(apt.endDatetime)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  {apt.modality === "HOME_CARE" ? (
+                    <Home className="h-4 w-4" />
+                  ) : (
+                    <MapPin className="h-4 w-4" />
+                  )}
+                  <span>{modalityLabel(apt.modality)}</span>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <span className="text-muted-foreground">Cliente ID</span>
+                  <span className="font-mono text-xs truncate">{apt.clientId}</span>
+
+                  <span className="text-muted-foreground">Serviço ID</span>
+                  <span className="font-mono text-xs truncate">{apt.serviceId}</span>
+
+                  {apt.resourceId && (
+                    <>
+                      <span className="text-muted-foreground">Recurso ID</span>
+                      <span className="font-mono text-xs truncate">{apt.resourceId}</span>
+                    </>
+                  )}
+
+                  {apt.addressId && (
+                    <>
+                      <span className="text-muted-foreground">Endereço ID</span>
+                      <span className="font-mono text-xs truncate">{apt.addressId}</span>
+                    </>
+                  )}
+
+                  <span className="text-muted-foreground">Valor</span>
+                  <span>R$ {apt.priceAtBooking}</span>
+                </div>
+
+                {apt.notes && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs mb-1">Observações</p>
+                      <p>{apt.notes}</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ações de status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Ações</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Iniciar — apenas se CONFIRMED */}
+                {apt.status === "CONFIRMED" && (
+                  <Button
+                    className="w-full"
+                    onClick={() => applyStatus("IN_PROGRESS")}
+                    disabled={patchMutation.isPending}
+                  >
+                    Iniciar Atendimento
+                  </Button>
+                )}
+
+                {/* Concluir — apenas se IN_PROGRESS */}
+                {apt.status === "IN_PROGRESS" && (
+                  <Button
+                    className="w-full"
+                    onClick={() => applyStatus("COMPLETED")}
+                    disabled={patchMutation.isPending}
+                  >
+                    Concluir Atendimento
+                  </Button>
+                )}
+
+                {/* Registrar Ausência — apenas se CONFIRMED */}
+                {apt.status === "CONFIRMED" && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => applyStatus("NO_SHOW")}
+                    disabled={patchMutation.isPending}
+                  >
+                    Registrar Ausência
+                  </Button>
+                )}
+
+                {/* Cancelar — se CONFIRMED ou IN_PROGRESS */}
+                {(apt.status === "CONFIRMED" || apt.status === "IN_PROGRESS") && (
+                  <>
+                    {!confirmCancel ? (
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => setConfirmCancel(true)}
+                        disabled={patchMutation.isPending}
+                      >
+                        Cancelar Atendimento
+                      </Button>
+                    ) : (
+                      <div className="border border-destructive rounded-md p-3 space-y-2">
+                        <p className="text-sm text-destructive font-medium">
+                          Confirmar cancelamento?
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => applyStatus("CANCELLED")}
+                            disabled={patchMutation.isPending}
+                          >
+                            Sim, cancelar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => setConfirmCancel(false)}
+                            disabled={patchMutation.isPending}
+                          >
+                            Não
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Status finais — sem ações */}
+                {(apt.status === "COMPLETED" || apt.status === "CANCELLED" || apt.status === "NO_SHOW") && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Este atendimento está encerrado.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Histórico */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Histórico</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {histLoading && <Skeleton className="h-16 w-full" />}
+                {!histLoading && (histData?.history?.length ?? 0) === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum registro de histórico.
+                  </p>
+                )}
+                {!histLoading && (histData?.history?.length ?? 0) > 0 && (
+                  <div className="space-y-2">
+                    {histData!.history.map((h) => (
+                      <div key={h.id} className="flex items-start justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
+                        <div>
+                          <span className="font-medium">
+                            {h.oldStatus ? `${STATUS_LABELS[h.oldStatus] ?? h.oldStatus} → ` : ""}
+                            {STATUS_LABELS[h.newStatus] ?? h.newStatus}
+                          </span>
+                          {h.reason && (
+                            <p className="text-muted-foreground text-xs">{h.reason}</p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+                          {new Date(h.changedAt).toLocaleString("pt-BR", {
+                            day: "2-digit", month: "2-digit",
+                            hour: "2-digit", minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+    </AppLayout>
+  );
+}

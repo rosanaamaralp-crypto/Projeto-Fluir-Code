@@ -518,6 +518,20 @@ export const UpdateProfessionalAvailabilityResponse = zod.object({
 
 
 /**
+ * ADMIN and the owning PROFESSIONAL can deactivate an availability window.
+ * @summary Deactivate availability window (soft delete)
+ */
+export const DeleteProfessionalAvailabilityParams = zod.object({
+  "profId": zod.coerce.string(),
+  "id": zod.coerce.string()
+})
+
+export const DeleteProfessionalAvailabilityResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
  * @summary List services linked to a professional
  */
 export const ListProfessionalServicesParams = zod.object({
@@ -590,6 +604,94 @@ export const ListProfessionalBlockedPeriodsResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 }))
+})
+
+
+/**
+ * ADMIN and the owning PROFESSIONAL can create blocked periods.
+ * @summary Create a blocked period for a professional
+ */
+export const CreateProfessionalBlockedPeriodParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const CreateProfessionalBlockedPeriodBody = zod.object({
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "reason": zod.string().nullish()
+})
+
+export const CreateProfessionalBlockedPeriodResponse = zod.object({
+  "blockedPeriod": zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "reason": zod.string().nullish(),
+  "status": zod.string(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * ADMIN can remove any; PROFESSIONAL can remove their own.
+ * @summary Remove a blocked period (soft-delete, sets status to CANCELLED)
+ */
+export const DeleteProfessionalBlockedPeriodParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteProfessionalBlockedPeriodResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * Returns notifications for the session user with pagination. Supports unread filter.
+ * @summary List notifications for the authenticated user
+ */
+export const ListNotificationsQueryParams = zod.object({
+  "unread": zod.coerce.string().optional().describe('true to return only unread; false or omit for all'),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const ListNotificationsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "message": zod.string(),
+  "appointmentId": zod.string().nullish(),
+  "readAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "pagination": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+
+/**
+ * Idempotent. Returns 403 if the notification does not belong to the session user.
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const MarkNotificationReadResponse = zod.object({
+  "notification": zod.object({
+  "id": zod.string(),
+  "readAt": zod.coerce.date().nullish()
+})
 })
 
 

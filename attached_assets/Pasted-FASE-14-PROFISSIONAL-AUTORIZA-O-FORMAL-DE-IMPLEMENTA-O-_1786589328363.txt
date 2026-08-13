@@ -1,0 +1,399 @@
+FASE 14 — PROFISSIONAL
+AUTORIZAÇÃO FORMAL DE IMPLEMENTAÇÃO
+
+A pré-implementação da FASE 14 foi analisada e está APROVADA PARA IMPLEMENTAÇÃO.
+
+A FASE 13 está oficialmente encerrada, aprovada e congelada.
+
+IMPORTANTE:
+- Preservar integralmente F1–F13.
+- NÃO fazer commit.
+- NÃO criar migration.
+- NÃO instalar dependências sem necessidade explícita.
+- NÃO alterar funcionalidades já aprovadas sem relação direta com a Fase 14.
+- NÃO inventar endpoints, dados ou regras.
+- Backend continua sendo a autoridade definitiva.
+- Frontend deve usar exclusivamente dados reais da API.
+- Validação frontend é apenas UX.
+- Respeitar RN-011, RN-012, RN-013, RN-025, RN-026, RN-067 e RN-083.
+- Manter o pipeline OpenAPI → Orval → api-client-react/api-zod.
+- Não usar `format: uuid`, `format: email` ou `type: integer` no OpenAPI.
+
+ESCOPO AUTORIZADO:
+
+Implementar a experiência completa do PROFESSIONAL:
+
+T-020 Dashboard Profissional
+T-021 Minha Agenda
+T-022 Detalhes do Atendimento
+T-023 Meus Clientes
+T-024 Disponibilidade
+T-025 Bloqueios
+T-026 Meu Perfil
+Notificações do profissional
+
+ROTAS:
+
+/professional
+/professional/schedule
+/professional/schedule/:id
+/professional/clients
+/professional/availability
+/professional/blocked-periods
+/professional/profile
+/professional/notifications
+
+PERMISSÃO:
+
+Todas as rotas /professional/* devem aceitar somente:
+
+ROLES.PROFESSIONAL
+
+PROFESSIONAL não pode acessar /admin/*.
+
+ADMIN não deve receber acesso às telas destinadas exclusivamente ao profissional através do frontend apenas por coincidência de role. Respeitar as regras de autorização já existentes no backend.
+
+ORDEM OBRIGATÓRIA:
+
+1. Antes de escrever qualquer arquivo, releia:
+   Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+
+2. Preserve integralmente F1–F13.
+
+3. Verifique novamente os contratos reais do backend.
+
+4. Implementar backend somente onde a investigação demonstrou necessidade real.
+
+5. Atualizar OpenAPI.
+
+6. Executar Orval/codegen.
+
+7. OBRIGATORIAMENTE verificar:
+   lib/api-zod/src/index.ts
+   após o codegen.
+
+8. Implementar frontend.
+
+9. Implementar rotas e navegação.
+
+10. Executar validações completas.
+
+BACKEND AUTORIZADO:
+
+A investigação identificou apenas uma ausência real necessária para o T-025:
+
+DELETE /blocked-periods/:id
+
+Pode implementar esse endpoint somente se:
+
+- a documentação oficial realmente exigir a remoção de bloqueios pelo profissional;
+- a implementação respeitar ownership do profissional;
+- ADMIN/PROFESSIONAL continuem obedecendo às regras de autorização existentes;
+- não seja criada migration;
+- não sejam alteradas regras de negócio existentes;
+- seja utilizado o repository/schema já existente;
+- seja adicionada validação adequada;
+- seja protegido pelo middleware correto.
+
+NÃO criar outros endpoints além dos estritamente necessários identificados na pré-implementação.
+
+ENDPOINTS EXISTENTES A SEREM DOCUMENTADOS NO OPENAPI, QUANDO NECESSÁRIO:
+
+DELETE /professionals/{profId}/availability/{id}
+POST /professionals/{profId}/blocked-periods
+DELETE /blocked-periods/{id}
+GET /notifications
+POST /notifications/{id}/read
+
+Antes de adicionar cada endpoint ao OpenAPI, confirme que ele existe no backend e que seu contrato corresponde exatamente à implementação real.
+
+Não inventar response shapes.
+
+OPENAPI:
+
+Após as alterações:
+
+- validar que o OpenAPI representa os contratos reais;
+- nenhum `format: uuid`;
+- nenhum `format: email`;
+- nenhum `type: integer`;
+- executar Orval;
+- verificar api-client-react;
+- verificar api-zod;
+- verificar obrigatoriamente `lib/api-zod/src/index.ts`.
+
+T-021 — MINHA AGENDA:
+
+Implementar agenda do profissional autenticado.
+
+REGRA CRÍTICA:
+
+O profissional deve visualizar SOMENTE sua própria agenda.
+
+O filtro `professionalId` deve ser derivado da sessão/profissional autenticado.
+
+NÃO permitir que o usuário altere livremente o professionalId para consultar outro profissional.
+
+Não carregar todos os agendamentos para filtrar no browser.
+
+Usar dados reais da API.
+
+Implementar:
+- filtros compatíveis com documentação;
+- loading;
+- empty;
+- error;
+- success;
+- responsividade;
+- paginação quando prevista;
+- links para detalhes.
+
+T-022 — DETALHES DO ATENDIMENTO:
+
+Implementar:
+
+- informações do atendimento;
+- cliente;
+- serviço;
+- modalidade;
+- endereço quando Home Care;
+- histórico;
+- ações permitidas;
+- Iniciar;
+- Concluir;
+- Ausência;
+- Cancelar.
+
+Toda mudança de status deve utilizar a API real.
+
+Não duplicar regras de negócio no frontend.
+
+Ações destrutivas ou irreversíveis devem exigir confirmação.
+
+Não permitir que o profissional execute transições não autorizadas pelo backend.
+
+T-023 — MEUS CLIENTES:
+
+Usar somente clientes relacionados ao profissional autenticado.
+
+Não mostrar todos os clientes do sistema caso o contrato existente não garanta essa relação.
+
+Não inventar relacionamento.
+
+Usar dados reais.
+
+Se o endpoint existente não fornecer exatamente o conjunto necessário, pare e informe o bloqueio antes de criar workaround.
+
+T-024 — DISPONIBILIDADE:
+
+Implementar:
+
+- listagem;
+- criação;
+- edição;
+- remoção, caso oficialmente permitida;
+- estados LOADING/EMPTY/ERROR/SUCCESS;
+- validação de UX;
+- confirmação para ações destrutivas.
+
+O profissional só pode manipular sua própria disponibilidade.
+
+Não permitir manipulação de disponibilidade de outro profissional.
+
+T-025 — BLOQUEIOS:
+
+Implementar:
+
+- listagem;
+- criação;
+- remoção;
+- estados LOADING/EMPTY/ERROR/SUCCESS;
+- confirmação antes de remover;
+- ownership do profissional.
+
+Não expor ao profissional ações ADMIN-only.
+
+O backend continua sendo a autoridade.
+
+T-026 — MEU PERFIL:
+
+Exibir dados reais do profissional autenticado.
+
+Utilizar os endpoints/contratos existentes.
+
+Não criar endpoint de perfil se os endpoints existentes forem suficientes.
+
+Não inventar campos.
+
+Se algum campo oficialmente exigido não estiver disponível no contrato atual, parar e reportar exatamente o bloqueio.
+
+NOTIFICAÇÕES:
+
+Implementar somente a experiência prevista para o profissional.
+
+Usar:
+
+GET /notifications
+POST /notifications/:id/read
+
+Somente depois de confirmar os contratos reais e documentá-los no OpenAPI.
+
+Não implementar sistema novo de notificações.
+
+Não criar novas regras de negócio.
+
+ESTADOS OBRIGATÓRIOS:
+
+Todas as telas funcionais devem possuir:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+Placeholders somente onde a documentação permitir.
+
+RESPONSIVIDADE:
+
+Validar:
+- celular;
+- tablet;
+- notebook;
+- desktop.
+
+Tabelas devem possuir scroll horizontal interno quando necessário.
+
+A página não deve apresentar overflow horizontal indevido.
+
+TESTES E VALIDAÇÕES:
+
+Ao terminar:
+
+1. pnpm typecheck
+
+Esperado:
+0 erros.
+
+2. pnpm test
+
+Executar e informar separadamente cada teste.
+
+NÃO classificar automaticamente como OK se houver falha.
+
+Se o foundation.test.js continuar falhando, informar explicitamente:
+
+- nome;
+- causa;
+- se é pré-existente;
+- se a Fase 14 alterou ou não o comportamento relacionado.
+
+Não alterar esse teste sem autorização específica.
+
+3. Build REAL:
+
+Usar o procedimento correto do ambiente Replit.
+
+Se o projeto exigir:
+
+PORT=3000 BASE_PATH=/fluir-da-vida pnpm --filter @workspace/fluir-da-vida run build
+
+executar exatamente assim.
+
+Não considerar "build exige PORT" como falha se o procedimento oficial do projeto exigir essas variáveis.
+
+4. Validar rotas.
+
+5. Validar permissões:
+
+ADMIN
+PROFESSIONAL
+CLIENT
+não autenticado
+
+6. Validar que PROFESSIONAL não consegue acessar /admin/*.
+
+7. Validar que PROFESSIONAL só consegue acessar sua própria agenda, disponibilidade e bloqueios.
+
+8. Validar ausência de mocks.
+
+9. Validar ausência de migrations.
+
+10. Validar git diff.
+
+11. Confirmar que nenhum commit foi criado.
+
+12. Confirmar que F1–F13 não foram quebradas.
+
+CRITÉRIOS DE ACEITE:
+
+- Todas as rotas da Fase 14 carregam.
+- PROFESSIONAL consegue navegar por suas telas.
+- ADMIN não ganha acesso indevido às telas exclusivas do profissional.
+- CLIENT não acessa /professional/*.
+- Agenda mostra somente atendimentos do profissional autenticado.
+- Detalhes do atendimento funcionam.
+- Transições de status usam backend real.
+- Clientes são dados reais e relacionados ao profissional.
+- Disponibilidade funciona.
+- Bloqueios funcionam.
+- Remoção de bloqueio exige confirmação.
+- Perfil usa dados reais.
+- Notificações usam API real.
+- Nenhum mock.
+- LOADING/EMPTY/ERROR/SUCCESS presentes.
+- Responsividade validada.
+- OpenAPI corresponde ao backend.
+- Orval executado.
+- api-client-react sem erros.
+- api-zod sem conflitos.
+- lib/api-zod/src/index.ts verificado após codegen.
+- Nenhuma migration.
+- F1–F13 preservadas.
+- Sem commit.
+
+RELATÓRIO FINAL OBRIGATÓRIO:
+
+Ao finalizar, NÃO diga apenas "concluído".
+
+Entregue:
+
+1. Arquivos criados
+2. Arquivos modificados
+3. Endpoints utilizados
+4. Endpoints novos, se houver
+5. Rotas implementadas
+6. Funcionalidades implementadas por tela
+7. Permissões
+8. Estados LOADING/EMPTY/ERROR/SUCCESS
+9. Responsividade
+10. OpenAPI
+11. Codegen/Orval
+12. Situação do api-zod/src/index.ts
+13. pnpm typecheck
+14. pnpm test
+15. build real
+16. Validação funcional
+17. Validação de ownership
+18. Migrations
+19. Impacto sobre F1–F13
+20. Problemas encontrados
+21. Pendências
+22. Confirmação de que nenhum commit foi realizado
+23. STATUS FINAL DA FASE 14
+
+STATUS FINAL DEVE SER:
+
+FASE 14 APROVÁVEL
+
+ou
+
+FASE 14 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+Se qualquer requisito oficial estiver ambíguo ou houver conflito entre documentação e backend:
+
+PARE.
+NÃO invente solução.
+NÃO implemente workaround.
+Informe exatamente o conflito e aguarde minha aprovação.
+
+NÃO FAÇA COMMIT.

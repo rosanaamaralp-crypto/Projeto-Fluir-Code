@@ -579,6 +579,41 @@ export interface ReportResourcesResponse {
   period: ReportPeriod;
 }
 
+export interface CreateBlockedPeriodRequest {
+  startDatetime: string;
+  endDatetime: string;
+  reason?: string | null;
+}
+
+export interface BlockedPeriodItemResponse {
+  blockedPeriod: BlockedPeriodRow;
+}
+
+export interface NotificationRow {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  appointmentId?: string | null;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface NotificationsListResponse {
+  data: NotificationRow[];
+  pagination: Pagination;
+}
+
+export interface NotificationReadResult {
+  id: string;
+  readAt?: string | null;
+}
+
+export interface NotificationReadResponse {
+  notification: NotificationReadResult;
+}
+
 export interface AuditLogRow {
   id: string;
   userId: string;
@@ -608,6 +643,15 @@ export type GetClientDashboardParams = {
  * Required for ADMIN role; ignored for CLIENT (uses session)
  */
 clientId?: string;
+};
+
+export type ListNotificationsParams = {
+/**
+ * true to return only unread; false or omit for all
+ */
+unread?: string;
+page?: number;
+limit?: number;
 };
 
 export type ListAppointmentsParams = {

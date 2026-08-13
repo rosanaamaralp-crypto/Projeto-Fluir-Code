@@ -45,6 +45,15 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import ProfessionalDashboard from "@/pages/professional/dashboard";
 import ClientDashboard from "@/pages/client/dashboard";
 
+// Professional — carregamento lazy (F14)
+const ProfessionalSchedule = lazy(() => import("@/pages/professional/schedule"));
+const ProfessionalAppointmentDetail = lazy(() => import("@/pages/professional/appointment-detail"));
+const ProfessionalClients = lazy(() => import("@/pages/professional/clients"));
+const ProfessionalAvailability = lazy(() => import("@/pages/professional/availability"));
+const ProfessionalBlockedPeriods = lazy(() => import("@/pages/professional/blocked-periods"));
+const ProfessionalProfile = lazy(() => import("@/pages/professional/profile"));
+const ProfessionalNotifications = lazy(() => import("@/pages/professional/notifications"));
+
 // Admin — carregamento lazy (F13)
 const AdminSchedule = lazy(() => import("@/pages/admin/schedule"));
 const AdminAppointmentNew = lazy(() => import("@/pages/admin/appointments/new"));
@@ -167,7 +176,56 @@ function Router() {
           </PrivateRoute>
         </Route>
 
-        {/* ── Professional ─────────────────────────────────────────────────── */}
+        {/* ── Professional (ordem: mais específicas primeiro) ──────────────── */}
+        <Route path="/professional/schedule/:id">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalAppointmentDetail />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/schedule">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalSchedule />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/clients">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalClients />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/availability">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalAvailability />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/blocked-periods">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalBlockedPeriods />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/profile">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalProfile />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/notifications">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalNotifications />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
         <Route path="/professional">
           <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
             <ProfessionalDashboard />
