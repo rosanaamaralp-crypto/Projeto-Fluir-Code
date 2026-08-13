@@ -1,0 +1,281 @@
+FASE 14 — AUDITORIA FINAL DE CONFORMIDADE
+
+A implementação da Fase 14 foi concluída, porém NÃO está aprovada ainda.
+
+NÃO implemente nenhuma correção.
+NÃO altere nenhum arquivo.
+NÃO faça migration.
+NÃO execute codegen novamente.
+NÃO faça commit.
+
+Apenas AUDITE.
+
+A Fase 13 permanece aprovada e congelada.
+F1–F13 devem ser consideradas baseline protegida.
+
+Faça uma auditoria completa da Fase 14 contra os documentos oficiais na hierarquia:
+
+Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+
+IMPORTANTE:
+
+Não aceite automaticamente o relatório anterior como prova.
+Verifique os arquivos, contratos e comportamento reais.
+
+AUDITE ESPECIALMENTE:
+
+1. T-020 Dashboard Profissional
+2. T-021 Minha Agenda
+3. T-022 Detalhes do Atendimento
+4. T-023 Meus Clientes
+5. T-024 Disponibilidade
+6. T-025 Bloqueios
+7. T-026 Meu Perfil
+8. Notificações do profissional
+
+T-023 É UM PONTO CRÍTICO.
+
+O relatório de implementação informou:
+
+"GET /api/clients para role PROFESSIONAL retorna apenas o próprio registro do usuário, e AppointmentRow tem clientId mas não clientName. A tela usa GET /api/appointments para derivar clientes únicos, exibindo o clientId truncado. Para exibir nomes completos seria necessário um endpoint enriquecido novo."
+
+Não aceite isso como correto sem verificar a documentação.
+
+Determine exatamente:
+
+- O que o documento oficial exige em T-023.
+- Se o profissional deve conseguir identificar seus clientes por nome.
+- Quais informações do cliente são oficialmente exigidas.
+- Se clientId truncado é compatível com a especificação.
+- Se a solução atual é apenas uma limitação de UI.
+- Se falta contrato de backend.
+- Se seria necessário novo endpoint ou enriquecimento de endpoint existente.
+- Se criar esse endpoint seria permitido nesta fase.
+- Se existe algum endpoint existente que já fornece os dados necessários e foi ignorado.
+
+T-021 — AGENDA
+
+Verifique:
+
+- profissional autenticado;
+- isolamento por professionalId;
+- impossibilidade de consultar agenda de outro profissional;
+- filtros oficiais;
+- server-side;
+- paginação;
+- dados reais;
+- estados LOADING/EMPTY/ERROR/SUCCESS.
+
+T-022 — DETALHES
+
+Verifique:
+
+- cliente;
+- serviço;
+- modalidade;
+- endereço Home Care;
+- histórico;
+- transições de status;
+- regras de negócio;
+- confirmação das ações destrutivas;
+- ownership;
+- backend como autoridade.
+
+T-024 — DISPONIBILIDADE
+
+Verifique:
+
+- listagem;
+- criação;
+- edição;
+- remoção/desativação;
+- ownership;
+- validação;
+- confirmação;
+- dados reais;
+- estados.
+
+T-025 — BLOQUEIOS
+
+Verifique:
+
+- listagem;
+- criação;
+- remoção;
+- ownership;
+- confirmação;
+- endpoint DELETE;
+- soft delete;
+- regras de negócio;
+- estados.
+
+T-026 — PERFIL
+
+Verifique contra a documentação exatamente quais campos são exigidos.
+
+Não aceite simplesmente dados da sessão se a documentação exigir informações adicionais.
+
+NOTIFICAÇÕES
+
+Verifique:
+
+- contrato GET /notifications;
+- contrato POST /notifications/:id/read;
+- OpenAPI;
+- hooks gerados;
+- dados reais;
+- unread;
+- marcar como lida;
+- permissões;
+- estados.
+
+BACKEND
+
+Verifique o novo:
+
+DELETE /blocked-periods/:id
+
+Confirme:
+
+- middleware;
+- ownership;
+- ADMIN;
+- PROFESSIONAL;
+- comportamento de soft delete;
+- status usado;
+- ausência de migration;
+- ausência de alteração indevida das regras anteriores.
+
+OPENAPI / ORVAL
+
+Verifique:
+
+- todos os endpoints usados pelo frontend estão documentados;
+- nenhum endpoint inventado;
+- schemas correspondem ao backend;
+- nenhum `format: uuid`;
+- nenhum `format: email`;
+- nenhum `type: integer`;
+- codegen executado;
+- api-client-react correto;
+- api-zod correto;
+- `lib/api-zod/src/index.ts` correto após codegen.
+
+TESTES
+
+Execute separadamente:
+
+pnpm typecheck
+
+pnpm test
+
+PORT=3000 BASE_PATH=/fluir-da-vida pnpm --filter @workspace/fluir-da-vida run build
+
+Não classifique `pnpm test` como OK se houver falha.
+
+Se foundation.test.js estiver falhando, informe:
+
+- teste;
+- causa;
+- fase em que surgiu;
+- se Fase 14 alterou algo relacionado;
+- se é pré-existente.
+
+FUNCIONAL
+
+Verifique todas as rotas:
+
+/professional
+/professional/schedule
+/professional/schedule/:id
+/professional/clients
+/professional/availability
+/professional/blocked-periods
+/professional/profile
+/professional/notifications
+
+Verifique permissões:
+
+ADMIN
+PROFESSIONAL
+CLIENT
+não autenticado
+
+Confirme:
+
+- PROFESSIONAL acessa somente /professional/*
+- CLIENT não acessa /professional/*
+- PROFESSIONAL não acessa /admin/*
+- ownership funciona no backend.
+
+RESPONSIVIDADE
+
+Verifique celular, tablet, notebook e desktop.
+
+Confirme ausência de overflow horizontal indevido.
+
+F1–F13
+
+Confirme que:
+
+- nenhuma funcionalidade anterior foi quebrada;
+- nenhum endpoint anterior foi alterado indevidamente;
+- nenhuma regra de negócio anterior foi alterada;
+- nenhuma migration foi criada/modificada;
+- nenhuma funcionalidade da Fase 13 foi quebrada.
+
+GIT
+
+Verifique:
+
+git status --short
+
+git diff --name-only
+
+Confirme que nenhum commit foi criado.
+
+RELATÓRIO OBRIGATÓRIO
+
+Ao final entregue SOMENTE o relatório de auditoria contendo:
+
+1. Requisitos oficiais verificados
+2. T-020 a T-026 + Notificações — status individual
+3. Endpoints e contratos verificados
+4. T-023 — análise detalhada de conformidade
+5. Backend
+6. OpenAPI / Orval
+7. api-zod
+8. Testes
+9. Typecheck
+10. Build real
+11. Validação funcional
+12. Permissões
+13. Ownership
+14. Responsividade
+15. Estados LOADING/EMPTY/ERROR/SUCCESS
+16. Migrations
+17. Impacto sobre F1–F13
+18. Problemas encontrados
+19. Problemas que são somente UI
+20. Problemas que exigem backend
+21. Problemas que NÃO exigem alteração
+22. Correções necessárias
+23. Pendências
+24. STATUS FINAL
+
+STATUS FINAL OBRIGATÓRIO:
+
+FASE 14 APROVÁVEL
+
+ou
+
+FASE 14 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+Se houver qualquer conflito entre documentação oficial e implementação atual:
+
+NÃO corrija.
+
+Apenas documente exatamente o conflito e aguarde aprovação.
+
+NÃO FAÇA COMMIT.
+NÃO IMPLEMENTE CORREÇÕES.
