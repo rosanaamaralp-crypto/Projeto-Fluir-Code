@@ -1,0 +1,280 @@
+FASE 14 — CORREÇÕES PÓS-AUDITORIA
+STATUS: AUTORIZAÇÃO PARA CORREÇÕES
+
+A auditoria final da Fase 14 identificou 3 bloqueadores:
+
+B1 — T-023: Meus Clientes
+B2 — T-024: Edição de disponibilidade
+B3 — T-026: Serviços no perfil
+
+IMPORTANTE:
+NÃO iniciar uma nova fase.
+NÃO alterar funcionalidades de F1–F13.
+NÃO criar migrations.
+NÃO fazer alterações fora do escopo abaixo.
+
+==================================================
+REGRA PRINCIPAL DE EXECUÇÃO
+==================================================
+
+Antes de modificar qualquer arquivo:
+
+1. Leia os documentos oficiais da hierarquia:
+   Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+
+2. Leia os arquivos atualmente envolvidos nos 3 bloqueadores.
+
+3. Faça uma investigação objetiva do estado atual.
+
+4. NÃO faça workaround para T-023.
+
+5. Se T-023 continuar exigindo backend novo, PARE antes de implementar qualquer backend novo e apresente um relatório de bloqueio formal.
+
+A instrução oficial é:
+
+"Se o endpoint existente não fornecer exatamente o conjunto necessário, pare e informe o bloqueio antes de criar workaround."
+
+Portanto:
+NÃO derive clientes exibindo UUID.
+NÃO invente endpoint.
+NÃO alterar GET /appointments apenas para contornar o problema sem autorização explícita.
+
+==================================================
+B2 — T-024: EDIÇÃO DE DISPONIBILIDADE
+==================================================
+
+Corrigir somente o frontend.
+
+O backend já possui:
+
+PUT /professionals/{profId}/availability/{id}
+
+O hook já existe:
+
+useUpdateProfessionalAvailability
+
+Implementar na tela:
+
+/professional/availability
+
+Requisitos:
+
+- manter listagem atual;
+- manter criação atual;
+- manter remoção/desativação atual;
+- adicionar ação "Editar";
+- abrir formulário/modal de edição;
+- carregar os valores atuais da disponibilidade;
+- permitir alterar:
+  - dia da semana;
+  - horário inicial;
+  - horário final;
+  - demais campos já suportados pelo contrato existente;
+- utilizar EXCLUSIVAMENTE o hook gerado existente;
+- não duplicar regras de negócio do backend;
+- respeitar ownership existente;
+- após sucesso, atualizar/refetch a listagem;
+- loading durante mutation;
+- erro tratado;
+- sucesso tratado;
+- confirmação somente se o padrão existente da aplicação exigir.
+
+NÃO criar endpoint.
+NÃO alterar schema do banco.
+NÃO criar migration.
+NÃO modificar o contrato existente.
+
+==================================================
+B3 — T-026: SERVIÇOS NO PERFIL
+==================================================
+
+Corrigir somente o frontend.
+
+Tela:
+
+/professional/profile
+
+A documentação exige:
+
+- nome
+- telefone
+- e-mail
+- especialidade
+- serviços
+
+O hook já existe:
+
+useListProfessionalServices(profId)
+
+Implementar uma seção "Serviços" no perfil.
+
+Requisitos:
+
+- obter o profId do profissional autenticado através da mesma estratégia já utilizada no módulo profissional;
+- usar useListProfessionalServices;
+- mostrar dados reais;
+- não usar mock;
+- não permitir que o profissional consulte serviços de outro profissional;
+- tratar:
+  - loading;
+  - empty;
+  - error;
+  - success;
+- manter o restante do perfil intacto;
+- layout responsivo.
+
+NÃO criar novo endpoint.
+NÃO criar migration.
+NÃO alterar backend se não for estritamente necessário.
+
+==================================================
+B1 — T-023: MEUS CLIENTES
+==================================================
+
+NÃO IMPLEMENTAR AINDA.
+
+A auditoria confirmou que:
+
+GET /api/clients para PROFESSIONAL
+não retorna os clientes relacionados aos seus atendimentos.
+
+GET /api/appointments
+retorna clientId, mas não fornece:
+
+- nome;
+- telefone;
+- data de nascimento;
+- e-mail;
+- histórico;
+- endereço Home Care.
+
+GET /api/clients/:id
+não permite ao profissional acessar arbitrariamente clientes de outros usuários.
+
+A documentação exige:
+
+TELA 24:
+"Lista de clientes relacionados aos seus atendimentos. Buscar: nome; telefone."
+
+TELA 25:
+- nome;
+- data de nascimento;
+- telefone;
+- e-mail;
+- histórico de atendimentos;
+- endereço quando necessário para Home Care.
+
+Portanto:
+
+NÃO criar workaround.
+NÃO mostrar UUID como substituto de nome.
+NÃO criar endpoint novo.
+NÃO enriquecer AppointmentRow.
+NÃO alterar permissões.
+
+Primeiro, após concluir B2 e B3, apresentar formalmente:
+
+"T-023 BLOQUEADO — NECESSITA DECISÃO/AUTORIZAÇÃO DE BACKEND"
+
+Explicar objetivamente quais dados faltam e quais opções técnicas seriam possíveis, SEM implementá-las.
+
+==================================================
+PRESERVAÇÃO OBRIGATÓRIA
+==================================================
+
+Não modificar:
+
+- autenticação;
+- autorização;
+- PrivateRoute;
+- AdminWrap;
+- dashboards;
+- appointments existentes;
+- regras de slots;
+- regras de concorrência;
+- bloqueios;
+- notifications;
+- banco/schema;
+- migrations;
+- endpoints existentes;
+- regras de negócio de F1–F13.
+
+Não criar arquivos desnecessários.
+
+Não alterar OpenAPI, salvo se a investigação demonstrar uma necessidade já existente para B2/B3 — o esperado é NÃO precisar alterar.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Depois das correções B2 e B3:
+
+1. pnpm typecheck
+
+2. pnpm test
+
+3. Build real:
+
+PORT=3000 BASE_PATH=/fluir-da-vida pnpm --filter @workspace/fluir-da-vida run build
+
+4. Verificar que não existem erros TypeScript.
+
+5. Verificar que os hooks existentes continuam sendo usados.
+
+6. Verificar que nenhuma migration foi criada.
+
+7. Verificar que F1–F13 continuam preservadas.
+
+8. Verificar responsividade.
+
+9. Verificar estados:
+   LOADING
+   EMPTY
+   ERROR
+   SUCCESS
+
+10. Fazer uma auditoria final somente das alterações realizadas.
+
+==================================================
+CRITÉRIO DE PARADA
+==================================================
+
+Se B2 e B3 forem concluídos com sucesso:
+
+- NÃO implementar T-023;
+- NÃO criar backend novo;
+- NÃO inventar solução;
+- apresentar relatório final.
+
+O relatório deve conter:
+
+1. B2 — Edição de disponibilidade
+   - arquivos alterados;
+   - comportamento implementado;
+   - hook utilizado.
+
+2. B3 — Serviços no perfil
+   - arquivos alterados;
+   - comportamento implementado;
+   - hook utilizado.
+
+3. T-023
+   - BLOQUEADO;
+   - motivo;
+   - dados que o backend não fornece;
+   - opções técnicas possíveis;
+   - nenhuma implementação realizada.
+
+4. Validações:
+   - typecheck;
+   - testes;
+   - build;
+   - migrations;
+   - preservação F1–F13.
+
+5. Git status.
+
+NÃO faça commit manual.
+
+COMECE AGORA PELA INVESTIGAÇÃO.
+NÃO ESCREVA NENHUM ARQUIVO ANTES DE CONCLUIR A INVESTIGAÇÃO.

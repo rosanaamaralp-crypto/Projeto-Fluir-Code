@@ -13,6 +13,7 @@ import { useState } from "react";
 import {
   useListProfessionalAvailability,
   useCreateProfessionalAvailability,
+  useUpdateProfessionalAvailability,
   useDeleteProfessionalAvailability,
 } from "@workspace/api-client-react";
 import { useProfessionalSelf } from "@/hooks/use-professional-self";
@@ -25,20 +26,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Plus, Trash2 } from "lucide-react";
+import { Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-interface NewAvailability {
+interface AvailabilityForm {
   weekday: string;
   startTime: string;
   endTime: string;
 }
 
-const DEFAULT_FORM: NewAvailability = {
+const DEFAULT_FORM: AvailabilityForm = {
   weekday: "1",
   startTime: "08:00",
   endTime: "18:00",
@@ -49,8 +49,15 @@ export default function ProfessionalAvailability() {
   const { professional, isLoading: profLoading, isError: profError } = useProfessionalSelf();
   const profId = professional?.id;
 
+  // Create form
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<NewAvailability>(DEFAULT_FORM);
+  const [form, setForm] = useState<AvailabilityForm>(DEFAULT_FORM);
+
+  // Edit form
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<AvailabilityForm>(DEFAULT_FORM);
+
+  // Delete confirm
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
@@ -75,6 +82,24 @@ export default function ProfessionalAvailability() {
           variant: "destructive",
           title: "Erro",
           description: err instanceof Error ? err.message : "Erro ao adicionar disponibilidade.",
+        });
+      },
+    },
+  });
+
+  const updateMutation = useUpdateProfessionalAvailability({
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ["listProfessionalAvailability"] });
+        setEditingId(null);
+        setEditForm(DEFAULT_FORM);
+        toast({ title: "Disponibilidade atualizada com sucesso." });
+      },
+      onError: (err) => {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: err instanceof Error ? err.message : "Erro ao atualizar disponibilidade.",
         });
       },
     },
@@ -110,6 +135,31 @@ export default function ProfessionalAvailability() {
     });
   }
 
+  function handleEditClick(avail: { id: string; weekday: number; startTime: string; endTime: string }) {
+    setShowForm(false);
+    setDeletingId(null);
+    setEditingId(avail.id);
+    setEditForm({
+      weekday: String(avail.weekday),
+      startTime: avail.startTime,
+      endTime: avail.endTime,
+    });
+  }
+
+  function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profId || !editingId) return;
+    updateMutation.mutate({
+      profId,
+      id: editingId,
+      data: {
+        weekday: parseInt(editForm.weekday, 10),
+        startTime: editForm.startTime,
+        endTime: editForm.endTime,
+      },
+    });
+  }
+
   function handleDelete(id: string) {
     if (!profId) return;
     deleteMutation.mutate({ profId, id });
@@ -119,7 +169,6 @@ export default function ProfessionalAvailability() {
   const isError = profError || listError;
 
   const availability = data?.availability ?? [];
-  // Sort by weekday then startTime
   const sorted = [...availability].sort(
     (a, b) => a.weekday - b.weekday || a.startTime.localeCompare(b.startTime),
   );
@@ -137,7 +186,7 @@ export default function ProfessionalAvailability() {
               Seus horários de atendimento por dia da semana
             </p>
           </div>
-          {profId && (
+          {profId && !editingId && (
             <Button onClick={() => setShowForm((v) => !v)} size="sm" className="gap-1">
               <Plus className="h-4 w-4" />
               Adicionar
@@ -146,7 +195,7 @@ export default function ProfessionalAvailability() {
         </div>
 
         {/* Formulário de nova disponibilidade */}
-        {showForm && profId && (
+        {showForm && profId && !editingId && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Nova Disponibilidade</CardTitle>
@@ -192,16 +241,76 @@ export default function ProfessionalAvailability() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    disabled={createMutation.isPending}
-                  >
+                  <Button type="submit" disabled={createMutation.isPending}>
                     {createMutation.isPending ? "Salvando…" : "Salvar"}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => { setShowForm(false); setForm(DEFAULT_FORM); }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Formulário de edição de disponibilidade */}
+        {editingId && profId && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Editar Disponibilidade</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Dia da semana</Label>
+                  <Select
+                    value={editForm.weekday}
+                    onValueChange={(v) => setEditForm((f) => ({ ...f, weekday: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WEEKDAYS.map((day, i) => (
+                        <SelectItem key={i} value={String(i)}>{day}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Início</Label>
+                    <Input
+                      type="time"
+                      value={editForm.startTime}
+                      onChange={(e) => setEditForm((f) => ({ ...f, startTime: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fim</Label>
+                    <Input
+                      type="time"
+                      value={editForm.endTime}
+                      onChange={(e) => setEditForm((f) => ({ ...f, endTime: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={updateMutation.isPending}>
+                    {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => { setEditingId(null); setEditForm(DEFAULT_FORM); }}
                   >
                     Cancelar
                   </Button>
@@ -253,12 +362,18 @@ export default function ProfessionalAvailability() {
                       <th className="py-3 px-4 text-left font-medium">Início</th>
                       <th className="py-3 px-4 text-left font-medium">Fim</th>
                       <th className="py-3 px-4 text-left font-medium">Status</th>
-                      <th className="py-3 px-4 text-right font-medium">Ação</th>
+                      <th className="py-3 px-4 text-right font-medium">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sorted.map((avail, idx) => (
-                      <tr key={avail.id} className={idx !== sorted.length - 1 ? "border-b" : ""}>
+                      <tr
+                        key={avail.id}
+                        className={[
+                          idx !== sorted.length - 1 ? "border-b" : "",
+                          editingId === avail.id ? "bg-muted/30" : "",
+                        ].join(" ")}
+                      >
                         <td className="py-3 px-4 font-medium">
                           {WEEKDAYS[avail.weekday] ?? avail.weekday}
                         </td>
@@ -290,14 +405,27 @@ export default function ProfessionalAvailability() {
                               </Button>
                             </div>
                           ) : (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setDeletingId(avail.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1 justify-end">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditClick(avail)}
+                                disabled={!!editingId}
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setDeletingId(avail.id)}
+                                disabled={!!editingId}
+                                className="text-destructive hover:text-destructive"
+                                title="Remover"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
                         </td>
                       </tr>
