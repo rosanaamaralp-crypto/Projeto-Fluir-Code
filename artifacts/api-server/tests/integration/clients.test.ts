@@ -175,6 +175,71 @@ describe("PATCH /api/clients/:id", () => {
     expect(res.body.client.status).toBe("ACTIVE");
   });
 
+  it("CLIENT edita nome, telefone e data de nascimento (F15 D5)", async () => {
+    const res = await request
+      .patch(`/api/clients/${ids.clientId}`)
+      .set("Cookie", clientCookie)
+      .send({ name: "Cliente Renomeado", phone: "11988887777", birthDate: "1991-03-15" });
+    expect(res.status).toBe(200);
+    expect(res.body.client.birthDate).toBe("1991-03-15");
+
+    // Confirma que name/phone foram persistidos em users (via GET enriquecido)
+    const check = await request
+      .get(`/api/clients/${ids.clientId}`)
+      .set("Cookie", clientCookie);
+    expect(check.status).toBe(200);
+    expect(check.body.client.name).toBe("Cliente Renomeado");
+    expect(check.body.client.phone).toBe("11988887777");
+  });
+
+  it("CLIENT não consegue alterar email, role, clientId ou userId (F15 D5)", async () => {
+    const before = await request
+      .get(`/api/clients/${ids.clientId}`)
+      .set("Cookie", clientCookie);
+    const originalEmail = before.body.client.email;
+
+    const res = await request
+      .patch(`/api/clients/${ids.clientId}`)
+      .set("Cookie", clientCookie)
+      .send({
+        email: "hacker@fluir.test",
+        role: "ADMIN",
+        roleId: 1,
+        id: "00000000-0000-0000-0000-000000000000",
+        clientId: "00000000-0000-0000-0000-000000000000",
+        userId: "00000000-0000-0000-0000-000000000000",
+      });
+    // Campos desconhecidos são ignorados pelo schema (strip)
+    expect(res.status).toBe(200);
+    expect(res.body.client.id).toBe(ids.clientId);
+    expect(res.body.client.userId).toBe(ids.clientUserId);
+
+    const after = await request
+      .get(`/api/clients/${ids.clientId}`)
+      .set("Cookie", clientCookie);
+    expect(after.body.client.email).toBe(originalEmail);
+  });
+
+  it("CLIENT não consegue editar outro client (IDOR) — 403", async () => {
+    // Cria um segundo client via ADMIN
+    const created = await request
+      .post("/api/clients")
+      .set("Cookie", adminCookie)
+      .send({
+        name: "Outro Cliente IDOR",
+        email: `idor-target-${Date.now()}@fluir.test`,
+        password: "SenhaForte123!",
+      });
+    expect(created.status).toBe(201);
+    const otherClientId = created.body.client.id;
+
+    const res = await request
+      .patch(`/api/clients/${otherClientId}`)
+      .set("Cookie", clientCookie)
+      .send({ name: "Invasao" });
+    expect(res.status).toBe(403);
+  });
+
   it("ADMIN altera status", async () => {
     const res = await request
       .patch(`/api/clients/${ids.clientId}`)

@@ -6,7 +6,7 @@ description: Decisões, gaps resolvidos e quirks encontrados na implementação 
 # Fase 15 — Módulo Cliente
 
 ## Status
-CONCLUÍDA. 500/500 testes passando. TypeScript 0 erros.
+CONCLUÍDA. 503/503 testes passando (inclui 3 testes D5: edição name/phone/birthDate, proteção de campos, IDOR no PATCH clients). TypeScript 0 erros.
 
 ## Decisões formalizadas (AuthDoc F15)
 

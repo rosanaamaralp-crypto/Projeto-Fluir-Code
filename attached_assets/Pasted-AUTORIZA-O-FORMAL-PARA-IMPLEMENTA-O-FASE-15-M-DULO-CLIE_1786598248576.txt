@@ -1,0 +1,376 @@
+AUTORIZAÇÃO FORMAL PARA IMPLEMENTAÇÃO — FASE 15 — MÓDULO CLIENTE
+
+AUTORIZO EXPRESSAMENTE O INÍCIO DA IMPLEMENTAÇÃO COMPLETA DA FASE 15, conforme o AuthDoc F15, a validação pré-implementação e as decisões abaixo.
+
+A partir deste momento, você está autorizado a IMPLEMENTAR, MODIFICAR, TESTAR e executar o CODEGEN estritamente dentro do escopo da Fase 15.
+
+==================================================
+1. ESCOPO AUTORIZADO
+==================================================
+
+Implementar integralmente:
+
+T-027 — Dashboard Cliente
+T-028 — Novo Agendamento
+T-034 — Confirmação
+T-035 — Sucesso
+T-036 — Meus Agendamentos
+T-037 — Detalhe do Agendamento
+T-038 — Meus Endereços
+T-039 — Meu Perfil
+T-040 — Notificações
+
+Adicionar e registrar as respectivas rotas protegidas para CLIENT.
+
+Implementar também a navegação/menu específico do CLIENT.
+
+Todas as telas devem respeitar os estados:
+- LOADING
+- EMPTY
+- ERROR
+- SUCCESS
+
+Não utilizar mocks quando houver API real disponível.
+
+==================================================
+2. DECISÕES FORMAIS DA FASE 15
+==================================================
+
+D1 — ENDEREÇO
+
+Manter UM ÚNICO endereço por cliente no MVP.
+
+NÃO implementar múltiplos endereços.
+NÃO criar migration para múltiplos endereços.
+NÃO adicionar isDefault.
+NÃO refatorar o AddressesRepository para suportar lista.
+
+Utilizar a estrutura/backend atualmente existente.
+
+--------------------------------------------------
+
+D2 — ALTERAÇÃO DE AGENDAMENTO
+
+O CLIENT poderá:
+
+- cancelar seus próprios agendamentos quando permitido;
+- remarcar seus próprios agendamentos CONFIRMED;
+- alterar data/horário;
+- alterar endereço quando aplicável.
+
+O CLIENT NÃO poderá, através da remarcação:
+
+- trocar profissional;
+- trocar serviço;
+- trocar modalidade.
+
+Respeitar integralmente as validações existentes do backend.
+
+Toda ação crítica de cancelamento deve possuir confirmação.
+
+--------------------------------------------------
+
+D3 — DASHBOARD
+
+O Dashboard deverá apresentar:
+
+- próximo atendimento;
+- próximos atendimentos;
+- últimos atendimentos/histórico resumido;
+- acesso para novo agendamento;
+- acesso para meus agendamentos.
+
+Para o histórico resumido, utilizar a segunda consulta existente de:
+
+GET /api/appointments
+
+com os filtros apropriados.
+
+NÃO criar novo endpoint apenas para isso, salvo se surgir necessidade técnica real e previamente documentada.
+
+--------------------------------------------------
+
+D4 — NOVO AGENDAMENTO
+
+Implementar o fluxo como WIZARD EM UMA ÚNICA ROTA:
+
+/client/book
+
+Utilizar estado local para controlar as etapas.
+
+Fluxo autorizado:
+
+1. Serviço
+2. Modalidade
+3. Profissional
+4. Data
+5. Horário
+6. Confirmação
+7. Sucesso
+
+Respeitar as regras condicionais, especialmente Home Care/endereço.
+
+O backend continua sendo a autoridade final para validação do agendamento.
+
+--------------------------------------------------
+
+D5 — MEU PERFIL
+
+O CLIENT poderá editar:
+
+- nome;
+- telefone;
+- data de nascimento.
+
+O CLIENT NÃO poderá editar:
+
+- e-mail;
+- clientId;
+- userId;
+- role;
+- status;
+- createdAt.
+
+O e-mail deve ser apresentado como somente leitura.
+
+==================================================
+3. GAP D5 — AUTORIZAÇÃO EXPLÍCITA DE BACKEND
+==================================================
+
+AUTORIZO EXPRESSAMENTE as seguintes alterações de backend necessárias para D5:
+
+1. artifacts/api-server/src/validators/clients.validator.ts
+
+Adicionar ao UpdateClientSchemaSelf:
+
+- name?: string
+- phone?: string
+
+2. artifacts/api-server/src/controllers/clients.controller.ts
+
+No método de atualização do próprio CLIENT:
+
+- atualizar clients.birthDate quando enviado;
+- atualizar users.name quando enviado;
+- atualizar users.phone quando enviado;
+- executar as alterações na mesma transação;
+- preservar as regras de ownership existentes.
+
+NÃO permitir que CLIENT altere campos administrativos ou de identificação protegidos.
+
+3. lib/api-spec/openapi.yaml
+
+Atualizar o schema UpdateClientRequest para refletir os campos:
+
+- name
+- phone
+- birthDate
+
+mantendo os demais campos protegidos conforme as regras acima.
+
+4. Executar o CODEGEN após a atualização do OpenAPI.
+
+Utilizar os hooks gerados/atualizados no frontend.
+
+==================================================
+4. TELAS E ROTAS
+==================================================
+
+Registrar:
+
+/client
+/client/book
+/client/appointments
+/client/appointments/:id
+/client/addresses
+/client/profile
+/client/notifications
+
+Garantir que:
+
+/client/appointments/:id
+
+seja registrada antes de:
+
+/client/appointments
+
+quando a estrutura do roteador exigir essa ordem.
+
+Todas as rotas do módulo devem estar protegidas para:
+
+allowedRoles=[ROLES.CLIENT]
+
+==================================================
+5. MENU DO CLIENTE
+==================================================
+
+Seguir a documentação de hierarquia superior (Doc 15).
+
+Menu:
+
+- Início
+- Novo Agendamento
+- Meus Agendamentos
+- Histórico
+- Meus Endereços
+- Meu Perfil
+- Notificações
+- Sair
+
+Não alterar a navegação dos módulos ADMIN ou PROFESSIONAL.
+
+==================================================
+6. REUTILIZAÇÃO DO BACKEND
+==================================================
+
+Priorizar os endpoints existentes já validados.
+
+Não criar endpoints novos se os existentes atenderem ao requisito.
+
+Utilizar os hooks existentes quando disponíveis, incluindo:
+
+useGetClientDashboard
+useListAppointments
+useGetAppointment
+useGetAppointmentHistory
+usePatchAppointment
+useCreateAppointment
+useListSlots
+useListServices
+useListProfessionals
+useListClients
+useGetClientAddress
+useUpsertClientAddress
+useDeleteClientAddress
+useListNotifications
+useMarkNotificationRead
+
+Após o codegen, utilizar os hooks atualizados quando necessário.
+
+==================================================
+7. PROTEÇÃO DAS FASES ANTERIORES
+==================================================
+
+As Fases 1–14 estão CONGELADAS.
+
+NÃO modificar comportamento ou escopo das Fases 1–14.
+
+Especial atenção:
+
+- F13 — Admin
+- F14 — Profissional
+- AppLayout
+- PrivateRoute
+- AuthContext
+- permissões/roles
+- filtros de appointments
+- regras de ownership/IDOR
+
+Qualquer alteração compartilhada deverá ser mínima, justificada e comprovada por testes de regressão.
+
+==================================================
+8. TESTES OBRIGATÓRIOS
+==================================================
+
+Após a implementação:
+
+1. executar os testes existentes;
+2. executar testes relacionados ao backend alterado;
+3. testar especificamente PATCH /api/clients/:id;
+4. testar CLIENT editando:
+   - nome;
+   - telefone;
+   - nascimento;
+5. testar que CLIENT NÃO consegue alterar:
+   - e-mail;
+   - role;
+   - status;
+   - clientId;
+   - userId;
+6. testar ownership/IDOR;
+7. testar cancelamento de agendamento;
+8. testar remarcação;
+9. testar que CLIENT não consegue trocar profissional/serviço/modalidade;
+10. testar o fluxo completo de novo agendamento;
+11. testar estados loading/empty/error/success;
+12. testar rotas e permissões de CLIENT;
+13. executar regressão suficiente para garantir que F13 e F14 continuam funcionando.
+
+Não considerar a Fase 15 concluída se houver falhas de regressão.
+
+==================================================
+9. REGRAS DE IMPLEMENTAÇÃO
+==================================================
+
+Antes de alterar qualquer arquivo:
+
+- verificar o estado atual do código;
+- respeitar a hierarquia documental;
+- reutilizar componentes e padrões existentes;
+- evitar duplicação;
+- não instalar dependências sem necessidade real;
+- não fazer alterações fora do escopo da F15.
+
+Se surgir uma situação que CONTRADIGA explicitamente o AuthDoc ou as decisões acima, PARE SOMENTE nesse ponto e informe o conflito antes de alterar o escopo.
+
+Não é necessário solicitar nova autorização para as alterações já explicitamente autorizadas neste prompt.
+
+==================================================
+10. CHECKPOINTS
+==================================================
+
+Trabalhar de forma incremental.
+
+Após cada bloco relevante:
+
+- verificar TypeScript;
+- verificar lint/build quando aplicável;
+- executar testes pertinentes;
+- corrigir problemas antes de avançar.
+
+Não acumular erros para o final.
+
+==================================================
+11. FINALIZAÇÃO DA FASE 15
+==================================================
+
+Somente declarar a Fase 15 como CONCLUÍDA após:
+
+- todas as telas implementadas;
+- todas as rotas funcionando;
+- menu CLIENT funcionando;
+- backend D5 implementado;
+- OpenAPI atualizado;
+- codegen executado;
+- testes executados;
+- regressão F1–F14 verificada;
+- nenhum erro crítico pendente.
+
+Ao finalizar, NÃO faça alterações adicionais fora do escopo.
+
+Entregar um relatório final contendo:
+
+1. Status da F15;
+2. arquivos criados;
+3. arquivos modificados;
+4. alterações de backend;
+5. alterações de frontend;
+6. OpenAPI/codegen;
+7. testes executados;
+8. resultado dos testes;
+9. validação de regressão F1–F14;
+10. eventuais problemas/pontos de atenção;
+11. confirmação de que não houve migration;
+12. confirmação de que o endereço único foi mantido;
+13. confirmação de que o e-mail permanece somente leitura;
+14. confirmação de que CLIENT não pode trocar profissional/serviço/modalidade na remarcação.
+
+CHECKPOINT OBRIGATÓRIO ANTES DO ENCERRAMENTO:
+
+Criar um checkpoint/commit da Fase 15 somente após todos os testes passarem.
+
+AUTORIZAÇÃO FINAL:
+
+A Fase 15 está formalmente AUTORIZADA para implementação integral dentro das regras acima.
+
+PODE INICIAR A IMPLEMENTAÇÃO AGORA.
