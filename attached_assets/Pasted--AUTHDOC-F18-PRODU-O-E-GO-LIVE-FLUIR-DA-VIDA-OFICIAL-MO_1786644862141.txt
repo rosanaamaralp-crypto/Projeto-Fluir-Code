@@ -1,0 +1,448 @@
+# AUTHDOC F18 — PRODUÇÃO E GO-LIVE
+
+## FLUIR DA VIDA OFICIAL
+
+### MODO DE EXECUÇÃO ECONÔMICO — CRÉDITO LIMITADO
+
+Esta é a fase final do projeto.
+
+O objetivo é colocar o MVP em produção com o menor consumo possível de créditos.
+
+## BASE JÁ VALIDADA
+
+Não repetir auditorias anteriores.
+
+O estado oficial já validado é:
+
+* F1–F16 concluídas;
+* F17 concluída;
+* 519/519 testes passando;
+* TypeScript API = 0 erros;
+* TypeScript frontend = 0 erros;
+* commit atual F17 = `05cc423`;
+* três workflows funcionando normalmente;
+* aplicação funcional para ADMIN, PROFESSIONAL e CLIENT;
+* segurança, RBAC, ownership, banco e regras de negócio já auditados;
+* F17 já validou responsividade Client/Professional;
+* recuperação de senha já foi implementada e testada;
+* concorrência de macas já foi corrigida/testada.
+
+### REGRA ABSOLUTA
+
+NÃO executar nova auditoria F1–F17.
+
+NÃO reler todos os documentos.
+
+NÃO procurar melhorias.
+
+NÃO refatorar código.
+
+NÃO alterar funcionalidades existentes.
+
+NÃO criar novas funcionalidades.
+
+NÃO executar nova bateria completa de testes sem necessidade operacional.
+
+A auditoria anterior é o baseline confiável.
+
+---
+
+# OBJETIVO DA F18
+
+Executar somente a preparação e publicação do ambiente de PRODUÇÃO.
+
+A F18 deve priorizar:
+
+1. ambiente de produção;
+2. banco de produção;
+3. migrations;
+4. seed mínimo;
+5. secrets;
+6. deploy;
+7. healthcheck;
+8. validação funcional mínima;
+9. backup/rollback;
+10. documentação operacional.
+
+---
+
+# ETAPA 1 — INSPEÇÃO MÍNIMA
+
+Antes de alterar qualquer coisa, verificar SOMENTE:
+
+* configuração atual de deployment;
+* scripts existentes de build/start/migrate/seed;
+* variáveis de ambiente necessárias;
+* configuração atual do banco;
+* mecanismo existente de seed;
+* healthcheck `/api/healthz`;
+* configuração de workflows/deployment.
+
+Não fazer exploração adicional.
+
+Não alterar arquivos nesta etapa.
+
+Se tudo necessário já existir, reutilizar.
+
+---
+
+# ETAPA 2 — BANCO DE PRODUÇÃO
+
+Preparar banco de produção usando a migration canônica existente.
+
+IMPORTANTE:
+
+A migration existente é o estado canônico.
+
+NÃO criar nova migration.
+
+NÃO modificar schema.
+
+NÃO modificar constraints.
+
+NÃO modificar tabelas existentes.
+
+NÃO alterar `0001` ou qualquer migration existente.
+
+Executar a migration existente no banco de produção somente se o ambiente de produção estiver corretamente configurado.
+
+---
+
+# ETAPA 3 — SEED DE PRODUÇÃO
+
+Criar/configurar somente o seed mínimo necessário para produção.
+
+O seed de produção deve conter somente o necessário para o sistema iniciar.
+
+Mínimo esperado:
+
+* usuário ADMIN inicial;
+* 5 macas/recursos necessários;
+* dados mínimos indispensáveis para operação.
+
+NÃO inserir dados fictícios de clientes.
+
+NÃO inserir agendamentos de teste.
+
+NÃO inserir dados de QA.
+
+NÃO copiar o seed de desenvolvimento cegamente.
+
+Se o projeto já possuir mecanismo adequado para isso, reutilizá-lo.
+
+---
+
+# ETAPA 4 — SECRETS / VARIÁVEIS
+
+Identificar somente as variáveis realmente necessárias para produção.
+
+Configurar, quando aplicável:
+
+* DATABASE_URL;
+* SESSION_SECRET;
+* variáveis necessárias para recuperação de senha/e-mail;
+* NODE_ENV;
+* demais variáveis já exigidas pelo código.
+
+IMPORTANTE:
+
+NÃO imprimir secrets ou valores sensíveis no relatório.
+
+Somente informar os nomes das variáveis.
+
+Se alguma variável obrigatória não puder ser configurada automaticamente porque depende de informação do proprietário:
+
+PARAR e informar exatamente:
+
+* nome da variável;
+* para que serve;
+* onde deve ser configurada.
+
+Não inventar valores.
+
+Não inventar credenciais.
+
+---
+
+# ETAPA 5 — DEPLOY
+
+Utilizar a configuração de deployment já existente.
+
+Não criar arquitetura nova.
+
+Não trocar plataforma.
+
+Não alterar desnecessariamente `.replit`.
+
+Executar o deployment de produção.
+
+Validar:
+
+* build;
+* inicialização da API;
+* inicialização do frontend;
+* healthcheck;
+* acesso HTTPS;
+* ausência de erro fatal de startup.
+
+---
+
+# ETAPA 6 — HEALTHCHECK
+
+Validar:
+
+`/api/healthz`
+
+Critério:
+
+HTTP 200 após o ambiente estar totalmente inicializado.
+
+Não considerar erros transitórios de startup como falha se o serviço posteriormente estabilizar e responder corretamente.
+
+---
+
+# ETAPA 7 — SMOKE TEST FUNCIONAL MÍNIMO
+
+NÃO executar os 519 testes novamente salvo se houver alteração de código.
+
+Validar apenas os fluxos essenciais de produção:
+
+### ADMIN
+
+* login;
+* acesso ao dashboard.
+
+### PROFESSIONAL
+
+* login;
+* acesso à agenda.
+
+### CLIENT
+
+* login;
+* acesso ao booking;
+* visualização de disponibilidade.
+
+### AGENDAMENTO
+
+Se for seguro utilizar dados de produção:
+
+* criar um agendamento de teste controlado;
+* confirmar que a operação funciona;
+* cancelar/remover o teste de forma segura.
+
+NÃO deixar dados de teste no ambiente de produção.
+
+Se não for seguro executar um booking real, fazer somente smoke test sem criar dados persistentes e registrar isso.
+
+---
+
+# ETAPA 8 — BACKUP E ROLLBACK
+
+Não criar infraestrutura complexa.
+
+Documentar o procedimento mínimo existente para:
+
+### Backup
+
+Como realizar backup/exportação do banco de produção.
+
+### Rollback
+
+Como retornar ao deployment anterior utilizando os mecanismos disponíveis da plataforma.
+
+Não implementar monitoramento avançado.
+
+Não instalar ferramentas externas.
+
+Não criar infraestrutura adicional.
+
+---
+
+# ETAPA 9 — DOCUMENTAÇÃO OPERACIONAL
+
+Criar somente uma documentação curta contendo:
+
+1. como realizar deploy;
+2. como verificar healthcheck;
+3. como realizar rollback;
+4. como realizar backup;
+5. quais secrets/variáveis existem;
+6. como executar migration em produção;
+7. como executar seed inicial;
+8. procedimento básico em caso de falha.
+
+Não criar documentação extensa.
+
+---
+
+# PROIBIDO NA F18
+
+NÃO implementar:
+
+* novas funcionalidades;
+* novas telas;
+* melhorias UX;
+* redesign;
+* paginação;
+* performance geral;
+* novos índices;
+* novas migrations;
+* alterações de schema;
+* alterações de RBAC;
+* alterações de ownership;
+* alterações de autenticação;
+* alterações do motor de agendamento;
+* alterações de notificações;
+* alterações OpenAPI;
+* alterações codegen;
+* alterações Admin;
+* alterações Professional;
+* alterações Client;
+* E2E;
+* monitoramento avançado;
+* landing;
+* novos módulos.
+
+F17 está encerrada.
+
+F1–F17 permanecem congeladas.
+
+---
+
+# REGRA ESPECIAL SOBRE CÓDIGO
+
+O objetivo desta fase é que o código de produção permaneça inalterado.
+
+Se for possível concluir o Go-Live somente com configuração, deployment, banco e documentação:
+
+### NÃO ALTERAR CÓDIGO.
+
+Se surgir uma necessidade de alteração de código:
+
+### PARAR ANTES DE ALTERAR.
+
+Informar:
+
+* arquivo;
+* motivo;
+* alteração proposta;
+* por que é indispensável para o Go-Live.
+
+Aguardar autorização.
+
+---
+
+# REGRA DE ECONOMIA DE CRÉDITOS
+
+Este projeto já consumiu aproximadamente US$120 em créditos.
+
+Portanto, esta execução deve ser extremamente objetiva.
+
+Não:
+
+* explorar arquivos sem necessidade;
+* repetir auditorias;
+* executar testes redundantes;
+* investigar problemas históricos;
+* procurar melhorias;
+* reavaliar decisões já tomadas;
+* gerar múltiplas soluções para o mesmo problema.
+
+Use o estado validado da F17 como baseline.
+
+Fluxo obrigatório:
+
+INSPECIONAR MÍNIMO
+→ CONFIGURAR
+→ MIGRATE
+→ SEED
+→ DEPLOY
+→ HEALTHCHECK
+→ SMOKE TEST
+→ DOCUMENTAR
+→ RELATÓRIO FINAL
+
+---
+
+# REGRA DE PARADA
+
+PARAR imediatamente se:
+
+1. for necessário alterar schema;
+2. for necessária nova migration;
+3. for necessário alterar código de produção;
+4. faltar uma credencial/secrets indispensável;
+5. faltar banco de produção;
+6. houver risco de apagar dados;
+7. houver risco de alterar dados reais indevidamente;
+8. houver necessidade de infraestrutura externa não disponível.
+
+Não improvisar.
+
+Não criar solução alternativa sem autorização.
+
+---
+
+# CRITÉRIOS DE ACEITE F18
+
+F18 será considerada concluída somente quando:
+
+* banco de produção disponível;
+* migration aplicada;
+* seed mínimo aplicado;
+* secrets necessários configurados;
+* deployment funcionando;
+* HTTPS funcionando;
+* `/api/healthz` retornando 200;
+* frontend acessível;
+* login ADMIN funcionando;
+* login PROFESSIONAL funcionando;
+* login CLIENT funcionando;
+* fluxo essencial de booking validado;
+* backup documentado;
+* rollback documentado;
+* procedimento de deploy documentado;
+* nenhum dado de teste abandonado em produção;
+* nenhum código alterado sem autorização.
+
+---
+
+# IMPORTANTE — NÃO INICIAR NOVA FASE
+
+Não iniciar nenhuma fase posterior.
+
+Não criar backlog adicional.
+
+Não implementar melhorias pós-MVP.
+
+F18 é a fase final autorizada.
+
+---
+
+# RELATÓRIO FINAL
+
+Ao terminar, apresentar somente:
+
+1. status do banco de produção;
+2. migration aplicada;
+3. seed aplicado;
+4. variáveis necessárias — somente nomes, nunca valores;
+5. status do deployment;
+6. healthcheck;
+7. smoke tests realizados;
+8. backup;
+9. rollback;
+10. arquivos alterados;
+11. alterações de código — esperado: ZERO;
+12. git status;
+13. commit/hash, se houver alteração autorizada;
+14. problemas encontrados;
+15. itens que ficaram pendentes;
+16. VEREDITO FINAL: GO-LIVE LIBERADO ou GO-LIVE BLOQUEADO.
+
+## REGRA FINAL
+
+NÃO gastar créditos com qualquer atividade que não seja necessária para colocar o sistema em produção.
+
+EXECUTE A F18 DE FORMA CONCENTRADA, SEGURA E ECONÔMICA.
