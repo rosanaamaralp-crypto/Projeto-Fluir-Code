@@ -1,0 +1,254 @@
+F18 — FINALIZAÇÃO DE PRODUÇÃO / GO-LIVE
+MODO ECONOMIA DE CRÉDITOS — EXECUÇÃO CONCENTRADA
+
+CONTEXTO ATUAL CONFIRMADO
+
+F1–F17 estão concluídas e congeladas.
+
+Estado:
+- F17 concluída;
+- commit atual: 05cc423;
+- 519/519 testes passando;
+- TypeScript API + frontend: 0 erros;
+- workflows funcionando;
+- nenhum problema crítico ou alto conhecido;
+- deployment configurado;
+- migrate existente e idempotente;
+- seed existente e idempotente;
+- bootstrap:admin existente e idempotente;
+- SESSION_SECRET já disponível;
+- APP_PUBLIC_URL configurada;
+- CORS_ORIGIN configurada;
+- builds de produção já validados.
+
+DESCOBERTA DA F18
+
+Existe um deployment antigo publicado, referente à F1.
+Esse deployment NÃO deve ser tratado como versão atual.
+
+O código que deve ir para produção é o estado atual da branch/main, correspondente à F17 e ao commit 05cc423.
+
+O banco de produção ainda não existe.
+
+REGRA PRINCIPAL DE ECONOMIA
+
+NÃO faça nova auditoria do projeto.
+NÃO releia todos os documentos.
+NÃO reanalise F1–F17.
+NÃO procure melhorias.
+NÃO refatore.
+NÃO altere código sem necessidade.
+NÃO execute tarefas fora deste escopo.
+
+Faça somente as etapas necessárias para concluir o Go-Live.
+
+ORDEM OBRIGATÓRIA
+
+ETAPA 1 — AGUARDAR PUBLISH
+
+O Publish/Publicar é uma ação manual do proprietário.
+
+NÃO tente executar Publish por código, CLI ou qualquer mecanismo alternativo.
+
+Se o Publish ainda não tiver sido executado:
+- pare imediatamente;
+- informe apenas que estou aguardando o Publish manual;
+- não execute outras ações.
+
+Quando eu executar o Publish e retornar ao Agent, continue automaticamente a partir da Etapa 2.
+
+ETAPA 2 — VALIDAR DEPLOYMENT
+
+Após o Publish:
+
+1. confirmar que o deployment está usando o código atual da F17/commit 05cc423;
+2. confirmar build concluído;
+3. confirmar aplicação iniciou;
+4. verificar GET /api/healthz;
+5. verificar HTTPS;
+6. confirmar que a URL pública responde.
+
+Se houver erro:
+- diagnosticar somente o erro diretamente relacionado ao deployment;
+- corrigir somente se for necessário para colocar a versão atual no ar;
+- não fazer melhorias ou alterações arquiteturais.
+
+ETAPA 3 — BANCO DE PRODUÇÃO
+
+Confirmar que o banco de produção foi criado pela plataforma.
+
+Executar a migration existente SOMENTE se ela ainda não tiver sido aplicada.
+
+Usar o mecanismo de migration existente.
+
+NÃO criar nova migration.
+NÃO alterar schema.
+NÃO alterar migration 0001.
+
+Confirmar:
+- schema criado;
+- tabelas existentes;
+- constraints existentes;
+- índices existentes.
+
+Se o Publish já tiver aplicado o schema, NÃO executar trabalho redundante.
+
+ETAPA 4 — SEED MÍNIMO DE PRODUÇÃO
+
+Executar o seed idempotente existente.
+
+O seed de produção deve conter somente os dados mínimos já previstos:
+
+- roles ADMIN;
+- roles PROFESSIONAL;
+- roles CLIENT;
+- 5 macas;
+- nenhum dado fictício de clientes;
+- nenhum agendamento fictício;
+- nenhum profissional fictício;
+- nenhum dado de teste.
+
+Depois executar bootstrap:admin usando o mecanismo já existente.
+
+NÃO registrar senha em logs.
+
+Se for necessário nome/e-mail/senha do ADMIN:
+- solicitar os dados por mecanismo/formulário seguro do próprio ambiente;
+- NÃO pedir a senha no chat;
+- NÃO imprimir senha em logs.
+
+Se os dados já existirem, não duplicar.
+
+ETAPA 5 — SMOKE TEST DE PRODUÇÃO
+
+Executar somente verificações essenciais:
+
+1. /api/healthz;
+2. página inicial;
+3. login;
+4. sessão / usuário autenticado;
+5. acesso ADMIN;
+6. acesso PROFESSIONAL;
+7. acesso CLIENT;
+8. criação/consulta de agendamento em fluxo mínimo;
+9. validação básica das 5 macas;
+10. logout.
+
+Não executar a suíte completa novamente se não houver necessidade técnica.
+
+A suíte 519/519 já foi validada na F17.
+
+Se um smoke test falhar:
+- investigar somente o fluxo que falhou;
+- corrigir somente se for problema causado pelo deployment/configuração;
+- não reabrir fases anteriores.
+
+ETAPA 6 — PRODUÇÃO
+
+Confirmar:
+
+- HTTPS funcionando;
+- CORS correto;
+- SESSION_SECRET presente;
+- banco de produção funcionando;
+- migration aplicada;
+- seed mínimo aplicado;
+- ADMIN inicial funcionando;
+- healthcheck 200;
+- login funcionando;
+- booking básico funcionando.
+
+Não configurar:
+- monitoramento avançado;
+- alertas avançados;
+- performance;
+- paginação;
+- E2E completo;
+- novas features.
+
+Esses itens permanecem pós-MVP.
+
+ETAPA 7 — DOCUMENTAÇÃO OPERACIONAL MÍNIMA
+
+Criar APENAS se ainda não existir documentação equivalente:
+
+- procedimento de deploy;
+- procedimento de rollback;
+- procedimento de backup;
+- procedimento de recuperação básica.
+
+Manter a documentação curta e operacional.
+
+Não criar documentação extensa ou nova arquitetura documental.
+
+ETAPA 8 — VERIFICAÇÃO FINAL
+
+Executar somente:
+
+- git status;
+- identificação do commit publicado;
+- confirmação do deployment;
+- confirmação do healthcheck;
+- confirmação do banco;
+- confirmação do seed;
+- smoke tests.
+
+NÃO iniciar F19.
+NÃO iniciar novas funcionalidades.
+
+REGRA DE PARADA
+
+Se qualquer etapa exigir:
+
+- nova migration;
+- alteração de schema;
+- alteração de RBAC;
+- alteração de autenticação;
+- alteração de OpenAPI;
+- alteração de codegen;
+- alteração do motor de agendamento;
+- alteração de frontend funcional;
+- alteração de arquitetura;
+- novo secret além dos já previstos;
+- mudança estrutural no deployment;
+
+PARAR e me informar antes de alterar qualquer coisa.
+
+Não gastar créditos investigando alternativas.
+
+VEREDITO FINAL
+
+F18 somente poderá ser marcada como concluída se:
+
+- versão atual da F17 estiver publicada;
+- deployment estiver saudável;
+- banco de produção existir;
+- migration/schema estiver aplicado;
+- seed mínimo estiver aplicado;
+- ADMIN inicial estiver configurado;
+- healthcheck responder 200;
+- login funcionar;
+- fluxo mínimo de agendamento funcionar;
+- HTTPS funcionar;
+- nenhuma alteração fora do escopo tiver sido feita.
+
+Ao final, apresentar SOMENTE:
+
+1. Status do deployment;
+2. URL pública;
+3. Banco de produção;
+4. Migration;
+5. Seed;
+6. ADMIN;
+7. Smoke tests;
+8. Arquivos alterados;
+9. Git status/commit;
+10. Pendências reais;
+11. VEREDITO F18.
+
+IMPORTANTE:
+A prioridade absoluta é concluir o Go-Live com o menor consumo possível de créditos.
+Não faça análises adicionais.
+Não reabra fases anteriores.
+Não procure problemas novos.
+Não implemente melhorias.
