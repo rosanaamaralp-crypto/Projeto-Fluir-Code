@@ -1,0 +1,172 @@
+FASE 14 — FECHAMENTO OFICIAL E PREPARAÇÃO DA FASE 15
+
+A Fase 14 — Módulo Profissional foi submetida a auditoria final somente-leitura.
+
+STATUS OFICIAL:
+
+FASE 14 = APROVADA / CONCLUÍDA.
+
+A auditoria final confirmou:
+
+- T-020 Dashboard: CONFORME
+- T-021 Agenda — visualização Dia: CONFORME
+- T-022 Detalhe do Atendimento: CONFORME
+- T-023 Meus Clientes: CONFORME
+- T-023 Detalhe do Cliente: CONFORME
+- T-024 Disponibilidade: CONFORME
+- T-025 Bloqueios: CONFORME
+- T-026 Perfil: CONFORME, com pequeno gap não bloqueador
+- /professional/notifications: CONFORME
+- B2 — edição de disponibilidade: IMPLEMENTADO
+- B3 — serviços no perfil: IMPLEMENTADO
+- T-023/T-025 — Meus Clientes + Detalhe: IMPLEMENTADO
+- T-022 Decisão B — nomes reais de cliente, serviço, recurso/maca e endereço: IMPLEMENTADO
+
+VALIDAÇÕES FINAIS:
+
+- frontend typecheck: 0 erros
+- backend typecheck: 0 erros
+- testes backend: 500/500
+- build real: aprovado
+- migrations: nenhuma criada
+- schema do banco: inalterado
+- F1–F13: preservadas
+- nenhum bloqueador técnico identificado
+- nenhum problema de ownership/IDOR identificado
+- nenhum endpoint anterior alterado indevidamente
+
+PENDÊNCIAS DE ESCOPO REGISTRADAS, MAS NÃO BLOQUEADORAS:
+
+1. T-021 — visualizações Semana/Mês
+   Status: AGUARDA DECISÃO DE ESCOPO.
+   NÃO implementar nesta etapa.
+
+2. T-022 — ação "Alterar"
+   Status: AGUARDA DECISÃO DE ESCOPO.
+   NÃO implementar nesta etapa.
+
+3. T-026 — fallback de UUID em services
+   Status: GAP MENOR / NÃO BLOQUEADOR.
+   NÃO corrigir retroativamente na Fase 14.
+
+REGRAS OBRIGATÓRIAS A PARTIR DE AGORA:
+
+1. NÃO reabrir a Fase 14.
+2. NÃO modificar arquivos da Fase 14 apenas para "melhorias".
+3. NÃO implementar Semana/Mês.
+4. NÃO implementar a ação Alterar.
+5. NÃO corrigir o fallback de UUID neste momento.
+6. NÃO criar migrations relacionadas à Fase 14.
+7. NÃO alterar endpoints da Fase 14.
+8. NÃO alterar OpenAPI da Fase 14.
+9. NÃO fazer alterações retroativas sem autorização explícita.
+10. NÃO fazer commit automaticamente.
+11. Preservar integralmente F1–F14.
+
+ANTES DE INICIAR A FASE 15:
+
+Faça SOMENTE uma análise de preparação, em modo SOMENTE-LEITURA.
+
+NÃO escreva código.
+
+NÃO altere arquivos.
+
+NÃO instale dependências.
+
+NÃO crie migrations.
+
+NÃO faça commit.
+
+NÃO implemente nenhuma funcionalidade da Fase 15 ainda.
+
+A análise deve:
+
+1. Localizar e ler o documento oficial/autorização da Fase 15, caso exista.
+2. Identificar a hierarquia documental oficial da Fase 15.
+3. Mapear todas as telas e requisitos da Fase 15.
+4. Identificar dependências com F1–F14.
+5. Identificar endpoints existentes que poderão ser reutilizados.
+6. Identificar possíveis gaps de backend.
+7. Identificar possíveis gaps de frontend.
+8. Identificar requisitos de OpenAPI/codegen.
+9. Identificar necessidade ou não de migrations.
+10. Identificar riscos de regressão em F1–F14.
+11. Separar claramente:
+   - requisitos autorizados;
+   - requisitos ambíguos;
+   - conflitos documentais;
+   - pendências;
+   - bloqueadores;
+   - decisões que precisam de autorização.
+
+IMPORTANTE:
+
+Não assuma que um requisito de documentos antigos está automaticamente autorizado para a Fase 15.
+
+Use a hierarquia documental oficial da Fase 15.
+
+Se houver conflito entre documentos, NÃO resolva por conta própria.
+
+Se houver necessidade de decisão, pare e apresente a decisão necessária.
+
+FORMATO OBRIGATÓRIO DO RELATÓRIO DE PREPARAÇÃO:
+
+# PREPARAÇÃO DA FASE 15 — ANÁLISE SOMENTE-LEITURA
+
+## 1. STATUS DA FASE 14
+Confirmar que permanece:
+APROVADA / CONCLUÍDA
+
+## 2. DOCUMENTOS ENCONTRADOS
+Listar documentos utilizados e sua hierarquia.
+
+## 3. ESCOPO DA FASE 15
+Tabela:
+Tela | Rota | Requisito | Autorizado? | Dependências
+
+## 4. REQUISITOS
+Separar:
+- Conforme documentação
+- Ambíguo
+- Conflito documental
+- Necessita decisão
+
+## 5. BACKEND
+Endpoints existentes reutilizáveis.
+Endpoints novos eventualmente necessários.
+Ownership.
+Autorização.
+IDOR.
+Validators.
+
+## 6. FRONTEND
+Telas existentes.
+Telas novas.
+Hooks existentes.
+Hooks que eventualmente precisarão ser gerados.
+
+## 7. OPENAPI / CODEGEN
+Alterações necessárias, se houver.
+
+## 8. BANCO / MIGRATIONS
+Informar se há necessidade de alteração de schema.
+
+## 9. IMPACTO F1–F14
+Identificar qualquer risco de regressão.
+
+## 10. BLOQUEADORES
+Somente bloqueadores reais.
+
+## 11. DECISÕES NECESSÁRIAS
+Listar somente decisões que realmente precisam de autorização.
+
+## 12. RECOMENDAÇÃO
+Informar se a Fase 15 está:
+- pronta para implementação;
+- pronta parcialmente;
+- aguardando autorização;
+- bloqueada por documentação.
+
+NÃO IMPLEMENTE NADA APÓS A ANÁLISE.
+
+Aguarde minha autorização explícita antes de qualquer alteração de código.
