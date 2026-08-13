@@ -1,0 +1,635 @@
+AUDITORIA FINAL SOMENTE-LEITURA — FASE 14 — MÓDULO PROFISSIONAL
+
+IMPORTANTE: esta tarefa é EXCLUSIVAMENTE DE AUDITORIA.
+
+NÃO altere nenhum arquivo.
+NÃO crie código.
+NÃO corrija nenhum problema encontrado.
+NÃO instale dependências.
+NÃO execute migrations.
+NÃO gere arquivos novos.
+NÃO faça commit.
+NÃO faça push.
+NÃO implemente nenhuma pendência.
+NÃO faça qualquer alteração no banco ou no schema.
+
+Você deve apenas INVESTIGAR, LER, EXECUTAR AS VALIDAÇÕES EXISTENTES e PRODUZIR O RELATÓRIO FINAL.
+
+Se encontrar um problema, registre-o. NÃO corrija.
+
+==================================================
+1. HIERARQUIA DOCUMENTAL OFICIAL
+==================================================
+
+Utilize rigorosamente esta hierarquia para determinar conformidade:
+
+1. AuthDoc F14 — autorização formal da Fase 14
+2. Doc 18
+3. Doc 17
+4. Doc 15
+5. Doc 16
+6. Doc 14
+7. Doc 08
+8. Doc 03
+
+Não substitua essa hierarquia por interpretação própria.
+
+Quando houver conflito entre documentos, registre explicitamente:
+- qual documento determina a decisão pela hierarquia;
+- qual documento entra em conflito;
+- se o item deve ser considerado conforme, não conforme ou aguardando decisão.
+
+Não invente requisitos que não estejam sustentados pelos documentos.
+
+==================================================
+2. CONTEXTO — CORREÇÕES JÁ AUTORIZADAS
+==================================================
+
+Considere como já implementadas e audite o estado ATUAL do código:
+
+B2 — Edição de disponibilidade
+B3 — Serviços no perfil
+T-023 — Meus Clientes + Detalhe do Cliente
+T-022 — Decisão B: exibição dos nomes reais de cliente, serviço, recurso/maca e endereço.
+
+NÃO reverta, altere ou reimplemente essas correções.
+
+==================================================
+3. TELAS OBRIGATÓRIAS
+==================================================
+
+Audite todas estas telas:
+
+T-020
+/professional
+
+T-021
+/professional/schedule
+
+T-022
+/professional/schedule/:id
+
+T-023
+/professional/clients
+
+T-023 detalhe
+/professional/clients/:clientId
+
+T-024
+/professional/availability
+
+T-025
+/professional/blocked-periods
+
+T-026
+/professional/profile
+
+Notificações
+/professional/notifications
+
+==================================================
+4. AUDITORIA DE CADA TELA
+==================================================
+
+Para CADA tela, verifique:
+
+1. Requisitos documentais
+2. Funcionalidades implementadas
+3. Dados exibidos
+4. Endpoints utilizados
+5. Hooks utilizados
+6. Ownership
+7. Autorização
+8. Loading
+9. Empty
+10. Error
+11. Success
+12. Tratamento de erros
+13. Responsividade
+14. Dados reais da API
+15. Ausência de UUIDs técnicos quando a documentação exige informação legível
+16. Ausência de dados de outro profissional
+17. Regras de negócio
+18. Impacto sobre F1–F13
+
+Não considere uma tela conforme apenas porque ela carrega. Compare a implementação contra os documentos oficiais.
+
+==================================================
+5. T-021 — SEMANA / MÊS
+==================================================
+
+NÃO implemente nada.
+
+Verifique:
+
+- Dia está implementado?
+- Semana está implementada?
+- Mês está implementado?
+- O que exatamente diz o AuthDoc F14?
+- O que exatamente dizem Doc 03 e Doc 08?
+- Existe conflito ou apenas ambiguidade?
+- Pela hierarquia documental, isso é bloqueador ou questão de decisão?
+
+Classifique corretamente.
+
+==================================================
+6. T-022 — NOMES REAIS
+==================================================
+
+A Decisão B foi explicitamente autorizada.
+
+Audite o código atual de:
+
+/professional/schedule/:id
+
+Confirme objetivamente:
+
+Cliente → nome real
+Serviço → nome real
+Recurso/maca → nome real
+Endereço → endereço real quando HOME_CARE
+
+Verifique os hooks:
+
+useGetMyProfessionalClient
+useListServices
+useListResources
+
+Confirme:
+
+- nenhum UUID continua sendo mostrado indevidamente;
+- não existe fallback que exponha UUID técnico;
+- loading dos dados relacionados é tratado;
+- ausência dos dados é tratada de forma legível;
+- ownership continua protegido.
+
+Se encontrar UUID técnico sendo exibido, registre como não conformidade.
+
+NÃO corrija.
+
+==================================================
+7. T-022 — AÇÃO "ALTERAR"
+==================================================
+
+NÃO implemente.
+
+Audite:
+
+- Doc 08
+- Doc 03
+- AuthDoc F14
+- AlterAppointmentSchema
+- PATCH /api/appointments/:id
+
+Determine pela hierarquia:
+
+- "Alterar" é obrigatório nesta fase?
+- está autorizado explicitamente?
+- existe conflito documental?
+- é bloqueador?
+- ou deve aguardar decisão?
+
+Não implemente mesmo que o endpoint já exista.
+
+==================================================
+8. T-023 — MEUS CLIENTES
+==================================================
+
+Audite profundamente:
+
+GET /api/me/professional/clients
+GET /api/me/professional/clients/:clientId
+
+Verifique:
+
+- endpoint existe;
+- OpenAPI documenta;
+- hook existe;
+- frontend utiliza o hook correto;
+- lista somente clientes relacionados ao profissional;
+- busca por nome;
+- busca por telefone;
+- detalhe do cliente;
+- nome;
+- telefone;
+- e-mail;
+- data de nascimento;
+- histórico;
+- endereço quando necessário;
+- ausência de UUIDs como substitutos de nomes;
+- IDOR;
+- isolamento entre profissionais.
+
+Confirme que o antigo workaround baseado em clientId truncado NÃO existe mais.
+
+Verifique também:
+
+ProfessionalsRepository
+ClientsRepository
+AppointmentsRepository
+controller
+rotas
+middleware
+
+NÃO altere nada.
+
+==================================================
+9. T-024 — DISPONIBILIDADE
+==================================================
+
+Verifique:
+
+- listagem;
+- criação;
+- edição;
+- remoção;
+- confirmação de remoção;
+- ownership;
+- estados;
+- erros;
+- useUpdateProfessionalAvailability;
+- PUT correspondente no backend;
+- ausência de alteração indevida no backend.
+
+Confirme especificamente que B2 está realmente implementado.
+
+==================================================
+10. T-026 — PERFIL
+==================================================
+
+Verifique:
+
+- nome;
+- telefone;
+- e-mail;
+- especialidade;
+- serviços;
+- dados reais;
+- ownership;
+- estados;
+- tratamento de erro.
+
+Confirme especificamente:
+
+useListProfessionalServices
++
+useListServices
+
+e a resolução dos nomes dos serviços.
+
+Confirme que B3 está realmente implementado.
+
+==================================================
+11. BLOQUEIOS
+==================================================
+
+Audite:
+
+/professional/blocked-periods
+
+Verifique:
+
+- listagem;
+- criação;
+- remoção;
+- soft delete;
+- status;
+- motivo;
+- data/hora;
+- confirmação;
+- ownership;
+- middleware;
+- ADMIN;
+- PROFESSIONAL;
+- IDOR;
+- audit log;
+- rota DELETE /blocked-periods/:id;
+- ausência de conflito de rotas.
+
+==================================================
+12. NOTIFICAÇÕES
+==================================================
+
+Audite:
+
+/professional/notifications
+
+Verifique:
+
+- GET /notifications;
+- POST /notifications/:id/read;
+- hooks;
+- badge;
+- marcação como lida;
+- ownership;
+- IDOR;
+- loading;
+- empty;
+- error;
+- success;
+- contrato OpenAPI.
+
+==================================================
+13. BACKEND
+==================================================
+
+Audite o backend completo relacionado à F14.
+
+Verifique:
+
+- endpoints novos;
+- endpoints existentes;
+- controllers;
+- repositories;
+- routes;
+- middleware;
+- validators;
+- ownership;
+- IDOR;
+- status transitions;
+- regras de negócio;
+- uso de session.userId;
+- professionalId derivado da sessão quando aplicável;
+- ausência de parâmetros controláveis pelo usuário que permitam trocar de profissional;
+- ausência de alterações indevidas em funcionalidades anteriores.
+
+Não altere nenhum arquivo.
+
+==================================================
+14. OPENAPI / ORVAL / CODEGEN
+==================================================
+
+Verifique:
+
+- todos os endpoints utilizados pelo frontend estão documentados;
+- todos possuem hooks;
+- operationIds;
+- schemas;
+- request/response;
+- correspondência backend ↔ OpenAPI;
+- api-client-react;
+- api-zod;
+- ausência de endpoints inventados;
+- ausência de schemas incompatíveis;
+- lib/api-zod/src/index.ts continua íntegro;
+- nenhum codegen inconsistente.
+
+Não execute codegen se isso puder modificar arquivos.
+
+Apenas verifique o estado atual.
+
+==================================================
+15. BANCO / MIGRATIONS
+==================================================
+
+Verifique:
+
+- migrations criadas na F14;
+- alterações em schema;
+- alterações em SQL;
+- impacto sobre dados existentes;
+- se as funcionalidades da F14 realmente exigem ou não migration.
+
+Não execute migration.
+
+==================================================
+16. TESTES E VALIDAÇÕES
+==================================================
+
+Execute SOMENTE comandos que não alterem arquivos.
+
+Execute:
+
+1. Typecheck frontend
+2. Typecheck backend
+3. Testes backend
+4. Build real do frontend
+
+Use os comandos reais do projeto.
+
+IMPORTANTE:
+
+Se algum teste falhar:
+
+- NÃO corrija;
+- NÃO altere arquivos;
+- NÃO tente "consertar";
+- identifique exatamente o teste;
+- determine, por leitura/histórico do código, se é regressão ou falha pré-existente;
+- registre no relatório.
+
+Informe números reais.
+
+==================================================
+17. GIT
+==================================================
+
+Verifique:
+
+git status --short
+
+NÃO faça commit.
+
+Informe exatamente:
+
+- arquivos modificados;
+- arquivos novos;
+- se existem alterações fora do escopo F14;
+- se há migration;
+- se há arquivos gerados.
+
+Não reverta nada.
+
+==================================================
+18. IMPACTO F1–F13
+==================================================
+
+Verifique se F14 alterou:
+
+- endpoints anteriores;
+- regras de negócio anteriores;
+- autenticação;
+- autorização;
+- Admin;
+- Client;
+- schema;
+- migrations;
+- componentes compartilhados;
+- hooks anteriores.
+
+Classifique:
+
+✅ Nenhum impacto
+⚠️ Impacto potencial
+🔴 Regressão
+
+Não considere simplesmente "500 testes passando" como prova suficiente de ausência de impacto.
+
+==================================================
+19. CLASSIFICAÇÃO OBRIGATÓRIA
+==================================================
+
+Para cada problema encontrado, classifique EXATAMENTE em uma destas categorias:
+
+1. Conforme
+2. Parcialmente conforme
+3. Bloqueador
+4. Pendência que exige decisão de escopo
+5. Gap exclusivamente documental
+6. Gap de backend
+7. Gap de frontend
+
+IMPORTANTE:
+
+Não classifique como bloqueador algo que seja apenas uma decisão de escopo.
+
+Não classifique como bug uma divergência documental quando a hierarquia determina que a implementação está correta.
+
+==================================================
+20. FORMATO OBRIGATÓRIO DO RELATÓRIO
+==================================================
+
+# AUDITORIA FINAL — FASE 14
+
+## 1. STATUS EXECUTIVO
+
+Escolha UMA:
+
+APROVÁVEL
+
+NÃO APROVÁVEL
+
+APROVÁVEL COM PENDÊNCIAS DE DECISÃO
+
+Explique em no máximo 5 linhas.
+
+## 2. MATRIZ DE CONFORMIDADE
+
+| Tela | Status | Problema | Natureza | Ação necessária |
+|------|--------|----------|----------|-----------------|
+
+Inclua TODAS as telas.
+
+## 3. REQUISITOS DOCUMENTAIS
+
+Para cada requisito relevante:
+
+✅ Conforme
+⚠️ Parcial
+🔴 Não conforme
+⏸ Aguarda decisão
+
+Inclua referência ao documento/seção.
+
+## 4. BACKEND
+
+Detalhe:
+
+- endpoints;
+- controllers;
+- repositories;
+- middleware;
+- validators;
+- ownership;
+- IDOR;
+- status transitions;
+- alterações indevidas, se houver.
+
+## 5. OPENAPI / CODEGEN
+
+Detalhe:
+
+- cobertura dos endpoints;
+- hooks;
+- schemas;
+- api-client-react;
+- api-zod;
+- divergências.
+
+## 6. AUTORIZAÇÃO / OWNERSHIP / IDOR
+
+Faça uma matriz:
+
+| Recurso | PROFESSIONAL | ADMIN | CLIENT | Não autenticado | IDOR |
+|---------|--------------|-------|--------|----------------|------|
+
+## 7. BANCO / MIGRATIONS
+
+Informe:
+
+- migrations;
+- schema;
+- impacto em dados;
+- conclusão.
+
+## 8. TESTES
+
+Informe números REAIS:
+
+- frontend typecheck: X erros
+- backend typecheck: X erros
+- testes: X/X
+- build: sucesso/falha
+
+Se houver falha pré-existente, separar claramente.
+
+## 9. IMPACTO F1–F13
+
+Classifique cada risco encontrado.
+
+## 10. PENDÊNCIAS QUE EXIGEM DECISÃO
+
+Somente decisões de escopo.
+
+Separar rigorosamente de bugs e bloqueadores.
+
+Especialmente:
+
+- T-021 Semana/Mês
+- T-022 Alterar
+
+## 11. BLOQUEADORES REAIS
+
+Liste SOMENTE problemas que realmente impedem aprovação segundo a hierarquia documental.
+
+Não incluir:
+
+- preferências;
+- melhorias;
+- backlog;
+- decisões ainda não tomadas;
+- itens explicitamente fora do escopo autorizado.
+
+## 12. CONCLUSÃO
+
+Responder objetivamente:
+
+"A Fase 14 pode ser considerada concluída e aprovada?"
+
+Se SIM:
+explique por que as pendências restantes não impedem aprovação.
+
+Se NÃO:
+liste SOMENTE os motivos objetivos que impedem a aprovação.
+
+==================================================
+REGRA FINAL
+==================================================
+
+ESTA É UMA AUDITORIA.
+
+NÃO MODIFIQUE NENHUM ARQUIVO.
+
+NÃO CORRIJA NADA.
+
+NÃO IMPLEMENTE NADA.
+
+NÃO INSTALE NADA.
+
+NÃO EXECUTE MIGRATIONS.
+
+NÃO FAÇA COMMIT.
+
+Se encontrar qualquer problema, apenas registre no relatório final.
+
+Antes de concluir, faça uma última verificação de git status para confirmar que a auditoria não produziu alterações.
