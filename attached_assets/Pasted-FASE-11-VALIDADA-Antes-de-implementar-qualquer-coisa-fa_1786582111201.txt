@@ -1,0 +1,85 @@
+FASE 11 VALIDADA.
+
+Antes de implementar qualquer coisa, faça uma auditoria documental para identificar a próxima fase oficial do projeto.
+
+REGRAS OBRIGATÓRIAS:
+
+1. Leia novamente os documentos oficiais do projeto, respeitando rigorosamente a hierarquia documental definida anteriormente:
+   Doc 18 > Doc 17 > Doc 16 > Doc 14.
+
+2. Identifique qual é a PRÓXIMA FASE OFICIAL após a Fase 11.
+
+3. Leia as seções específicas dos documentos oficiais que definem essa fase.
+
+4. NÃO implemente nada.
+5. NÃO altere nenhum arquivo.
+6. NÃO instale dependências.
+7. NÃO execute migrations.
+8. NÃO faça commit.
+
+5. Compare os requisitos oficiais da próxima fase com o estado REAL atual do projeto.
+
+Considere como baseline confirmado:
+
+BACKEND:
+- F1–F8 concluídas
+- F9 concluída: 488/488 testes
+- F10 concluída: 500/500 testes
+- typecheck OK
+- build OK
+
+FRONTEND:
+- React + Vite funcionando
+- frontend em artifacts/fluir-da-vida/
+- F11 implementada e validada
+- Login funcional
+- AuthContext funcionando
+- sessão via cookie funcionando
+- PrivateRoute funcionando
+- dashboards ADMIN, PROFESSIONAL e CLIENT funcionando
+- logout funcionando
+- proteção por role funcionando
+- integração frontend/API funcionando
+- console/runtime sem erros relevantes
+- API client OpenAPI regenerado
+- frontend typecheck: 0 erros
+- backend: 500/500 sem regressão
+
+VALIDAÇÃO F11:
+- Login: PASSOU
+- AuthContext/sessão: PASSOU
+- PrivateRoute: PASSOU
+- Dashboard ADMIN: PASSOU
+- Dashboard PROFESSIONAL: PASSOU
+- Dashboard CLIENT: PASSOU
+- Logout: PASSOU
+- Proteção de rotas: PASSOU
+- Console/runtime: OK
+- Integração Frontend/API: PASSOU
+
+Agora produza SOMENTE um PLANO DE AUDITORIA da próxima fase, contendo:
+
+1. Próxima fase oficial
+2. Nome oficial da fase
+3. Objetivo oficial
+4. Documentos e seções que determinam a fase
+5. Requisitos oficiais completos
+6. O que já existe no projeto
+7. O que está faltando
+8. Quais arquivos provavelmente serão envolvidos
+9. Quais endpoints/API serão envolvidos
+10. Quais telas/componentes/frontend serão envolvidos
+11. Dependências necessárias
+12. Testes necessários
+13. Critérios de aceite
+14. Riscos
+15. Decisões pendentes, se houver
+
+IMPORTANTE:
+- Não invente requisitos.
+- Diferencie claramente o que vem dos documentos oficiais do que é recomendação técnica.
+- Não implemente nada nesta etapa.
+
+Ao final escreva exatamente:
+
+STATUS: AGUARDANDO APROVAÇÃO
