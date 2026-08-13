@@ -1,0 +1,283 @@
+# PÓS-GO-LIVE — VALIDAÇÃO OPERACIONAL DO MVP
+
+## OBJETIVO
+
+O sistema Fluir da Vida Oficial já está publicado em produção.
+
+F18 foi concluída com:
+
+* deployment funcionando;
+* HTTPS funcionando;
+* frontend 200;
+* `/api/healthz` 200;
+* banco de produção configurado;
+* migration oficial aplicada;
+* 3 constraints EXCLUDE ativas;
+* `btree_gist` ativa;
+* 3 roles criadas;
+* 5 macas criadas;
+* ADMIN criado;
+* smoke tests de autenticação aprovados;
+* commit atual: `5b9f1cd`;
+* `docs/OPERACOES.md` criado;
+* Git limpo.
+
+NÃO implementar novas funcionalidades.
+
+NÃO alterar código.
+
+NÃO criar migration.
+
+NÃO alterar schema.
+
+NÃO alterar OpenAPI/codegen.
+
+NÃO alterar autenticação/RBAC.
+
+NÃO reabrir F1–F18.
+
+NÃO iniciar nova fase.
+
+NÃO fazer auditoria geral.
+
+NÃO executar novamente a suíte completa de 519 testes.
+
+NÃO gastar créditos procurando problemas hipotéticos.
+
+---
+
+# ETAPA 1 — LIMPEZA DOS SECRETS TEMPORÁRIOS
+
+Verificar se estes Secrets temporários ainda existem:
+
+* `PROD_DATABASE_URL`
+* `BOOTSTRAP_ADMIN_NAME`
+* `BOOTSTRAP_ADMIN_EMAIL`
+* `BOOTSTRAP_ADMIN_PASSWORD`
+
+Se ainda existirem, remover SOMENTE esses quatro Secrets.
+
+NÃO remover:
+
+* `SESSION_SECRET`;
+* secrets permanentes necessários à aplicação;
+* configurações de produção utilizadas pelo deployment.
+
+Após a remoção, não executar nenhuma outra alteração.
+
+---
+
+# ETAPA 2 — VALIDAÇÃO OPERACIONAL MÍNIMA
+
+Executar somente verificações essenciais da aplicação publicada.
+
+### Infraestrutura
+
+Confirmar:
+
+* deployment ativo;
+* HTTPS;
+* frontend responde;
+* `/api/healthz` retorna 200.
+
+### ADMIN
+
+Confirmar que o ADMIN existente consegue:
+
+* fazer login;
+* acessar dashboard;
+* acessar clientes;
+* acessar profissionais;
+* acessar serviços;
+* acessar recursos/maças;
+* acessar agenda;
+* acessar agendamentos;
+* acessar relatórios;
+* acessar auditoria.
+
+Não criar dados adicionais automaticamente.
+
+### CLIENT
+
+Não criar um cliente fictício.
+
+Apenas verificar, usando os fluxos já existentes e dados disponíveis, se as rotas/páginas CLIENT carregam corretamente.
+
+### PROFESSIONAL
+
+Da mesma forma, não criar dados fictícios.
+
+Verificar apenas se as páginas e rotas existentes carregam corretamente.
+
+---
+
+# ETAPA 3 — VALIDAÇÃO DAS FUNCIONALIDADES CRÍTICAS
+
+Somente se houver dados reais/testáveis já disponíveis:
+
+Validar superficialmente:
+
+1. criação de cliente pelo ADMIN;
+2. criação de profissional pelo ADMIN;
+3. criação/ativação de serviço;
+4. existência das 5 macas;
+5. disponibilidade de agenda;
+6. criação de agendamento;
+7. cancelamento/remarcação;
+8. Home Care;
+9. notificações;
+10. relatórios.
+
+Não criar uma massa de dados para testes.
+
+Não executar testes destrutivos em dados reais.
+
+---
+
+# ETAPA 4 — RECUPERAÇÃO DE SENHA
+
+Confirmar somente que a funcionalidade implementada na F17 está presente e acessível.
+
+Não enviar e-mails de teste para terceiros.
+
+Não alterar configuração de e-mail.
+
+Não alterar código.
+
+Se não for possível validar o envio sem uma conta de teste apropriada, apenas registrar como "não validado em produção", sem tentar corrigir.
+
+---
+
+# ETAPA 5 — RESPONSIVIDADE
+
+Não executar uma nova auditoria de responsividade.
+
+A F17 já tratou CLIENT e PROFESSIONAL.
+
+Apenas verificar visualmente, de forma rápida, se:
+
+* `/client/book` abre;
+* login abre;
+* dashboard CLIENT abre;
+* agenda PROFESSIONAL abre.
+
+Não corrigir problemas encontrados nesta etapa.
+
+Se houver problema visual evidente, apenas registrar.
+
+---
+
+# REGRA ABSOLUTA DE ECONOMIA DE CRÉDITOS
+
+Esta tarefa é somente uma validação operacional pós-Go-Live.
+
+Se tudo estiver funcionando:
+
+PARAR imediatamente.
+
+Não procurar problemas adicionais.
+
+Não sugerir refatorações.
+
+Não sugerir novas fases.
+
+Não criar backlog automaticamente.
+
+Não modificar código.
+
+Não executar testes que não sejam necessários.
+
+Não executar nova auditoria documental.
+
+Não executar a suíte completa.
+
+---
+
+# REGRA PARA PROBLEMAS
+
+Se encontrar um problema:
+
+1. não corrigir;
+2. classificar como:
+
+   * BLOQUEADOR;
+   * BUG;
+   * MELHORIA;
+   * PÓS-MVP;
+3. informar exatamente onde foi encontrado;
+4. informar impacto;
+5. parar se for bloqueador;
+6. continuar se não for bloqueador.
+
+---
+
+# RELATÓRIO FINAL
+
+Entregar somente:
+
+### 1. Infraestrutura
+
+* Deployment:
+* HTTPS:
+* Frontend:
+* Healthcheck:
+
+### 2. ADMIN
+
+* Login:
+* Dashboard:
+* Módulos principais:
+
+### 3. CLIENT
+
+* Login/rotas:
+* Booking:
+* Responsividade:
+
+### 4. PROFESSIONAL
+
+* Login/rotas:
+* Agenda:
+* Responsividade:
+
+### 5. Funcionalidades críticas
+
+* Agendamento:
+* Macas:
+* Home Care:
+* Cancelamento/remarcação:
+* Notificações:
+* Relatórios:
+
+### 6. Segurança
+
+* Nenhuma alteração realizada.
+
+### 7. Problemas encontrados
+
+Somente problemas concretos.
+
+### 8. Alterações
+
+Esperado:
+"Nenhuma alteração de código."
+
+### 9. Git
+
+Informar status e commit atual.
+
+### 10. VEREDITO
+
+Classificar como:
+
+🟢 MVP OPERACIONAL EM PRODUÇÃO
+
+ou
+
+🟡 MVP OPERACIONAL COM PENDÊNCIAS NÃO BLOQUEADORAS
+
+ou
+
+🔴 GO-LIVE COM BLOQUEADOR
+
+Não iniciar nenhuma implementação após o relatório.
