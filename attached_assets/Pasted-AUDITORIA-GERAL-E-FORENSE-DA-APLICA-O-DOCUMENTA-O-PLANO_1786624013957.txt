@@ -1,0 +1,851 @@
+AUDITORIA GERAL E FORENSE DA APLICAÇÃO
+DOCUMENTAÇÃO × PLANO DE FASES × AUTHDOCS × CÓDIGO × BANCO × API × FRONTEND × TESTES
+
+============================================================
+MODO SOMENTE-LEITURA — NÃO ALTERAR O PROJETO
+============================================================
+
+ESTA É UMA AUDITORIA.
+
+NÃO IMPLEMENTE NADA.
+
+NÃO CORRIJA NADA.
+
+NÃO RESTAURE NADA.
+
+NÃO APAGUE NADA.
+
+NÃO CRIE ARQUIVOS.
+
+NÃO MODIFIQUE ARQUIVOS.
+
+NÃO EXECUTE MIGRATIONS.
+
+NÃO EXECUTE CODEGEN QUE MODIFIQUE ARQUIVOS.
+
+NÃO INSTALE DEPENDÊNCIAS.
+
+NÃO FAÇA REFACTOR.
+
+NÃO FAÇA COMMIT.
+
+NÃO FAÇA RESET.
+
+NÃO FAÇA CHECKOUT.
+
+NÃO ALTERE O BANCO.
+
+NÃO ALTERE O OPENAPI.
+
+NÃO ALTERE TESTES.
+
+NÃO ALTERE DOCUMENTAÇÃO.
+
+Apenas INSPECIONE, COMPARE, EXECUTE TESTES SOMENTE-LEITURA QUANDO NECESSÁRIO E PRODUZA UM RELATÓRIO.
+
+============================================================
+1. MOTIVO DESTA AUDITORIA
+============================================================
+
+O projeto passou por várias fases de desenvolvimento.
+
+Recentemente ocorreu um erro operacional em que foi emitido indevidamente um comando relacionado à exclusão da Fase 15, seguido posteriormente por uma solicitação para retornar/restaurar a Fase 15.
+
+Por esse motivo, NÃO devemos assumir que o estado atual do projeto está íntegro apenas porque os testes passam.
+
+Precisamos realizar uma auditoria completa para determinar:
+
+1. Qual é o estado real atual da aplicação.
+2. O que a documentação determina que deveria existir.
+3. O que realmente existe no código.
+4. O que foi implementado corretamente.
+5. O que está parcialmente implementado.
+6. O que está faltando.
+7. O que está diferente da documentação.
+8. O que foi implementado sem autorização documental.
+9. Se alguma fase anterior foi afetada.
+10. Se a restauração da Fase 15 deixou inconsistências.
+11. Se existem divergências entre frontend, backend, banco, OpenAPI e codegen.
+12. Se os testes realmente cobrem os requisitos.
+13. Se existem riscos ocultos que os testes atuais não detectam.
+
+============================================================
+2. OBJETIVO
+============================================================
+
+Quero uma fotografia técnica e documental COMPLETA do projeto neste momento.
+
+A pergunta principal é:
+
+"SE PEGÁSSEMOS A DOCUMENTAÇÃO OFICIAL DO PROJETO HOJE E COMPARÁSSEMOS COM O CÓDIGO ATUAL, O QUE ESTARIA CORRETO, O QUE ESTARIA FALTANDO E O QUE ESTARIA DIFERENTE?"
+
+Não presuma que documentação e código estão sincronizados.
+
+Não presuma que o Git representa corretamente a documentação.
+
+Não presuma que testes passando significam requisito implementado.
+
+============================================================
+3. HIERARQUIA DOCUMENTAL
+============================================================
+
+Localize primeiro TODOS os documentos disponíveis no projeto.
+
+Identifique especialmente:
+
+- Pacote Mestre / Doc 18
+- Plano Oficial / Doc 17
+- Mapa de Telas / Doc 15
+- API e Contratos / Doc 16
+- Regras de Negócio / Doc 14
+- Mapa de Telas original / Doc 08
+- Perfis e Permissões / Doc 03
+- documentos de autorização das fases;
+- AuthDocs;
+- documentos de fechamento/aprovação;
+- documentos de arquitetura;
+- documentos de banco;
+- documentos de API;
+- documentos de testes;
+- qualquer backlog futuro.
+
+Monte uma relação:
+
+DOCUMENTO
+LOCAL
+VERSÃO, se disponível
+FASE RELACIONADA
+FUNÇÃO
+STATUS
+
+Depois determine a hierarquia documental.
+
+Prioridade padrão:
+
+1. AuthDoc/autorização formal da fase
+2. documento oficial de fechamento/aprovação
+3. Pacote Mestre
+4. Plano Oficial
+5. documentos específicos da fase
+6. regras de negócio
+7. API/contratos
+8. mapa de telas
+9. código
+10. testes
+
+Se a documentação indicar outra hierarquia, registre e siga a documentação.
+
+============================================================
+4. MAPA COMPLETO DAS FASES
+============================================================
+
+Identifique TODAS as fases planejadas no projeto.
+
+Para cada fase:
+
+FASE
+NOME
+OBJETIVO
+STATUS DOCUMENTAL
+AUTHORIZATION/AUTHDOC
+STATUS NO CÓDIGO
+STATUS DOS TESTES
+STATUS REAL
+
+Classifique:
+
+🟢 CONCLUÍDA E VALIDADA
+🟡 CONCLUÍDA COM PENDÊNCIAS
+🟠 IMPLEMENTADA MAS NÃO FORMALMENTE APROVADA
+🔴 INCOMPLETA
+⚫ NÃO IMPLEMENTADA
+❓ NÃO FOI POSSÍVEL DETERMINAR
+
+NÃO confie apenas no nome da fase.
+
+Compare documentação × código × testes.
+
+============================================================
+5. AUDITORIA FASE POR FASE
+============================================================
+
+Para CADA fase já considerada concluída, faça:
+
+DOCUMENTAÇÃO
+↓
+REQUISITOS
+↓
+AUTHDOC
+↓
+ARQUIVOS
+↓
+ROTAS
+↓
+COMPONENTES
+↓
+API
+↓
+BANCO
+↓
+PERMISSÕES
+↓
+TESTES
+↓
+RESULTADO
+
+Determine:
+
+- requisito documentado existe?
+- requisito implementado?
+- requisito testado?
+- requisito funcionando?
+- requisito autorizado?
+- requisito parcialmente implementado?
+- requisito divergente?
+
+Não pule nenhuma fase.
+
+============================================================
+6. AUDITORIA ESPECÍFICA DA FASE 15
+============================================================
+
+Faça uma auditoria aprofundada da Fase 15.
+
+Verifique:
+
+T-027 Dashboard Cliente
+T-028 Novo Agendamento
+T-034 Confirmação
+T-035 Sucesso
+T-036 Meus Agendamentos
+T-037 Detalhe do Agendamento
+T-038 Meus Endereços
+T-039 Meu Perfil
+T-040 Notificações
+
+Verifique também D1–D5.
+
+D1:
+Endereço único no MVP.
+
+D2:
+CLIENT pode cancelar e remarcar conforme autorização, sem trocar profissional/serviço/modalidade.
+
+D3:
+Dashboard com histórico resumido através da segunda consulta.
+
+D4:
+Wizard single-route /client/book com 7 etapas.
+
+D5:
+CLIENT pode editar:
+- nome
+- telefone
+- nascimento
+
+E-mail somente leitura.
+
+Verifique a alteração de backend:
+
+UpdateClientSchemaSelf
+clients.controller
+users.name
+users.phone
+clients.birthDate
+transação
+OpenAPI
+codegen
+
+============================================================
+7. AUDITORIA DE ARQUITETURA
+============================================================
+
+Verifique a arquitetura real do projeto.
+
+Frontend:
+- React
+- Vite
+- roteamento
+- layouts
+- autenticação
+- gerenciamento de estado
+- hooks
+- componentes
+- tratamento de erros
+
+Backend:
+- Express
+- controllers
+- services
+- repositories
+- validators
+- middleware
+- autenticação
+- autorização
+
+Banco:
+- tabelas
+- relações
+- constraints
+- índices
+- migrations
+- seed
+- integridade referencial
+
+Identifique qualquer divergência entre a arquitetura documentada e a arquitetura implementada.
+
+============================================================
+8. AUDITORIA DO BANCO DE DADOS
+============================================================
+
+Compare documentação do modelo de dados com o banco/código atual.
+
+Verifique as 14 tabelas documentadas e suas regras.
+
+Especial atenção:
+
+roles
+users
+clients
+professionals
+addresses
+services
+professional_services
+availability
+blocked_periods
+resources
+appointments
+appointment_status_history
+notifications
+audit_logs
+
+Para cada tabela:
+
+- existe?
+- estrutura corresponde?
+- campos correspondem?
+- FK corresponde?
+- constraints correspondem?
+- enum/check corresponde?
+- histórico é preservado?
+- exclusão lógica está correta?
+- timestamps estão corretos?
+- regras de negócio estão refletidas?
+
+NÃO faça migration.
+
+Apenas reporte divergências.
+
+============================================================
+9. AUDITORIA DE API
+============================================================
+
+Compare:
+
+Documentação API
+VS
+OpenAPI
+VS
+Controllers
+VS
+Services
+VS
+Repositories
+VS
+Frontend hooks
+
+Identifique:
+
+- endpoints ausentes;
+- endpoints extras;
+- endpoints divergentes;
+- payloads divergentes;
+- schemas divergentes;
+- respostas divergentes;
+- permissões divergentes;
+- IDOR;
+- validações ausentes.
+
+============================================================
+10. AUDITORIA DE OPENAPI E CODEGEN
+============================================================
+
+Verifique se:
+
+Código
+=
+OpenAPI
+=
+Codegen
+
+Identifique qualquer divergência.
+
+Não execute codegen para corrigir.
+
+Apenas informe.
+
+============================================================
+11. AUDITORIA DE AUTENTICAÇÃO E AUTORIZAÇÃO
+============================================================
+
+Verifique os três perfis:
+
+ADMIN
+PROFESSIONAL
+CLIENT
+
+Para cada endpoint e rota:
+
+- quem pode acessar?
+- quem não pode?
+- ownership?
+- IDOR?
+- middleware?
+- service-level authorization?
+- frontend protection?
+- backend protection?
+
+IMPORTANTE:
+
+Não considere PrivateRoute suficiente.
+
+A proteção do backend deve ser auditada independentemente.
+
+============================================================
+12. AUDITORIA DE IDOR E SEGURANÇA DE OWNERSHIP
+============================================================
+
+Verifique especialmente:
+
+CLIENT → CLIENT
+
+CLIENT tentando acessar outro CLIENT.
+
+CLIENT tentando alterar outro CLIENT.
+
+PROFESSIONAL tentando acessar outro PROFESSIONAL.
+
+PROFESSIONAL tentando acessar dados de CLIENT indevidamente.
+
+ADMIN acessando dados permitidos.
+
+Verifique:
+
+appointments
+clients
+addresses
+notifications
+profiles
+history
+
+Não altere código.
+
+Apenas reporte vulnerabilidades encontradas.
+
+============================================================
+13. AUDITORIA DO FRONTEND
+============================================================
+
+Mapear TODAS as telas existentes.
+
+Para cada tela:
+
+- documentação correspondente;
+- rota;
+- perfil;
+- API;
+- loading;
+- empty;
+- error;
+- success;
+- validações;
+- navegação;
+- responsividade quando documentada;
+- dados reais;
+- mocks;
+- funcionalidades faltantes.
+
+Identificar telas existentes que não aparecem na documentação.
+
+============================================================
+14. AUDITORIA DE ROTAS
+============================================================
+
+Mapear todas as rotas atuais.
+
+Para cada rota:
+
+ROTA
+PERFIL
+COMPONENTE
+AUTH
+DOCUMENTAÇÃO
+FASE
+STATUS
+
+Identificar:
+
+- rota sem documentação;
+- documentação sem rota;
+- rota protegida incorretamente;
+- rota duplicada;
+- rota quebrada;
+- ordem problemática de rotas;
+- acesso indevido entre perfis.
+
+============================================================
+15. AUDITORIA DE TESTES
+============================================================
+
+Executar os testes existentes sem modificar nada.
+
+Informar:
+
+TOTAL
+PASSANDO
+FALHANDO
+IGNORADOS
+
+Mas NÃO parar aí.
+
+Avaliar também:
+
+REQUISITO DOCUMENTADO
+↓
+TEM TESTE?
+↓
+TESTE COBRE O REQUISITO?
+↓
+TESTE PASSA?
+
+Criar uma matriz de cobertura documental, SEM criar testes.
+
+Identificar requisitos importantes que não possuem teste.
+
+============================================================
+16. AUDITORIA DE REGRESSÃO
+============================================================
+
+Verificar especialmente o impacto das fases recentes nas anteriores.
+
+F11
+F12
+F13
+F14
+F15
+
+Verificar:
+
+- Admin;
+- Professional;
+- Client;
+- autenticação;
+- AppLayout;
+- PrivateRoute;
+- AuthContext;
+- appointments;
+- permissões;
+- endpoints compartilhados.
+
+Se houver histórico Git/checkpoints:
+
+UTILIZE-OS APENAS PARA COMPARAÇÃO.
+
+NÃO faça:
+
+reset
+checkout
+restore
+revert
+cherry-pick
+merge
+commit
+
+============================================================
+17. AUDITORIA DA RESTAURAÇÃO DA FASE 15
+============================================================
+
+Como houve uma tentativa indevida de apagar a Fase 15 seguida de restauração, procure sinais de inconsistência.
+
+Comparar, quando possível:
+
+ESTADO DOCUMENTADO DA F15
+VS
+ESTADO ATUAL
+VS
+CHECKPOINT/GIT HISTÓRICO
+
+Procurar:
+
+- arquivo perdido;
+- arquivo duplicado;
+- arquivo restaurado parcialmente;
+- rota perdida;
+- hook perdido;
+- teste perdido;
+- alteração de API;
+- alteração de OpenAPI;
+- alteração de schema;
+- alteração de permissões;
+- código revertido;
+- código adicional não documentado.
+
+Não restaurar nada.
+
+Somente identificar.
+
+============================================================
+18. AUDITORIA DE DOCUMENTAÇÃO × CÓDIGO
+============================================================
+
+Esta é uma das partes MAIS IMPORTANTES.
+
+Para cada requisito documentado:
+
+ID
+REQUISITO
+DOCUMENTO
+FASE
+CÓDIGO
+TESTE
+STATUS
+
+Classificar:
+
+🟢 IMPLEMENTADO EXATAMENTE
+🟡 IMPLEMENTADO PARCIALMENTE
+🟠 IMPLEMENTADO DE FORMA DIFERENTE
+🔴 NÃO IMPLEMENTADO
+🔵 IMPLEMENTADO MAS NÃO DOCUMENTADO
+
+============================================================
+19. AUDITORIA INVERSA
+============================================================
+
+Agora faça o contrário.
+
+Partindo do código:
+
+Existe alguma funcionalidade implementada que NÃO esteja documentada?
+
+Existe algum endpoint não documentado?
+
+Existe alguma tela não documentada?
+
+Existe alguma regra de negócio não documentada?
+
+Existe alguma alteração de banco não documentada?
+
+Existe alguma permissão diferente da documentação?
+
+Liste tudo.
+
+============================================================
+20. AUDITORIA DE ESCOPO
+============================================================
+
+Identifique qualquer "scope creep".
+
+Ou seja:
+
+funcionalidade implementada antes da fase autorizada;
+
+funcionalidade implementada fora do AuthDoc;
+
+alteração de arquitetura não autorizada;
+
+alteração de banco não autorizada;
+
+alteração de API não autorizada;
+
+alteração de comportamento de fases anteriores.
+
+Não corrija.
+
+Apenas reporte.
+
+============================================================
+21. BACKLOG E FUTURO
+============================================================
+
+Compare o backlog futuro documentado com o código.
+
+Identifique funcionalidades futuras que foram implementadas prematuramente.
+
+Não implemente nenhuma delas.
+
+============================================================
+22. RESULTADO FINAL
+============================================================
+
+Entregue um relatório chamado:
+
+AUDITORIA GERAL DE INTEGRIDADE DA APLICAÇÃO
+
+Estrutura obrigatória:
+
+1. VEREDITO EXECUTIVO
+
+Escolher:
+
+🟢 PROJETO ÍNTEGRO
+🟡 PROJETO ÍNTEGRO COM PENDÊNCIAS
+🟠 PROJETO COM DIVERGÊNCIAS
+🔴 PROJETO NÃO CONFIÁVEL PARA CONTINUAR
+
+2. ESTADO DAS FASES
+
+Tabela completa.
+
+3. DOCUMENTOS ENCONTRADOS
+
+Tabela completa.
+
+4. DOCUMENTAÇÃO × CÓDIGO
+
+Matriz completa.
+
+5. FASE 15
+
+Auditoria completa.
+
+6. BANCO
+
+Auditoria completa.
+
+7. BACKEND/API
+
+Auditoria completa.
+
+8. FRONTEND
+
+Auditoria completa.
+
+9. AUTH/AUTORIZAÇÃO
+
+Auditoria completa.
+
+10. IDOR/OWNERSHIP
+
+Auditoria completa.
+
+11. OPENAPI/CODEGEN
+
+Auditoria completa.
+
+12. TESTES
+
+Resultado + cobertura documental.
+
+13. REGRESSÃO
+
+F1–F15.
+
+14. RESTAURAÇÃO DA F15
+
+Evidências encontradas.
+
+15. FUNCIONALIDADES NÃO DOCUMENTADAS
+
+Lista.
+
+16. FUNCIONALIDADES DOCUMENTADAS MAS AUSENTES
+
+Lista.
+
+17. SCOPE CREEP
+
+Lista.
+
+18. RISCOS
+
+🔴 CRÍTICO
+🟠 ALTO
+🟡 MÉDIO
+🟢 BAIXO
+
+19. PENDÊNCIAS
+
+Separar:
+
+- bloqueadoras;
+- importantes;
+- menores.
+
+20. RECOMENDAÇÃO
+
+Escolher exatamente uma:
+
+"PODE CONTINUAR O DESENVOLVIMENTO"
+
+ou
+
+"DEVE PARAR E CORRIGIR ANTES DE CONTINUAR"
+
+============================================================
+23. REGRA ABSOLUTA
+============================================================
+
+NÃO CORRIJA NADA.
+
+Se encontrar problema:
+
+NÃO RESOLVA.
+
+NÃO MODIFIQUE.
+
+NÃO RESTAURE.
+
+NÃO APAGUE.
+
+NÃO CRIE.
+
+Apenas documente.
+
+A próxima etapa somente será autorizada depois que eu analisar o relatório.
+
+============================================================
+24. CRITÉRIO DE CONCLUSÃO DA AUDITORIA
+============================================================
+
+A auditoria só será considerada concluída quando você tiver comparado:
+
+DOCUMENTAÇÃO
++
+AUTHDOCS
++
+PLANO DE FASES
++
+CÓDIGO
++
+BANCO
++
+API
++
+OPENAPI
++
+CODEGEN
++
+FRONTEND
++
+ROTAS
++
+PERMISSÕES
++
+TESTES
++
+HISTÓRICO/CHECKPOINTS, quando disponível
+
+e apresentado as divergências encontradas.
+
+NÃO quero apenas um resumo dizendo "tudo está funcionando".
+
+Quero uma auditoria baseada em evidências.
+
+Se não for possível verificar alguma coisa, escreva explicitamente:
+
+"⚠️ NÃO FOI POSSÍVEL VERIFICAR"
+
+e explique o motivo.
+
+INICIE AGORA A AUDITORIA SOMENTE-LEITURA.
