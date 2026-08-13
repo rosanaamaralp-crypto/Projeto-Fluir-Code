@@ -2,7 +2,9 @@
  * Rotas de appointments.
  *
  * RBAC:
- * - POST:  requireAuth + requireRole(CLIENT, ADMIN) — PROFESSIONAL não agenda
+ * - POST:  requireAuth + requireRole(CLIENT, ADMIN, PROFESSIONAL) — F19:
+ *          PROFESSIONAL agenda em nome de um cliente (professionalId forçado
+ *          ao próprio profissional no service; clientId obrigatório)
  * - GET /appointments e GET /appointments/:id: requireAuth (ownership no service)
  * - GET /appointments/:id/history: requireAuth (ownership no service)
  * - PATCH /appointments/:id: requireAuth (ownership e transições no service)
@@ -12,7 +14,7 @@
  */
 import { Router } from "express";
 import { requireAuth } from "../middlewares/require-auth.js";
-import { requireClient } from "../middlewares/require-role.js";
+import { requireRole, ROLES } from "../middlewares/require-role.js";
 import { validateParams, validateBody, validateQuery } from "../middlewares/validate.js";
 import { ParamsIdSchema } from "../validators/params.validator.js";
 import {
@@ -23,11 +25,11 @@ import { AppointmentsController } from "../controllers/appointments.controller.j
 
 const router = Router();
 
-/** POST /api/appointments — apenas CLIENT e ADMIN */
+/** POST /api/appointments — CLIENT, ADMIN e PROFESSIONAL (F19) */
 router.post(
   "/appointments",
   requireAuth,
-  requireClient,
+  requireRole([ROLES.ADMIN, ROLES.CLIENT, ROLES.PROFESSIONAL]),
   validateBody(CreateAppointmentSchema),
   AppointmentsController.create,
 );

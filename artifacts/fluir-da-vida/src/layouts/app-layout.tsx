@@ -51,6 +51,7 @@ const ADMIN_NAV: NavItem[] = [
 
 const PROFESSIONAL_NAV: NavItem[] = [
   { label: "Dashboard",       href: "/professional",                    icon: <LayoutDashboard className="h-4 w-4" /> },
+  { label: "Novo Agendamento", href: "/professional/book",              icon: <ClipboardList className="h-4 w-4" /> },
   { label: "Minha Agenda",    href: "/professional/schedule",           icon: <Calendar className="h-4 w-4" /> },
   { label: "Meus Clientes",   href: "/professional/clients",            icon: <Users className="h-4 w-4" /> },
   { label: "Disponibilidade", href: "/professional/availability",       icon: <Clock className="h-4 w-4" /> },

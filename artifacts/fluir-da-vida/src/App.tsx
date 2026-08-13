@@ -51,6 +51,7 @@ import ClientDashboard from "@/pages/client/dashboard";
 
 // Professional — carregamento lazy (F14)
 const ProfessionalSchedule = lazy(() => import("@/pages/professional/schedule"));
+const ProfessionalBook = lazy(() => import("@/pages/professional/book"));
 const ProfessionalAppointmentDetail = lazy(() => import("@/pages/professional/appointment-detail"));
 const ProfessionalClients = lazy(() => import("@/pages/professional/clients"));
 const ProfessionalClientDetail = lazy(() => import("@/pages/professional/client-detail"));
@@ -196,6 +197,13 @@ function Router() {
         </Route>
 
         {/* ── Professional (ordem: mais específicas primeiro) ──────────────── */}
+        <Route path="/professional/book">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalBook />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
         <Route path="/professional/schedule/:id">
           <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
             <Suspense fallback={<LoadingScreen />}>

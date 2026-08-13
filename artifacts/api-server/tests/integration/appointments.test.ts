@@ -17,7 +17,7 @@ import {
   type ConcurrencyExtras,
 } from "../helpers/seed.js";
 import { getDatabaseClient } from "@workspace/db";
-import { auditLogs, appointmentStatusHistory, users, professionals, addresses } from "@workspace/db";
+import { auditLogs, appointmentStatusHistory, users, professionals, addresses, services as servicesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const { db } = getDatabaseClient();
@@ -127,7 +127,46 @@ describe("POST /api/appointments", () => {
     expect(res.body.appointment.priceAtBooking).toBe("100.00");
   });
 
-  it("PROFESSIONAL não pode criar agendamento (403)", async () => {
+  // ── F19: PROFESSIONAL cria agendamento em nome do cliente ────────────────
+
+  it("F19: PROFESSIONAL cria agendamento IN_PERSON para um cliente (201) com maca", async () => {
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: ids.professionalId,
+        clientId: ids.clientId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.appointment.clientId).toBe(ids.clientId);
+    expect(res.body.appointment.professionalId).toBe(ids.professionalId);
+    expect(res.body.appointment.resourceId).not.toBeNull();
+    expect(res.body.appointment.status).toBe("CONFIRMED");
+  });
+
+  it("F19: PROFESSIONAL não consegue agendar em nome de OUTRO professionalId (valor é substituído pelo da sessão)", async () => {
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: concExtras.prof2Id, // tentativa de spoof
+        clientId: ids.clientId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+
+    // Backend ignora o professionalId enviado e usa o da sessão
+    expect(res.status).toBe(201);
+    expect(res.body.appointment.professionalId).toBe(ids.professionalId);
+    expect(res.body.appointment.professionalId).not.toBe(concExtras.prof2Id);
+  });
+
+  it("F19: PROFESSIONAL sem clientId retorna 400", async () => {
     const res = await request
       .post("/api/appointments")
       .set("Cookie", profCookie)
@@ -138,7 +177,128 @@ describe("POST /api/appointments", () => {
         modality: "IN_PERSON",
       });
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
+  });
+
+  it("F19: PROFESSIONAL com cliente inexistente retorna 404", async () => {
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: ids.professionalId,
+        clientId: "00000000-0000-4000-8000-000000000000",
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("F19: PROFESSIONAL não pode agendar para cliente sem relacionamento (404)", async () => {
+    // client2 nunca teve atendimento com o profissional principal
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: ids.professionalId,
+        clientId: concExtras.client2Id,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("F19: PROFESSIONAL não pode usar serviço não vinculado a ele (400)", async () => {
+    // Serviço temporário ativo, sem vínculo com o profissional principal
+    const [svc] = await db
+      .insert(servicesTable)
+      .values({
+        name: "Serviço F19 Sem Vínculo",
+        durationMinutes: 60,
+        price: "80.00",
+        allowedModalities: "IN_PERSON",
+        status: "ACTIVE",
+      })
+      .returning({ id: servicesTable.id });
+
+    try {
+      const res = await request
+        .post("/api/appointments")
+        .set("Cookie", profCookie)
+        .send({
+          professionalId: ids.professionalId,
+          clientId: ids.clientId,
+          serviceId: svc!.id,
+          startDatetime: uniqueSlot(),
+          modality: "IN_PERSON",
+        });
+
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toContain("não oferece");
+    } finally {
+      await db.delete(servicesTable).where(eq(servicesTable.id, svc!.id));
+    }
+  });
+
+  it("F19: PROFESSIONAL HOME_CARE rejeita endereço que não pertence ao cliente (403)", async () => {
+    // Cria um segundo endereço pertencente ao client2 e tenta usá-lo em um
+    // agendamento para o cliente principal (relacionado ao profissional).
+    const [addr2] = await db
+      .insert(addresses)
+      .values({
+        clientId: concExtras.client2Id,
+        street: "Rua F19",
+        number: "10",
+        neighborhood: "Centro",
+        city: "São Paulo",
+        state: "SP",
+        postalCode: "01000-000",
+      })
+      .returning({ id: addresses.id });
+
+    try {
+      const res = await request
+        .post("/api/appointments")
+        .set("Cookie", profCookie)
+        .send({
+          professionalId: ids.professionalId,
+          clientId: ids.clientId,
+          serviceId: extras.serviceHomeCareId,
+          startDatetime: uniqueSlot(),
+          modality: "HOME_CARE",
+          addressId: addr2!.id,
+        });
+
+      expect(res.status).toBe(403);
+    } finally {
+      await db.delete(addresses).where(eq(addresses.id, addr2!.id));
+    }
+  });
+
+  it("F19: PROFESSIONAL cria HOME_CARE com endereço do próprio cliente (201)", async () => {
+    const addrRes = await request
+      .get(`/api/clients/${ids.clientId}/addresses`)
+      .set("Cookie", adminCookie);
+    const addressId = addrRes.body.address?.id;
+
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: ids.professionalId,
+        clientId: ids.clientId,
+        serviceId: extras.serviceHomeCareId,
+        startDatetime: uniqueSlot(),
+        modality: "HOME_CARE",
+        addressId,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.appointment.addressId).toBe(addressId);
+    expect(res.body.appointment.resourceId).toBeNull();
   });
 
   it("sem autenticação retorna 401", async () => {

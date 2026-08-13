@@ -353,6 +353,18 @@ export const AppointmentsService = {
   ): Promise<AppointmentRow> {
     const { input, sessionUserId, sessionRoleId, ipAddress } = params;
     return await db.transaction(async (tx) => {
+      // 0. Resolver professional efetivo (F19 — segurança):
+      // PROFESSIONAL nunca escolhe o professionalId — é sempre o da própria
+      // sessão, ignorando/substituindo qualquer valor enviado pelo frontend.
+      let professionalId = input.professionalId;
+      if (sessionRoleId === ROLES.PROFESSIONAL) {
+        const own = await ProfessionalsRepository.findByUserId(tx, sessionUserId);
+        if (!own) {
+          throw new ValidationError("Usuário não possui perfil de profissional.");
+        }
+        professionalId = own.id;
+      }
+
       // 1. Resolver client
       let clientId: string;
       if (sessionRoleId === ROLES.CLIENT) {
@@ -365,20 +377,38 @@ export const AppointmentsService = {
         }
         clientId = client.id;
       } else {
-        // ADMIN
+        // ADMIN ou PROFESSIONAL (F19): clientId obrigatório no payload
         if (!input.clientId) {
-          throw new ValidationError("clientId é obrigatório quando o solicitante é ADMIN.");
+          throw new ValidationError(
+            "clientId é obrigatório quando o solicitante é ADMIN ou PROFESSIONAL.",
+          );
         }
-        const client = await ClientsRepository.findById(tx, input.clientId);
-        if (!client) throw new NotFoundError("Cliente não encontrado.");
-        if (client.status !== "ACTIVE") {
-          throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
+        if (sessionRoleId === ROLES.PROFESSIONAL) {
+          // F19 — ownership: PROFESSIONAL só agenda para os PRÓPRIOS clientes
+          // (relacionamento real via atendimentos — mesmo predicado IDOR-safe
+          // usado em GET /me/professional/clients/:clientId). 404 se não houver
+          // relacionamento, sem vazar existência do cliente.
+          const client = await ClientsRepository.findByIdForProfessional(
+            tx, input.clientId, professionalId,
+          );
+          if (!client) throw new NotFoundError("Cliente não encontrado.");
+          if (client.status !== "ACTIVE") {
+            throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
+          }
+          clientId = client.id;
+        } else {
+          // ADMIN
+          const client = await ClientsRepository.findById(tx, input.clientId);
+          if (!client) throw new NotFoundError("Cliente não encontrado.");
+          if (client.status !== "ACTIVE") {
+            throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
+          }
+          clientId = client.id;
         }
-        clientId = client.id;
       }
 
       // 2. Professional
-      const professional = await ProfessionalsRepository.findById(tx, input.professionalId);
+      const professional = await ProfessionalsRepository.findById(tx, professionalId);
       if (!professional) throw new NotFoundError("Profissional não encontrado.");
       if (professional.status !== "ACTIVE") {
         throw new ValidationError("Profissional inativo.");
@@ -392,7 +422,7 @@ export const AppointmentsService = {
       }
 
       // 4. Professional-service link
-      const ps = await ProfessionalServicesRepository.findOne(tx, input.professionalId, input.serviceId);
+      const ps = await ProfessionalServicesRepository.findOne(tx, professionalId, input.serviceId);
       if (!ps || !ps.active) {
         throw new ValidationError("Este profissional não oferece este serviço.");
       }
@@ -435,11 +465,11 @@ export const AppointmentsService = {
       }
 
       // 9. Disponibilidade do profissional
-      await validateInAvailabilityWindow(tx, input.professionalId, start, end);
+      await validateInAvailabilityWindow(tx, professionalId, start, end);
 
       // 10. Blocked periods
       const blocked = await BlockedPeriodsRepository.findActiveOverlapping(
-        tx, input.professionalId, start, end,
+        tx, professionalId, start, end,
       );
       if (blocked.length > 0) {
         throw new ConflictError("Profissional bloqueado neste horário.");
@@ -455,7 +485,7 @@ export const AppointmentsService = {
 
       // 12. Conflito do profissional
       const profConflicts = await AppointmentsRepository.findActiveByProfessionalInRange(
-        tx, input.professionalId, start, end,
+        tx, professionalId, start, end,
       );
       if (profConflicts.some((a) => overlaps(start, end, a.startDatetime, a.endDatetime))) {
         throw new ConflictError("Profissional já possui agendamento neste horário.");
@@ -488,7 +518,7 @@ export const AppointmentsService = {
       // 15. Inserir appointment
       const appointment = await AppointmentsRepository.create(tx, {
         clientId,
-        professionalId: input.professionalId,
+        professionalId,
         serviceId: input.serviceId,
         modality: input.modality,
         resourceId: resolvedResourceId,
@@ -518,7 +548,7 @@ export const AppointmentsService = {
         newData: {
           appointmentId: appointment.id,
           clientId,
-          professionalId: input.professionalId,
+          professionalId,
           serviceId: input.serviceId,
           modality: input.modality,
           startDatetime: start.toISOString(),

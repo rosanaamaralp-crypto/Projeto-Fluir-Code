@@ -1,0 +1,315 @@
+# F19 — AGENDAMENTO PELO PROFISSIONAL EM NOME DO CLIENTE
+
+## OBJETIVO
+
+Implementar exclusivamente a funcionalidade que permite ao usuário PROFESSIONAL criar um agendamento em nome de um CLIENTE.
+
+Este requisito já existe na documentação do projeto e foi confirmado como ausente no código atual.
+
+O sistema deve continuar permitindo que:
+
+- CLIENT crie seu próprio agendamento;
+- ADMIN crie agendamentos conforme as permissões existentes;
+- PROFESSIONAL crie agendamentos para seus próprios clientes.
+
+## ESCOPO AUTORIZADO
+
+### 1. BACKEND
+
+Alterar o POST /api/appointments para permitir também o perfil PROFESSIONAL.
+
+Regra de segurança obrigatória:
+
+Quando o usuário autenticado for PROFESSIONAL:
+
+- `professionalId` NÃO deve ser livremente escolhido pelo cliente da API;
+- o backend deve determinar o profissional a partir da sessão/autenticação;
+- o profissional só pode criar agendamento para SI MESMO;
+- `clientId` será informado para identificar o cliente atendido.
+
+Não confiar no `professionalId` enviado pelo frontend.
+
+Se o contrato atual exigir `professionalId`, adaptar da forma mínima e segura possível, preferencialmente ignorando/substituindo esse valor para PROFESSIONAL pelo ID do profissional autenticado.
+
+### 2. CLIENTE
+
+O PROFESSIONAL poderá selecionar um cliente existente.
+
+NÃO implementar cadastro de novo cliente durante o agendamento nesta fase.
+
+O cadastro de novos clientes continua sendo responsabilidade do ADMIN.
+
+Se não houver clientes cadastrados, a interface deve informar claramente que é necessário cadastrar o cliente antes de realizar o agendamento.
+
+### 3. SERVIÇOS
+
+O PROFESSIONAL deve visualizar somente serviços que estejam vinculados a ele.
+
+Reutilizar a vinculação de serviços já existente.
+
+Não permitir que o profissional agende um serviço que não esteja vinculado a ele.
+
+Essa validação deve existir no backend, não somente no frontend.
+
+### 4. MODALIDADE
+
+Preservar integralmente as regras existentes:
+
+- IN_PERSON;
+- HOME_CARE.
+
+Para IN_PERSON:
+
+- utilizar o mecanismo existente de seleção de maca;
+- preservar EXCLUDE constraint;
+- não permitir double-booking.
+
+Para HOME_CARE:
+
+- selecionar/utilizar endereço pertencente ao CLIENTE;
+- preservar todas as validações existentes.
+
+Não alterar as regras atuais de agendamento.
+
+### 5. DISPONIBILIDADE
+
+O agendamento criado pelo PROFESSIONAL deve respeitar:
+
+- disponibilidade do próprio profissional;
+- bloqueios;
+- conflitos de cliente;
+- conflitos de profissional;
+- conflitos de maca;
+- duração do serviço;
+- demais regras existentes.
+
+Não duplicar regras já existentes.
+
+Reutilizar o service/repository existente.
+
+### 6. FRONTEND PROFESSIONAL
+
+Adicionar uma ação claramente identificada:
+
+**Novo agendamento**
+
+Preferencialmente na área de:
+
+- Minha Agenda;
+- ou Dashboard;
+- ou menu do PROFESSIONAL,
+
+seguindo o padrão visual já existente.
+
+Criar o fluxo utilizando o máximo possível do wizard existente do CLIENT.
+
+Fluxo desejado:
+
+1. Selecionar CLIENTE;
+2. Selecionar SERVIÇO;
+3. Selecionar MODALIDADE;
+4. Selecionar DATA;
+5. Selecionar HORÁRIO disponível;
+6. Se presencial, selecionar/reservar MACA conforme mecanismo existente;
+7. Se home care, selecionar ENDEREÇO do cliente;
+8. Exibir resumo;
+9. Confirmar;
+10. Exibir sucesso.
+
+O profissional NÃO precisa selecionar outro profissional.
+
+O profissional autenticado será automaticamente o profissional do atendimento.
+
+### 7. REUTILIZAÇÃO
+
+Antes de criar componentes novos, localizar e reutilizar:
+
+- wizard existente do CLIENT;
+- useListServices;
+- useListProfessionals, somente se necessário;
+- useListSlots;
+- useCreateAppointment;
+- hooks de clientes;
+- hooks de endereços;
+- componentes de formulário;
+- componentes de feedback;
+- componentes de loading/empty/error já existentes.
+
+Evitar duplicação de código.
+
+### 8. OPENAPI / CODEGEN
+
+A alteração de OpenAPI/codegen está autorizada SOMENTE se for realmente necessária para refletir corretamente a nova permissão/comportamento.
+
+Se for necessário:
+
+1. fazer a menor alteração possível;
+2. regenerar apenas o necessário;
+3. não alterar endpoints não relacionados;
+4. não fazer limpeza geral da OpenAPI.
+
+Se o contrato atual já suportar os campos necessários, não modificar OpenAPI apenas por documentação.
+
+### 9. BANCO
+
+NÃO alterar schema.
+
+NÃO criar migration.
+
+NÃO criar tabelas.
+
+NÃO criar índices.
+
+NÃO alterar constraints.
+
+O banco existente já suporta essa funcionalidade.
+
+### 10. SEGURANÇA
+
+Obrigatório testar:
+
+- CLIENT continua podendo criar apenas para si;
+- ADMIN mantém comportamento atual;
+- PROFESSIONAL só consegue criar para si próprio;
+- PROFESSIONAL não consegue criar appointment usando outro `professionalId`;
+- PROFESSIONAL não consegue agendar cliente inexistente;
+- PROFESSIONAL não consegue usar serviço não vinculado a ele;
+- ownership de endereço HOME_CARE continua protegido;
+- regras de conflito continuam funcionando.
+
+Não enfraquecer nenhuma regra de RBAC/ownership existente.
+
+### 11. TESTES
+
+Adicionar testes focados somente nesta funcionalidade.
+
+Obrigatórios:
+
+1. PROFESSIONAL cria appointment para CLIENT → sucesso;
+2. PROFESSIONAL tenta criar appointment para outro professionalId → rejeitado;
+3. PROFESSIONAL tenta usar serviço não vinculado → rejeitado;
+4. PROFESSIONAL usa cliente existente → sucesso;
+5. HOME_CARE valida endereço do cliente;
+6. IN_PERSON mantém proteção da maca;
+7. CLIENT continua funcionando;
+8. ADMIN continua funcionando.
+
+Executar também:
+
+- TypeScript backend;
+- TypeScript frontend;
+- testes diretamente relacionados;
+- suíte existente de regressão.
+
+Não instalar framework novo.
+
+Não criar suíte E2E completa.
+
+### 12. REGRA DE ESCOPO
+
+NÃO alterar:
+
+- banco/schema/migrations;
+- autenticação;
+- sessão;
+- RBAC existente, exceto a autorização específica do POST /appointments para PROFESSIONAL;
+- ownership existente;
+- motor de agendamento além do mínimo necessário;
+- disponibilidade;
+- bloqueios;
+- notificações;
+- relatórios;
+- auditoria;
+- cadastro de clientes;
+- Admin;
+- fluxo de booking do CLIENT, salvo correção de regressão diretamente causada pela alteração;
+- landing;
+- responsividade geral;
+- performance;
+- paginação;
+- funcionalidades pós-MVP.
+
+Não fazer refatoração arquitetural.
+
+Não fazer melhorias gerais.
+
+Não procurar outros problemas.
+
+### REGRA DE PARADA
+
+Se durante a implementação surgir necessidade de:
+
+- migration;
+- alteração de schema;
+- nova tabela;
+- alteração de constraint;
+- alteração estrutural de autenticação;
+- alteração de RBAC além do POST /appointments;
+- alteração não prevista no frontend;
+- mudança que possa afetar produção de forma ampla;
+
+PARAR e informar antes de executar.
+
+Não improvisar.
+
+### CRITÉRIOS DE ACEITE
+
+F19 será concluída somente quando:
+
+- PROFESSIONAL visualizar "Novo agendamento";
+- conseguir selecionar um cliente existente;
+- conseguir selecionar serviço vinculado;
+- conseguir selecionar data/horário;
+- conseguir escolher IN_PERSON ou HOME_CARE conforme regras;
+- conseguir reservar maca quando aplicável;
+- conseguir utilizar endereço do cliente no HOME_CARE;
+- conseguir confirmar o agendamento;
+- appointment ficar vinculado ao profissional autenticado;
+- cliente visualizar o agendamento;
+- profissional visualizar o agendamento;
+- regras de conflito continuarem funcionando;
+- CLIENT continuar funcionando;
+- ADMIN continuar funcionando;
+- TypeScript = 0 erros;
+- testes novos verdes;
+- regressão verde;
+- nenhuma alteração de banco;
+- nenhuma alteração fora do escopo.
+
+### REGRA DE CUSTO
+
+Esta deve ser uma execução concentrada.
+
+Antes de alterar qualquer arquivo:
+
+1. localizar os arquivos necessários;
+2. reutilizar o máximo possível do wizard CLIENT;
+3. implementar somente o necessário;
+4. testar;
+5. corrigir somente falhas diretamente relacionadas;
+6. executar regressão final.
+
+Não realizar nova auditoria geral do projeto.
+
+Não reexaminar F1–F18.
+
+Não procurar melhorias adicionais.
+
+Não criar documentação extensa.
+
+### RELATÓRIO FINAL
+
+Ao terminar informar somente:
+
+1. arquivos alterados;
+2. resumo das alterações;
+3. endpoints alterados;
+4. testes antes/depois;
+5. TypeScript;
+6. testes de segurança/RBAC;
+7. regressão;
+8. git status;
+9. commit/hash;
+10. veredito F19.
+
+NÃO iniciar outra funcionalidade após concluir.
