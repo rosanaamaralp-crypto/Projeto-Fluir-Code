@@ -1,0 +1,87 @@
+AUTORIZAÇÃO FORMAL — FASE 14 — T-022
+
+Autorizo SOMENTE a implementação da Decisão B:
+
+T-022 — corrigir a exibição de Cliente, Serviço, Endereço e Recurso/Maca para apresentar dados legíveis/reais em vez de UUIDs.
+
+ESCOPO AUTORIZADO:
+
+1. Em /professional/schedule/:id:
+   - Cliente:
+     usar useGetMyProfessionalClient(apt.clientId)
+     exibir o nome real do cliente.
+   - Serviço:
+     usar useListServices()
+     resolver apt.serviceId para o nome do serviço.
+   - Recurso/Maca:
+     usar useListResources()
+     resolver apt.resourceId para o nome do recurso quando modalidade = IN_PERSON.
+   - Endereço:
+     quando modalidade = HOME_CARE, usar o endereço retornado por
+     useGetMyProfessionalClient(apt.clientId).
+   - Manter todos os demais campos e comportamentos existentes.
+
+2. Estados:
+   - preservar LOADING;
+   - preservar ERROR;
+   - preservar EMPTY;
+   - preservar SUCCESS;
+   - tratar individualmente eventual ausência de dados relacionados;
+   - não exibir UUID truncado como solução final quando existir dado legível disponível.
+
+3. Segurança:
+   - NÃO aceitar professionalId vindo do frontend;
+   - NÃO alterar regras de ownership;
+   - NÃO criar acesso adicional a clientes;
+   - manter o backend como autoridade;
+   - continuar usando somente o cliente relacionado ao atendimento atual.
+
+4. Limites desta autorização:
+   - NÃO implementar visualização semanal;
+   - NÃO implementar visualização mensal;
+   - NÃO implementar ação "Alterar";
+   - NÃO alterar PATCH /appointments;
+   - NÃO criar novos endpoints;
+   - NÃO alterar backend;
+   - NÃO alterar OpenAPI;
+   - NÃO executar alterações de banco;
+   - NÃO criar migration;
+   - NÃO instalar dependências novas;
+   - NÃO modificar outras telas além do estritamente necessário para T-022.
+
+5. Compatibilidade:
+   - preservar Iniciar;
+   - preservar Concluir;
+   - preservar Ausência;
+   - preservar Cancelar;
+   - preservar histórico;
+   - preservar permissões;
+   - preservar F1–F13;
+   - preservar T-023, T-024, T-025 e T-026 já aprovados.
+
+6. Validação obrigatória após implementação:
+   - typecheck frontend;
+   - typecheck backend, mesmo sem alteração backend;
+   - testes backend;
+   - build real do frontend;
+   - verificar que nenhuma migration foi criada;
+   - verificar git diff;
+   - confirmar exatamente quais arquivos foram alterados.
+
+REGRA IMPORTANTE:
+Se durante a implementação descobrir que algum dado necessário NÃO pode ser obtido pelos hooks/endpoints já existentes, NÃO crie workaround e NÃO altere backend.
+
+Pare e informe o bloqueio.
+
+Ao finalizar, entregue um RELATÓRIO DE IMPLEMENTAÇÃO contendo:
+- arquivos modificados;
+- comportamento implementado;
+- hooks utilizados;
+- validações executadas;
+- resultado dos testes;
+- resultado do typecheck;
+- resultado do build;
+- migrations;
+- impacto sobre F1–F13;
+- git status;
+- confirmação explícita de que Semana/Mês e Alterar NÃO foram implementados.

@@ -5,6 +5,12 @@
  * Doc 16 §42-44: status transitions via PATCH /appointments/:id.
  * RN-083: validação definitiva no backend; frontend apenas dispara a requisição.
  *
+ * Dados legíveis (Decisão B — Autorização Formal T-022):
+ *   - clientName:  useGetMyProfessionalClient(apt.clientId) → client.name
+ *   - serviceName: useListServices()                        → serviceMap[apt.serviceId]
+ *   - resourceName: useListResources()                     → resourceMap[apt.resourceId]
+ *   - address:     useGetMyProfessionalClient(apt.clientId) → address (Home Care)
+ *
  * Transições permitidas:
  *   CONFIRMED  → IN_PROGRESS  (Iniciar)
  *   IN_PROGRESS → COMPLETED   (Concluir)
@@ -17,6 +23,9 @@ import {
   useGetAppointment,
   useGetAppointmentHistory,
   usePatchAppointment,
+  useListServices,
+  useListResources,
+  useGetMyProfessionalClient,
 } from "@workspace/api-client-react";
 import { AppLayout } from "@/layouts/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +71,7 @@ export default function ProfessionalAppointmentDetail() {
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
+  // ── Dados do atendimento ──────────────────────────────────────────────────
   const {
     data: aptData,
     isLoading,
@@ -75,6 +85,32 @@ export default function ProfessionalAppointmentDetail() {
     isLoading: histLoading,
   } = useGetAppointmentHistory(id!);
 
+  const apt = aptData?.appointment;
+
+  // ── Dados legíveis (Decisão B) ────────────────────────────────────────────
+  // Chamadas independentes; executadas em paralelo pelo React Query.
+  // Habilitadas somente após o appointment carregar (enabled: !!apt?.clientId).
+
+  const { data: clientData } = useGetMyProfessionalClient(
+    apt?.clientId ?? "",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: !!apt?.clientId } } as any,
+  );
+
+  const { data: svcsData } = useListServices();
+  const { data: resourcesData } = useListResources();
+
+  // Mapas de resolução ID → nome
+  const serviceMap: Record<string, string> = {};
+  (svcsData?.services ?? []).forEach((s) => { serviceMap[s.id] = s.name; });
+
+  const resourceMap: Record<string, string> = {};
+  (resourcesData?.resources ?? []).forEach((r) => { resourceMap[r.id] = r.name; });
+
+  const clientName = clientData?.client?.name ?? null;
+  const clientAddress = clientData?.address ?? null;
+
+  // ── Mutação de status ─────────────────────────────────────────────────────
   const patchMutation = usePatchAppointment({
     mutation: {
       onSuccess: () => {
@@ -97,8 +133,6 @@ export default function ProfessionalAppointmentDetail() {
       data: { status, ...(reason ? { reason } : {}) },
     });
   }
-
-  const apt = aptData?.appointment;
 
   return (
     <AppLayout>
@@ -155,13 +189,17 @@ export default function ProfessionalAppointmentDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                {/* Horário */}
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   <span>
-                    {formatDatetime(apt.startDatetime)} — {formatDatetime(apt.endDatetime)}
+                    {formatDatetime(apt.startDatetime as unknown as string)}
+                    {" — "}
+                    {formatDatetime(apt.endDatetime as unknown as string)}
                   </span>
                 </div>
 
+                {/* Modalidade */}
                 <div className="flex items-center gap-2 text-muted-foreground">
                   {apt.modality === "HOME_CARE" ? (
                     <Home className="h-4 w-4" />
@@ -173,29 +211,62 @@ export default function ProfessionalAppointmentDetail() {
 
                 <Separator />
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  <span className="text-muted-foreground">Cliente ID</span>
-                  <span className="font-mono text-xs truncate">{apt.clientId}</span>
+                {/* Dados legíveis — Decisão B */}
+                <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+                  {/* Cliente */}
+                  <span className="text-muted-foreground">Cliente</span>
+                  <span className="col-span-2 font-medium">
+                    {clientData === undefined
+                      ? <span className="text-muted-foreground italic">carregando…</span>
+                      : (clientName ?? "Nome não informado")}
+                  </span>
 
-                  <span className="text-muted-foreground">Serviço ID</span>
-                  <span className="font-mono text-xs truncate">{apt.serviceId}</span>
+                  {/* Serviço */}
+                  <span className="text-muted-foreground">Serviço</span>
+                  <span className="col-span-2">
+                    {svcsData === undefined
+                      ? <span className="text-muted-foreground italic">carregando…</span>
+                      : (serviceMap[apt.serviceId] ?? "Serviço não encontrado")}
+                  </span>
 
-                  {apt.resourceId && (
+                  {/* Recurso / Maca — somente presencial */}
+                  {apt.modality === "IN_PERSON" && apt.resourceId && (
                     <>
-                      <span className="text-muted-foreground">Recurso ID</span>
-                      <span className="font-mono text-xs truncate">{apt.resourceId}</span>
+                      <span className="text-muted-foreground">Maca</span>
+                      <span className="col-span-2">
+                        {resourcesData === undefined
+                          ? <span className="text-muted-foreground italic">carregando…</span>
+                          : (resourceMap[apt.resourceId] ?? "Maca não encontrada")}
+                      </span>
                     </>
                   )}
 
-                  {apt.addressId && (
+                  {/* Endereço — somente Home Care */}
+                  {apt.modality === "HOME_CARE" && (
                     <>
-                      <span className="text-muted-foreground">Endereço ID</span>
-                      <span className="font-mono text-xs truncate">{apt.addressId}</span>
+                      <span className="text-muted-foreground">Endereço</span>
+                      <span className="col-span-2">
+                        {clientData === undefined ? (
+                          <span className="text-muted-foreground italic">carregando…</span>
+                        ) : clientAddress ? (
+                          <span>
+                            {clientAddress.street}, {clientAddress.number}
+                            {clientAddress.complement ? ` — ${clientAddress.complement}` : ""}
+                            {" · "}
+                            {clientAddress.neighborhood}, {clientAddress.city}
+                            {" — "}
+                            {clientAddress.state}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Endereço não cadastrado</span>
+                        )}
+                      </span>
                     </>
                   )}
 
+                  {/* Preço */}
                   <span className="text-muted-foreground">Valor</span>
-                  <span>R$ {apt.priceAtBooking}</span>
+                  <span className="col-span-2">R$ {apt.priceAtBooking}</span>
                 </div>
 
                 {apt.notes && (
@@ -327,7 +398,7 @@ export default function ProfessionalAppointmentDetail() {
                           )}
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                          {new Date(h.changedAt).toLocaleString("pt-BR", {
+                          {new Date(h.changedAt as unknown as string).toLocaleString("pt-BR", {
                             day: "2-digit", month: "2-digit",
                             hour: "2-digit", minute: "2-digit",
                           })}
