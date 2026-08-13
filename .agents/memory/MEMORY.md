@@ -11,4 +11,5 @@
 - [F16 — QA de concorrência](f16-qa.md) — auto-seleção de maca não é concorrência-segura; seed Maca 01–05 ativo no DB de testes; slots por arquivo
 - [F17 — Polimento](f17-polimento.md) — T-003 token stateless sem migration (update condicional = uso único); advisory lock na auto-seleção de maca; Caso C exige resourceId explícito
 - [F19 — Agendamento pelo profissional](f19-professional-booking.md) — professionalId sempre da sessão; cliente só com relacionamento (findByIdForProfessional, 404)
+- [F20 — Cadastro de cliente pelo profissional](f20-professional-client-creation.md) — ownership estendido via audit CLIENT_CREATED; e-mails únicos nos testes
 - [Fase 15 — Módulo Cliente](fase15-client.md) — D5 backend expandido (name/phone); changedAt em historyRow; enabled as any; wizard /client/book; 500/500 testes
