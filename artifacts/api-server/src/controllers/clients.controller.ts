@@ -136,25 +136,41 @@ export const ClientsController = {
       const client = await ClientsRepository.findById(db, id);
       if (!client) throw new NotFoundError("Cliente não encontrado.");
 
-      const updateData: Record<string, unknown> = {};
-      if (body.birthDate !== undefined) updateData["birthDate"] = body.birthDate;
-      if (body.notes !== undefined) updateData["notes"] = body.notes;
-      if ("status" in body && body.status !== undefined) updateData["status"] = body.status;
+      // Campos da tabela clients
+      const clientUpdateData: Record<string, unknown> = {};
+      if (body.birthDate !== undefined) clientUpdateData["birthDate"] = body.birthDate;
+      if (body.notes !== undefined) clientUpdateData["notes"] = body.notes;
+      if ("status" in body && body.status !== undefined) clientUpdateData["status"] = body.status;
 
-      if (Object.keys(updateData).length === 0) {
+      // Campos da tabela users (F15 D5 — editáveis pelo próprio CLIENT: name, phone)
+      const userUpdateData: Partial<{ name: string; phone: string | null }> = {};
+      if ("name" in body && body.name !== undefined) userUpdateData.name = body.name;
+      if ("phone" in body && body.phone !== undefined) userUpdateData.phone = body.phone;
+
+      const nothingToUpdate =
+        Object.keys(clientUpdateData).length === 0 &&
+        Object.keys(userUpdateData).length === 0;
+
+      if (nothingToUpdate) {
         res.json({ client });
         return;
       }
 
       const updated = await db.transaction(async (tx) => {
-        const updated = await ClientsRepository.update(tx, id, updateData);
+        if (Object.keys(userUpdateData).length > 0) {
+          await UsersRepository.update(tx, client.userId, userUpdateData);
+        }
+        let updated = client;
+        if (Object.keys(clientUpdateData).length > 0) {
+          updated = await ClientsRepository.update(tx, id, clientUpdateData) ?? client;
+        }
         await AuditLogsRepository.create(tx, {
           userId: session.userId,
           action: "CLIENT_UPDATED",
           entityType: "clients",
           entityId: id,
           oldData: client,
-          newData: updated,
+          newData: { ...updated, ...userUpdateData },
           ipAddress: getClientIp(req),
         });
         return updated;

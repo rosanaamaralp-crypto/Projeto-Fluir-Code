@@ -171,6 +171,8 @@ export interface CreateClientResponse {
 }
 
 export interface UpdateClientRequest {
+  name?: string | null;
+  phone?: string | null;
   birthDate?: string | null;
   notes?: string | null;
   status?: string;

@@ -73,6 +73,14 @@ const AdminAudit = lazy(() => import("@/pages/admin/audit"));
 const AdminSettings = lazy(() => import("@/pages/admin/settings"));
 const AdminNotifications = lazy(() => import("@/pages/admin/notifications"));
 
+// Client — carregamento lazy (F15)
+const ClientBook = lazy(() => import("@/pages/client/book"));
+const ClientAppointments = lazy(() => import("@/pages/client/appointments"));
+const ClientAppointmentDetail = lazy(() => import("@/pages/client/appointment-detail"));
+const ClientAddresses = lazy(() => import("@/pages/client/addresses"));
+const ClientProfile = lazy(() => import("@/pages/client/profile"));
+const ClientNotifications = lazy(() => import("@/pages/client/notifications"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -240,7 +248,49 @@ function Router() {
           </PrivateRoute>
         </Route>
 
-        {/* ── Client ───────────────────────────────────────────────────────── */}
+        {/* ── Client (F15 — ordem importa: mais específicas primeiro) ─────── */}
+        <Route path="/client/book">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientBook />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/client/appointments/:id">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientAppointmentDetail />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/client/appointments">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientAppointments />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/client/addresses">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientAddresses />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/client/profile">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientProfile />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/client/notifications">
+          <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ClientNotifications />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
         <Route path="/client">
           <PrivateRoute allowedRoles={[ROLES.CLIENT]}>
             <ClientDashboard />

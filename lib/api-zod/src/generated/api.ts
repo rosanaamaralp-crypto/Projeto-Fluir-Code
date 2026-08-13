@@ -236,6 +236,8 @@ export const UpdateClientParams = zod.object({
 })
 
 export const UpdateClientBody = zod.object({
+  "name": zod.string().nullish(),
+  "phone": zod.string().nullish(),
   "birthDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "status": zod.string().optional()

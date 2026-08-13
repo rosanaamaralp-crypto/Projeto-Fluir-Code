@@ -1,13 +1,11 @@
 /**
- * OBS-3 corrigido: UpdateClientSchemaSelf não contém mais `name` nem `phone`.
+ * F15 D5: UpdateClientSchemaSelf agora inclui name e phone.
  *
- * Razão: a tabela `clients` não possui colunas name/phone — elas existem em `users`.
- * Aceitar name/phone no schema e não aplicá-los seria um contrato enganoso.
+ * Autorização formal F15: CLIENT pode editar nome, telefone e data de nascimento.
+ * name e phone pertencem à tabela `users`; o controller atualiza ambas as tabelas
+ * (clients + users) na mesma transação.
  *
- * Se no futuro um CLIENT precisar atualizar name/phone, isso deve ser feito por
- * um endpoint dedicado que atualiza a tabela `users`.
- *
- * UpdateClientSchemaSelf: campos que o próprio CLIENT pode alterar (birthDate, notes).
+ * UpdateClientSchemaSelf: campos que o próprio CLIENT pode alterar.
  * UpdateClientSchemaAdmin: todos os campos, inclusive status.
  */
 import { z } from "zod";
@@ -27,10 +25,13 @@ export const CreateClientSchema = z.object({
 });
 
 /**
- * Campos que o próprio CLIENT pode alterar — sem status, sem name, sem phone.
- * Somente campos que existem na tabela `clients`.
+ * Campos que o próprio CLIENT pode alterar.
+ * name e phone existem em `users`; birthDate e notes em `clients`.
+ * O controller atualiza ambas as tabelas na mesma transação (F15 D5).
  */
 export const UpdateClientSchemaSelf = z.object({
+  name: z.string().min(2).max(255).optional(),
+  phone: z.string().max(20).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().max(2000).optional(),
 });

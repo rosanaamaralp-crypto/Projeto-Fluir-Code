@@ -61,12 +61,12 @@ const PROFESSIONAL_NAV: NavItem[] = [
 
 const CLIENT_NAV: NavItem[] = [
   { label: "Início",              href: "/client",                icon: <LayoutDashboard className="h-4 w-4" /> },
-  { label: "Novo Agendamento",    href: "/client/new",            icon: <ClipboardList className="h-4 w-4" /> },
+  { label: "Novo Agendamento",    href: "/client/book",           icon: <ClipboardList className="h-4 w-4" /> },
   { label: "Meus Agendamentos",   href: "/client/appointments",   icon: <Calendar className="h-4 w-4" /> },
-  { label: "Histórico",           href: "/client/history",        icon: <History className="h-4 w-4" /> },
+  { label: "Histórico",           href: "/client/appointments",   icon: <History className="h-4 w-4" /> },
   { label: "Meus Endereços",      href: "/client/addresses",      icon: <MapPin className="h-4 w-4" /> },
-  { label: "Notificações",        href: "/client/notifications",  icon: <Bell className="h-4 w-4" /> },
   { label: "Meu Perfil",          href: "/client/profile",        icon: <User className="h-4 w-4" /> },
+  { label: "Notificações",        href: "/client/notifications",  icon: <Bell className="h-4 w-4" /> },
 ];
 
 function getNav(roleId: number): NavItem[] {
