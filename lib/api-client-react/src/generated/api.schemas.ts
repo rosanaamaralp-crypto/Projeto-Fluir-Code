@@ -126,6 +126,454 @@ export interface ClientDashboardResponse {
   dashboard: ClientDashboard;
 }
 
+/**
+ * Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST /clients (create).
+ */
+export interface ClientRow {
+  id: string;
+  userId: string;
+  birthDate?: string | null;
+  notes?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * User record (name/email/phone stored here, not in clients/professionals).
+ */
+export interface UserRow {
+  id: string;
+  roleId: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateClientRequest {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  birthDate?: string;
+  notes?: string;
+}
+
+export interface CreateClientResponse {
+  user: UserRow;
+  client: ClientRow;
+}
+
+export interface UpdateClientRequest {
+  birthDate?: string | null;
+  notes?: string | null;
+  status?: string;
+}
+
+export interface ClientResponse {
+  client: ClientRow;
+}
+
+export interface ClientsListResponse {
+  clients: ClientRow[];
+}
+
+export interface AddressRow {
+  id: string;
+  clientId: string;
+  street: string;
+  number: string;
+  complement?: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  reference?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertAddressRequest {
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  reference?: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault?: boolean;
+}
+
+export interface AddressResponse {
+  address: AddressRow | null;
+}
+
+/**
+ * Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST /professionals (create).
+ */
+export interface ProfessionalRow {
+  id: string;
+  userId: string;
+  specialty?: string | null;
+  bio?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProfessionalRequest {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  specialty?: string;
+  bio?: string;
+}
+
+export interface CreateProfessionalResponse {
+  user: UserRow;
+  professional: ProfessionalRow;
+}
+
+export interface UpdateProfessionalRequest {
+  name?: string;
+  phone?: string | null;
+  specialty?: string | null;
+  bio?: string | null;
+  status?: string;
+}
+
+export interface ProfessionalResponse {
+  professional: ProfessionalRow;
+}
+
+export interface ProfessionalsListResponse {
+  professionals: ProfessionalRow[];
+}
+
+export interface AvailabilityRow {
+  id: string;
+  professionalId: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AvailabilityListResponse {
+  availability: AvailabilityRow[];
+}
+
+export interface AvailabilityItemResponse {
+  availability: AvailabilityRow;
+}
+
+export interface CreateAvailabilityRequest {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  active?: boolean;
+}
+
+export interface UpdateAvailabilityRequest {
+  weekday?: number;
+  startTime?: string;
+  endTime?: string;
+  active?: boolean;
+}
+
+export interface ProfessionalServiceRow {
+  id: string;
+  professionalId: string;
+  serviceId: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ProfessionalServicesListResponse {
+  professionalServices: ProfessionalServiceRow[];
+}
+
+export interface ProfessionalServiceItemResponse {
+  professionalService: ProfessionalServiceRow;
+}
+
+export interface AddProfessionalServiceRequest {
+  serviceId: string;
+}
+
+export interface ServiceRow {
+  id: string;
+  name: string;
+  description?: string | null;
+  durationMinutes: number;
+  /** Decimal stored as string (e.g. "120.00") */
+  price: string;
+  /** IN_PERSON | HOME_CARE | BOTH */
+  allowedModalities: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateServiceRequest {
+  name: string;
+  description?: string;
+  durationMinutes: number;
+  price: number;
+  allowedModalities?: string;
+}
+
+export interface UpdateServiceRequest {
+  name?: string;
+  description?: string | null;
+  durationMinutes?: number;
+  price?: number;
+  allowedModalities?: string;
+  status?: string;
+}
+
+export interface ServiceResponse {
+  service: ServiceRow;
+}
+
+export interface ServicesListResponse {
+  services: ServiceRow[];
+}
+
+export interface ResourceRow {
+  id: string;
+  name: string;
+  /** MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER */
+  type: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateResourceRequest {
+  name: string;
+  type?: string;
+}
+
+export interface UpdateResourceRequest {
+  name?: string;
+  type?: string;
+  status?: string;
+}
+
+export interface ResourceResponse {
+  resource: ResourceRow;
+}
+
+export interface ResourcesListResponse {
+  resources: ResourceRow[];
+}
+
+/**
+ * Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use /reports/appointments for enriched data with names.
+ */
+export interface AppointmentRow {
+  id: string;
+  clientId: string;
+  professionalId: string;
+  serviceId: string;
+  /** IN_PERSON | HOME_CARE */
+  modality: string;
+  resourceId?: string | null;
+  addressId?: string | null;
+  startDatetime: string;
+  endDatetime: string;
+  /** CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW */
+  status: string;
+  priceAtBooking: string;
+  notes?: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAppointmentRequest {
+  professionalId: string;
+  serviceId: string;
+  startDatetime: string;
+  modality: string;
+  resourceId?: string;
+  addressId?: string;
+  notes?: string;
+  /** Admin only — CLIENT uses session */
+  clientId?: string;
+}
+
+export type PatchAppointmentRequestReschedule = {
+  startDatetime: string;
+  resourceId?: string | null;
+  addressId?: string | null;
+};
+
+/**
+ * Polymorphic: cancel, status change, reschedule, or alter in-place.
+ */
+export interface PatchAppointmentRequest {
+  status?: string;
+  reason?: string;
+  reschedule?: PatchAppointmentRequestReschedule;
+  professionalId?: string;
+  modality?: string;
+  addressId?: string | null;
+  startDatetime?: string;
+}
+
+export interface AppointmentResponse {
+  appointment: AppointmentRow;
+}
+
+/**
+ * For status/alter: { appointment }. For reschedule: { cancelled, appointment }.
+ */
+export interface PatchAppointmentResponse {
+  appointment?: AppointmentRow;
+  cancelled?: AppointmentRow;
+}
+
+export interface AppointmentsListResponse {
+  appointments: AppointmentRow[];
+}
+
+export interface AppointmentStatusHistoryRow {
+  id: string;
+  appointmentId: string;
+  oldStatus?: string | null;
+  newStatus: string;
+  changedBy: string;
+  reason?: string | null;
+  oldStartDatetime?: string | null;
+  oldEndDatetime?: string | null;
+  newStartDatetime?: string | null;
+  newEndDatetime?: string | null;
+  oldResourceId?: string | null;
+  newResourceId?: string | null;
+  oldAddressId?: string | null;
+  newAddressId?: string | null;
+  changedAt: string;
+}
+
+export interface AppointmentHistoryResponse {
+  history: AppointmentStatusHistoryRow[];
+}
+
+export interface AvailableSlot {
+  startDatetime: string;
+  endDatetime: string;
+}
+
+export interface SlotsResponse {
+  slots: AvailableSlot[];
+  date: string;
+  professionalId: string;
+  serviceId: string;
+  modality?: string | null;
+}
+
+export interface AppointmentReportRow {
+  id: string;
+  startDatetime: string;
+  endDatetime: string;
+  status: string;
+  modality: string;
+  priceAtBooking: string;
+  clientName?: string | null;
+  professionalName?: string | null;
+  serviceName?: string | null;
+  resourceName?: string | null;
+}
+
+export interface AppointmentReportByStatus {
+  CONFIRMED: number;
+  IN_PROGRESS: number;
+  COMPLETED: number;
+  CANCELLED: number;
+  NO_SHOW: number;
+}
+
+export interface AppointmentReportByModality {
+  IN_PERSON: number;
+  HOME_CARE: number;
+}
+
+export interface AppointmentReportSummary {
+  total: number;
+  byStatus: AppointmentReportByStatus;
+  byModality: AppointmentReportByModality;
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ReportAppointmentsResponse {
+  data: AppointmentReportRow[];
+  summary: AppointmentReportSummary;
+  pagination: Pagination;
+}
+
+export interface ResourceReportByStatus {
+  CONFIRMED: number;
+  IN_PROGRESS: number;
+  COMPLETED: number;
+  CANCELLED: number;
+  NO_SHOW: number;
+}
+
+export interface ResourceReportRow {
+  resourceId: string;
+  resourceName: string;
+  resourceStatus: string;
+  totalAppointments: number;
+  byStatus: ResourceReportByStatus;
+}
+
+export interface ReportPeriod {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface ReportResourcesResponse {
+  data: ResourceReportRow[];
+  period: ReportPeriod;
+}
+
+export interface AuditLogRow {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldData?: unknown | null;
+  newData?: unknown | null;
+  ipAddress?: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogsResponse {
+  data: AuditLogRow[];
+  pagination: Pagination;
+}
+
 export type GetProfessionalDashboardParams = {
 /**
  * Required for ADMIN role; ignored for PROFESSIONAL (uses session)
@@ -138,5 +586,70 @@ export type GetClientDashboardParams = {
  * Required for ADMIN role; ignored for CLIENT (uses session)
  */
 clientId?: string;
+};
+
+export type ListAppointmentsParams = {
+status?: string;
+/**
+ * Filter by date in YYYY-MM-DD format (UTC)
+ */
+date?: string;
+clientId?: string;
+professionalId?: string;
+};
+
+export type ListSlotsParams = {
+professionalId: string;
+serviceId: string;
+/**
+ * Date in YYYY-MM-DD format
+ */
+date: string;
+modality?: string;
+};
+
+export type GetReportAppointmentsParams = {
+/**
+ * YYYY-MM-DD
+ */
+startDate?: string;
+/**
+ * YYYY-MM-DD
+ */
+endDate?: string;
+professionalId?: string;
+serviceId?: string;
+modality?: string;
+status?: string;
+page?: number;
+limit?: number;
+};
+
+export type GetReportResourcesParams = {
+/**
+ * YYYY-MM-DD
+ */
+startDate?: string;
+/**
+ * YYYY-MM-DD
+ */
+endDate?: string;
+};
+
+export type ListAuditLogsParams = {
+action?: string;
+entityType?: string;
+entityId?: string;
+userId?: string;
+/**
+ * ISO-8601 datetime
+ */
+startDate?: string;
+/**
+ * ISO-8601 datetime
+ */
+endDate?: string;
+page?: number;
+limit?: number;
 };
 

@@ -145,3 +145,913 @@ export const GetClientDashboardResponse = zod.object({
 })
 
 
+/**
+ * ADMIN returns all clients. CLIENT returns only their own record.
+ * @summary List clients
+ */
+export const ListClientsResponse = zod.object({
+  "clients": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "birthDate": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n'))
+})
+
+
+/**
+ * Creates a user with CLIENT role and a linked client record.
+ * @summary Create client (ADMIN only)
+ */
+export const CreateClientBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string(),
+  "password": zod.string(),
+  "phone": zod.string().optional(),
+  "birthDate": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+export const CreateClientResponse = zod.object({
+  "user": zod.object({
+  "id": zod.string(),
+  "roleId": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('User record (name\/email\/phone stored here, not in clients\/professionals).'),
+  "client": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "birthDate": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+})
+
+
+/**
+ * @summary Get client by ID
+ */
+export const GetClientParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetClientResponse = zod.object({
+  "client": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "birthDate": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+})
+
+
+/**
+ * ADMIN can update birthDate, notes, status. CLIENT can update only birthDate and notes (no status).
+ * @summary Update client
+ */
+export const UpdateClientParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateClientBody = zod.object({
+  "birthDate": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "status": zod.string().optional()
+})
+
+export const UpdateClientResponse = zod.object({
+  "client": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "birthDate": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw client record from the clients table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/clients (create).\n')
+})
+
+
+/**
+ * @summary Get client address
+ */
+export const GetClientAddressParams = zod.object({
+  "clientId": zod.coerce.string()
+})
+
+export const GetClientAddressResponse = zod.object({
+  "address": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "street": zod.string(),
+  "number": zod.string(),
+  "complement": zod.string().nullish(),
+  "neighborhood": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "postalCode": zod.string(),
+  "reference": zod.string().nullish(),
+  "latitude": zod.string().nullish(),
+  "longitude": zod.string().nullish(),
+  "isDefault": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullable()
+})
+
+
+/**
+ * @summary Create or update client address
+ */
+export const UpsertClientAddressParams = zod.object({
+  "clientId": zod.coerce.string()
+})
+
+export const UpsertClientAddressBody = zod.object({
+  "street": zod.string(),
+  "number": zod.string(),
+  "complement": zod.string().optional(),
+  "neighborhood": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "postalCode": zod.string(),
+  "reference": zod.string().optional(),
+  "latitude": zod.number().optional(),
+  "longitude": zod.number().optional(),
+  "isDefault": zod.boolean().optional()
+})
+
+export const UpsertClientAddressResponse = zod.object({
+  "address": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "street": zod.string(),
+  "number": zod.string(),
+  "complement": zod.string().nullish(),
+  "neighborhood": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "postalCode": zod.string(),
+  "reference": zod.string().nullish(),
+  "latitude": zod.string().nullish(),
+  "longitude": zod.string().nullish(),
+  "isDefault": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullable()
+})
+
+
+/**
+ * ADMIN sees all; other roles see only ACTIVE professionals.
+ * @summary List professionals
+ */
+export const ListProfessionalsResponse = zod.object({
+  "professionals": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "specialty": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n'))
+})
+
+
+/**
+ * @summary Create professional (ADMIN only)
+ */
+export const CreateProfessionalBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string(),
+  "password": zod.string(),
+  "phone": zod.string().optional(),
+  "specialty": zod.string().optional(),
+  "bio": zod.string().optional()
+})
+
+export const CreateProfessionalResponse = zod.object({
+  "user": zod.object({
+  "id": zod.string(),
+  "roleId": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('User record (name\/email\/phone stored here, not in clients\/professionals).'),
+  "professional": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "specialty": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+})
+
+
+/**
+ * @summary Get professional by ID
+ */
+export const GetProfessionalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetProfessionalResponse = zod.object({
+  "professional": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "specialty": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+})
+
+
+/**
+ * @summary Update professional
+ */
+export const UpdateProfessionalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateProfessionalBody = zod.object({
+  "name": zod.string().optional(),
+  "phone": zod.string().nullish(),
+  "specialty": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "status": zod.string().optional()
+})
+
+export const UpdateProfessionalResponse = zod.object({
+  "professional": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "specialty": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw professional record from the professionals table. Name, email, and phone are stored in the users table (accessible via userId). The full user object is only returned by POST \/professionals (create).\n')
+})
+
+
+/**
+ * @summary List professional availability windows
+ */
+export const ListProfessionalAvailabilityParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const ListProfessionalAvailabilityResponse = zod.object({
+  "availability": zod.array(zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "weekday": zod.number(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Add availability window
+ */
+export const CreateProfessionalAvailabilityParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const CreateProfessionalAvailabilityBody = zod.object({
+  "weekday": zod.number(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "active": zod.boolean().optional()
+})
+
+export const CreateProfessionalAvailabilityResponse = zod.object({
+  "availability": zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "weekday": zod.number(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Update availability window
+ */
+export const UpdateProfessionalAvailabilityParams = zod.object({
+  "profId": zod.coerce.string(),
+  "id": zod.coerce.string()
+})
+
+export const UpdateProfessionalAvailabilityBody = zod.object({
+  "weekday": zod.number().optional(),
+  "startTime": zod.string().optional(),
+  "endTime": zod.string().optional(),
+  "active": zod.boolean().optional()
+})
+
+export const UpdateProfessionalAvailabilityResponse = zod.object({
+  "availability": zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "weekday": zod.number(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary List services linked to a professional
+ */
+export const ListProfessionalServicesParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const ListProfessionalServicesResponse = zod.object({
+  "professionalServices": zod.array(zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Link a service to a professional
+ */
+export const AddProfessionalServiceParams = zod.object({
+  "profId": zod.coerce.string()
+})
+
+export const AddProfessionalServiceBody = zod.object({
+  "serviceId": zod.string()
+})
+
+export const AddProfessionalServiceResponse = zod.object({
+  "professionalService": zod.object({
+  "id": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Unlink a service from a professional
+ */
+export const RemoveProfessionalServiceParams = zod.object({
+  "profId": zod.coerce.string(),
+  "serviceId": zod.coerce.string()
+})
+
+export const RemoveProfessionalServiceResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * ADMIN sees all; other roles see only ACTIVE services.
+ * @summary List services
+ */
+export const ListServicesResponse = zod.object({
+  "services": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "durationMinutes": zod.number(),
+  "price": zod.string().describe('Decimal stored as string (e.g. \"120.00\")'),
+  "allowedModalities": zod.string().describe('IN_PERSON | HOME_CARE | BOTH'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Create service (ADMIN only)
+ */
+export const CreateServiceBody = zod.object({
+  "name": zod.string(),
+  "description": zod.string().optional(),
+  "durationMinutes": zod.number(),
+  "price": zod.number(),
+  "allowedModalities": zod.string().optional()
+})
+
+export const CreateServiceResponse = zod.object({
+  "service": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "durationMinutes": zod.number(),
+  "price": zod.string().describe('Decimal stored as string (e.g. \"120.00\")'),
+  "allowedModalities": zod.string().describe('IN_PERSON | HOME_CARE | BOTH'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Get service by ID
+ */
+export const GetServiceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetServiceResponse = zod.object({
+  "service": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "durationMinutes": zod.number(),
+  "price": zod.string().describe('Decimal stored as string (e.g. \"120.00\")'),
+  "allowedModalities": zod.string().describe('IN_PERSON | HOME_CARE | BOTH'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Update service (ADMIN only)
+ */
+export const UpdateServiceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateServiceBody = zod.object({
+  "name": zod.string().optional(),
+  "description": zod.string().nullish(),
+  "durationMinutes": zod.number().optional(),
+  "price": zod.number().optional(),
+  "allowedModalities": zod.string().optional(),
+  "status": zod.string().optional()
+})
+
+export const UpdateServiceResponse = zod.object({
+  "service": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "durationMinutes": zod.number(),
+  "price": zod.string().describe('Decimal stored as string (e.g. \"120.00\")'),
+  "allowedModalities": zod.string().describe('IN_PERSON | HOME_CARE | BOTH'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * ADMIN sees all; other roles see only ACTIVE resources.
+ * @summary List resources
+ */
+export const ListResourcesResponse = zod.object({
+  "resources": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "type": zod.string().describe('MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Create resource (ADMIN only)
+ */
+export const CreateResourceBody = zod.object({
+  "name": zod.string(),
+  "type": zod.string().optional()
+})
+
+export const CreateResourceResponse = zod.object({
+  "resource": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "type": zod.string().describe('MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Get resource by ID
+ */
+export const GetResourceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetResourceResponse = zod.object({
+  "resource": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "type": zod.string().describe('MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Update resource (ADMIN only)
+ */
+export const UpdateResourceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateResourceBody = zod.object({
+  "name": zod.string().optional(),
+  "type": zod.string().optional(),
+  "status": zod.string().optional()
+})
+
+export const UpdateResourceResponse = zod.object({
+  "resource": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "type": zod.string().describe('MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER'),
+  "status": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Deactivate resource (ADMIN only, soft delete)
+ */
+export const DeleteResourceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteResourceResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * ADMIN sees all; PROFESSIONAL sees their own; CLIENT sees their own. Available filters: status, date (YYYY-MM-DD), clientId, professionalId.
+ * @summary List appointments
+ */
+export const ListAppointmentsQueryParams = zod.object({
+  "status": zod.coerce.string().optional(),
+  "date": zod.coerce.string().optional().describe('Filter by date in YYYY-MM-DD format (UTC)'),
+  "clientId": zod.coerce.string().optional(),
+  "professionalId": zod.coerce.string().optional()
+})
+
+export const ListAppointmentsResponse = zod.object({
+  "appointments": zod.array(zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().describe('IN_PERSON | HOME_CARE'),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string().describe('CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW'),
+  "priceAtBooking": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use \/reports\/appointments for enriched data with names.\n'))
+})
+
+
+/**
+ * @summary Create appointment
+ */
+export const CreateAppointmentBody = zod.object({
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "startDatetime": zod.coerce.date(),
+  "modality": zod.string(),
+  "resourceId": zod.string().optional(),
+  "addressId": zod.string().optional(),
+  "notes": zod.string().optional(),
+  "clientId": zod.string().optional().describe('Admin only — CLIENT uses session')
+})
+
+export const CreateAppointmentResponse = zod.object({
+  "appointment": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().describe('IN_PERSON | HOME_CARE'),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string().describe('CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW'),
+  "priceAtBooking": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use \/reports\/appointments for enriched data with names.\n')
+})
+
+
+/**
+ * @summary Get appointment by ID
+ */
+export const GetAppointmentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetAppointmentResponse = zod.object({
+  "appointment": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().describe('IN_PERSON | HOME_CARE'),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string().describe('CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW'),
+  "priceAtBooking": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).describe('Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use \/reports\/appointments for enriched data with names.\n')
+})
+
+
+/**
+ * Accepts 4 payload formats: 1. Cancel: { status: "CANCELLED", reason?: string } 2. Status change: { status: "IN_PROGRESS" | "COMPLETED" | "NO_SHOW" } 3. Reschedule: { reschedule: { startDatetime, resourceId?, addressId? } } 4. Alter in-place: { startDatetime?, professionalId?, modality?, addressId? }
+ * @summary Update appointment status, reschedule, or alter in-place
+ */
+export const PatchAppointmentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const PatchAppointmentBody = zod.object({
+  "status": zod.string().optional(),
+  "reason": zod.string().optional(),
+  "reschedule": zod.object({
+  "startDatetime": zod.coerce.date(),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish()
+}).optional(),
+  "professionalId": zod.string().optional(),
+  "modality": zod.string().optional(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date().optional()
+}).describe('Polymorphic: cancel, status change, reschedule, or alter in-place.\n')
+
+export const PatchAppointmentResponse = zod.object({
+  "appointment": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().describe('IN_PERSON | HOME_CARE'),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string().describe('CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW'),
+  "priceAtBooking": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).optional().describe('Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use \/reports\/appointments for enriched data with names.\n'),
+  "cancelled": zod.object({
+  "id": zod.string(),
+  "clientId": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().describe('IN_PERSON | HOME_CARE'),
+  "resourceId": zod.string().nullish(),
+  "addressId": zod.string().nullish(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string().describe('CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW'),
+  "priceAtBooking": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdBy": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).optional().describe('Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId are UUIDs (no embedded names). Use \/reports\/appointments for enriched data with names.\n')
+}).describe('For status\/alter: { appointment }. For reschedule: { cancelled, appointment }.\n')
+
+
+/**
+ * @summary Get appointment status history
+ */
+export const GetAppointmentHistoryParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetAppointmentHistoryResponse = zod.object({
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "appointmentId": zod.string(),
+  "oldStatus": zod.string().nullish(),
+  "newStatus": zod.string(),
+  "changedBy": zod.string(),
+  "reason": zod.string().nullish(),
+  "oldStartDatetime": zod.coerce.date().nullish(),
+  "oldEndDatetime": zod.coerce.date().nullish(),
+  "newStartDatetime": zod.coerce.date().nullish(),
+  "newEndDatetime": zod.coerce.date().nullish(),
+  "oldResourceId": zod.string().nullish(),
+  "newResourceId": zod.string().nullish(),
+  "oldAddressId": zod.string().nullish(),
+  "newAddressId": zod.string().nullish(),
+  "changedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary List available appointment slots
+ */
+export const ListSlotsQueryParams = zod.object({
+  "professionalId": zod.coerce.string(),
+  "serviceId": zod.coerce.string(),
+  "date": zod.coerce.string().describe('Date in YYYY-MM-DD format'),
+  "modality": zod.coerce.string().optional()
+})
+
+export const ListSlotsResponse = zod.object({
+  "slots": zod.array(zod.object({
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date()
+})),
+  "date": zod.string(),
+  "professionalId": zod.string(),
+  "serviceId": zod.string(),
+  "modality": zod.string().nullish()
+})
+
+
+/**
+ * @summary Appointments report (ADMIN only)
+ */
+export const GetReportAppointmentsQueryParams = zod.object({
+  "startDate": zod.coerce.string().optional().describe('YYYY-MM-DD'),
+  "endDate": zod.coerce.string().optional().describe('YYYY-MM-DD'),
+  "professionalId": zod.coerce.string().optional(),
+  "serviceId": zod.coerce.string().optional(),
+  "modality": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional(),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const GetReportAppointmentsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "startDatetime": zod.coerce.date(),
+  "endDatetime": zod.coerce.date(),
+  "status": zod.string(),
+  "modality": zod.string(),
+  "priceAtBooking": zod.string(),
+  "clientName": zod.string().nullish(),
+  "professionalName": zod.string().nullish(),
+  "serviceName": zod.string().nullish(),
+  "resourceName": zod.string().nullish()
+})),
+  "summary": zod.object({
+  "total": zod.number(),
+  "byStatus": zod.object({
+  "CONFIRMED": zod.number(),
+  "IN_PROGRESS": zod.number(),
+  "COMPLETED": zod.number(),
+  "CANCELLED": zod.number(),
+  "NO_SHOW": zod.number()
+}),
+  "byModality": zod.object({
+  "IN_PERSON": zod.number(),
+  "HOME_CARE": zod.number()
+})
+}),
+  "pagination": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+
+/**
+ * @summary Resources report (ADMIN only)
+ */
+export const GetReportResourcesQueryParams = zod.object({
+  "startDate": zod.coerce.string().optional().describe('YYYY-MM-DD'),
+  "endDate": zod.coerce.string().optional().describe('YYYY-MM-DD')
+})
+
+export const GetReportResourcesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "resourceId": zod.string(),
+  "resourceName": zod.string(),
+  "resourceStatus": zod.string(),
+  "totalAppointments": zod.number(),
+  "byStatus": zod.object({
+  "CONFIRMED": zod.number(),
+  "IN_PROGRESS": zod.number(),
+  "COMPLETED": zod.number(),
+  "CANCELLED": zod.number(),
+  "NO_SHOW": zod.number()
+})
+})),
+  "period": zod.object({
+  "startDate": zod.string().nullable(),
+  "endDate": zod.string().nullable()
+})
+})
+
+
+/**
+ * @summary List audit logs (ADMIN only)
+ */
+export const ListAuditLogsQueryParams = zod.object({
+  "action": zod.coerce.string().optional(),
+  "entityType": zod.coerce.string().optional(),
+  "entityId": zod.coerce.string().optional(),
+  "userId": zod.coerce.string().optional(),
+  "startDate": zod.coerce.string().optional().describe('ISO-8601 datetime'),
+  "endDate": zod.coerce.string().optional().describe('ISO-8601 datetime'),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const ListAuditLogsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "action": zod.string(),
+  "entityType": zod.string(),
+  "entityId": zod.string(),
+  "oldData": zod.unknown().nullish(),
+  "newData": zod.unknown().nullish(),
+  "ipAddress": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "pagination": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+

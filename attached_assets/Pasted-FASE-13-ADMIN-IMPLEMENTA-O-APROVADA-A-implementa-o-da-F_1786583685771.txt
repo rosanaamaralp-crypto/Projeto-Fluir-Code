@@ -1,0 +1,215 @@
+FASE 13 — ADMIN: IMPLEMENTAÇÃO APROVADA
+
+A implementação da Fase 13 — Admin está oficialmente aprovada.
+
+Antes de modificar qualquer arquivo:
+
+1. Releia os documentos oficiais na seguinte hierarquia:
+   Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+
+2. Preserve integralmente F1–F11 já concluídas.
+
+3. NÃO faça commit.
+4. NÃO faça migration.
+5. NÃO crie ou altere tabelas do banco.
+6. NÃO altere regras de negócio do backend sem necessidade explícita.
+7. NÃO invente endpoints.
+8. Utilize somente dados reais da API.
+9. ADMIN é o único perfil autorizado às telas administrativas.
+10. Filtros devem ser server-side.
+
+DECISÕES APROVADAS:
+
+DP-001 — Configurações:
+- Criar /admin/settings.
+- Criar apenas uma tela placeholder:
+  "Configurações disponíveis em breve".
+- NÃO criar endpoint.
+- NÃO criar migration.
+- NÃO inventar funcionalidades.
+
+DP-002 — Agenda:
+- Criar T-005 como lista filtrada por DATA.
+- NÃO instalar react-big-calendar.
+- NÃO criar grade semanal/mensal nesta fase.
+- Implementar filtros server-side:
+  data, profissional, cliente, serviço, modalidade, status e recurso.
+- Usar dados reais da API.
+
+DP-003 — Notificações:
+- Adicionar "Notificações" ao ADMIN_NAV.
+- Criar /admin/notifications como placeholder.
+- NÃO implementar funcionalidade de notificações.
+- NÃO criar endpoints.
+- A funcionalidade completa permanece para a Fase 20.
+
+TELAS OBRIGATÓRIAS:
+
+T-005 Agenda
+T-006 Novo Agendamento
+T-007 Detalhes do Agendamento
+T-008 Clientes
+T-009 Cadastro de Cliente
+T-010 Perfil do Cliente
+T-011 Profissionais
+T-012 Perfil do Profissional
+T-013 Serviços
+T-014 Cadastro de Serviço
+T-015 Recursos
+T-016 Detalhes da Maca
+T-017 Relatórios
+T-018 Auditoria
+T-019 Configurações — placeholder
+
+ROTAS OBRIGATÓRIAS:
+
+/admin
+/admin/schedule
+/admin/appointments/new
+/admin/appointments/:id
+/admin/clients
+/admin/clients/new
+/admin/clients/:id
+/admin/professionals
+/admin/professionals/:id
+/admin/services
+/admin/services/new
+/admin/resources
+/admin/resources/:id
+/admin/reports
+/admin/audit
+/admin/settings
+/admin/notifications
+
+COMPONENTES:
+
+status-badge.tsx
+modality-badge.tsx
+confirm-dialog.tsx
+data-table.tsx
+
+REGRAS OBRIGATÓRIAS:
+
+- Todas as telas devem possuir LOADING, EMPTY, ERROR e SUCCESS.
+- Ações destrutivas precisam de confirmação.
+- Home Care deve possuir identificação visual.
+- Status dos agendamentos devem possuir identificação visual.
+- Paginação deve ser server-side onde especificada.
+- Formulários devem validar para UX, mas o backend permanece como autoridade.
+- Responsividade para desktop, notebook, tablet e celular.
+- Não usar dados mock nas funcionalidades.
+- Não instalar dependências novas sem necessidade.
+
+OPENAPI:
+
+Atualize o openapi.yaml somente para documentar os endpoints reais existentes.
+
+Depois execute o pipeline:
+
+openapi.yaml
+→ orval
+→ api-client-react
+→ api-zod
+
+ATENÇÃO:
+
+Não utilizar no openapi.yaml:
+
+format: uuid
+format: email
+type: integer
+
+Esses formatos já causaram incompatibilidade com Zod v3/orval na Fase 11.
+
+Depois do codegen, verifique obrigatoriamente:
+
+lib/api-zod/src/index.ts
+
+O arquivo deve permanecer compatível com o padrão estabelecido na Fase 11.
+
+ORDEM DE IMPLEMENTAÇÃO:
+
+1. OpenAPI + codegen + validação api-zod
+2. Roteamento administrativo
+3. ADMIN_NAV
+4. Componentes compartilhados
+5. Clientes
+6. Profissionais
+7. Serviços
+8. Recursos
+9. Agenda
+10. Novo Agendamento + Detalhes
+11. Relatórios
+12. Auditoria
+13. Configurações placeholder
+14. Notificações placeholder
+15. Typecheck + testes + build + validação funcional
+
+CRITÉRIOS DE ACEITE:
+
+- Todas as rotas carregam.
+- ADMIN consegue navegar por todas as telas.
+- PROFESSIONAL e CLIENT não conseguem acessar /admin/*.
+- APIs protegidas retornam 403 para não-admin quando aplicável.
+- Zero dados mock nas funcionalidades.
+- Clientes, profissionais, serviços, recursos, relatórios e auditoria usam dados reais.
+- Agenda utiliza filtros server-side.
+- Paginação funciona onde especificado.
+- Ações destrutivas possuem confirmação.
+- Home Care possui identificação visual.
+- Status possuem identificação visual.
+- LOADING/EMPTY/ERROR/SUCCESS existem.
+- Responsividade validada.
+- Novo agendamento funciona ponta a ponta.
+- Cancelamento funciona.
+- Remarcação funciona.
+- Auditoria continua sendo gerada pelo backend.
+- pnpm typecheck → 0 erros.
+- pnpm test → 500/500 ou total equivalente, sem regressão.
+- pnpm build → OK.
+- Nenhuma migration criada ou modificada.
+- F1–F11 continuam funcionando.
+
+IMPORTANTE SOBRE BLOQUEIOS:
+
+Se qualquer requisito exigir:
+- novo endpoint;
+- alteração de regra de negócio;
+- migration;
+- alteração estrutural do banco;
+- nova dependência relevante;
+- decisão que não esteja coberta pelas decisões acima;
+
+PARE antes de implementar essa parte e informe exatamente:
+
+1. qual requisito está bloqueado;
+2. por que está bloqueado;
+3. qual arquivo seria afetado;
+4. qual decisão precisa ser tomada.
+
+NÃO invente uma solução.
+
+NÃO faça commit.
+
+AO FINAL, NÃO RESPONDA APENAS "CONCLUÍDO".
+
+Entregue um relatório contendo:
+
+1. Arquivos criados
+2. Arquivos modificados
+3. Endpoints utilizados
+4. Rotas implementadas
+5. Funcionalidades implementadas
+6. Testes executados e resultados
+7. Typecheck
+8. Build
+9. Validação funcional por tela
+10. Validação de permissões
+11. Problemas encontrados e soluções
+12. Itens que ficaram como placeholder
+13. Confirmação de nenhuma migration criada/modificada
+14. Confirmação de preservação de F1–F11
+15. STATUS FINAL DA FASE 13
+
+STATUS:
+IMPLEMENTAÇÃO AUTORIZADA — NÃO FAZER COMMIT AINDA.

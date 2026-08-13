@@ -14,6 +14,22 @@ tags:
     description: Authentication operations
   - name: dashboard
     description: Dashboard operations
+  - name: clients
+    description: Client operations
+  - name: professionals
+    description: Professional operations
+  - name: services
+    description: Service operations
+  - name: resources
+    description: Resource operations
+  - name: appointments
+    description: Appointment operations
+  - name: slots
+    description: Slot availability operations
+  - name: reports
+    description: Report operations
+  - name: audit
+    description: Audit log operations
 paths:
   /healthz:
     get:
@@ -188,6 +204,1309 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ClientDashboardResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Clients ─────────────────────────────────────────────────────────────────
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List clients
+      description: >
+        ADMIN returns all clients. CLIENT returns only their own record.
+      responses:
+        "200":
+          description: Clients list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientsListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create client (ADMIN only)
+      description: Creates a user with CLIENT role and a linked client record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequest"
+      responses:
+        "201":
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateClientResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get client by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Client data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update client
+      description: >
+        ADMIN can update birthDate, notes, status.
+        CLIENT can update only birthDate and notes (no status).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientRequest"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /clients/{clientId}/addresses:
+    get:
+      operationId: getClientAddress
+      tags: [clients]
+      summary: Get client address
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Client address (may be null if none set)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: upsertClientAddress
+      tags: [clients]
+      summary: Create or update client address
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertAddressRequest"
+      responses:
+        "200":
+          description: Address saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Professionals ────────────────────────────────────────────────────────────
+
+  /professionals:
+    get:
+      operationId: listProfessionals
+      tags: [professionals]
+      summary: List professionals
+      description: ADMIN sees all; other roles see only ACTIVE professionals.
+      responses:
+        "200":
+          description: Professionals list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalsListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createProfessional
+      tags: [professionals]
+      summary: Create professional (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProfessionalRequest"
+      responses:
+        "201":
+          description: Professional created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateProfessionalResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /professionals/{id}:
+    get:
+      operationId: getProfessional
+      tags: [professionals]
+      summary: Get professional by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Professional data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateProfessional
+      tags: [professionals]
+      summary: Update professional
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfessionalRequest"
+      responses:
+        "200":
+          description: Updated professional
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /professionals/{profId}/availability:
+    get:
+      operationId: listProfessionalAvailability
+      tags: [professionals]
+      summary: List professional availability windows
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Availability list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createProfessionalAvailability
+      tags: [professionals]
+      summary: Add availability window
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAvailabilityRequest"
+      responses:
+        "201":
+          description: Availability created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityItemResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /professionals/{profId}/availability/{id}:
+    put:
+      operationId: updateProfessionalAvailability
+      tags: [professionals]
+      summary: Update availability window
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAvailabilityRequest"
+      responses:
+        "200":
+          description: Availability updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityItemResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /professionals/{profId}/services:
+    get:
+      operationId: listProfessionalServices
+      tags: [professionals]
+      summary: List services linked to a professional
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Professional services list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalServicesListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: addProfessionalService
+      tags: [professionals]
+      summary: Link a service to a professional
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddProfessionalServiceRequest"
+      responses:
+        "201":
+          description: Service linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalServiceItemResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /professionals/{profId}/services/{serviceId}:
+    delete:
+      operationId: removeProfessionalService
+      tags: [professionals]
+      summary: Unlink a service from a professional
+      parameters:
+        - in: path
+          name: profId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: serviceId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Service unlinked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Services ─────────────────────────────────────────────────────────────────
+
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List services
+      description: ADMIN sees all; other roles see only ACTIVE services.
+      responses:
+        "200":
+          description: Services list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServicesListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create service (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceRequest"
+      responses:
+        "201":
+          description: Service created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /services/{id}:
+    get:
+      operationId: getService
+      tags: [services]
+      summary: Get service by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Service data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateService
+      tags: [services]
+      summary: Update service (ADMIN only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceRequest"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Resources ────────────────────────────────────────────────────────────────
+
+  /resources:
+    get:
+      operationId: listResources
+      tags: [resources]
+      summary: List resources
+      description: ADMIN sees all; other roles see only ACTIVE resources.
+      responses:
+        "200":
+          description: Resources list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourcesListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createResource
+      tags: [resources]
+      summary: Create resource (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResourceRequest"
+      responses:
+        "201":
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resources/{id}:
+    get:
+      operationId: getResource
+      tags: [resources]
+      summary: Get resource by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resource data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateResource
+      tags: [resources]
+      summary: Update resource (ADMIN only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResourceRequest"
+      responses:
+        "200":
+          description: Updated resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteResource
+      tags: [resources]
+      summary: Deactivate resource (ADMIN only, soft delete)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resource deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Appointments ──────────────────────────────────────────────────────────────
+
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointments
+      description: >
+        ADMIN sees all; PROFESSIONAL sees their own; CLIENT sees their own.
+        Available filters: status, date (YYYY-MM-DD), clientId, professionalId.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by date in YYYY-MM-DD format (UTC)
+        - in: query
+          name: clientId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: professionalId
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: Appointments list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentsListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Create appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict (scheduling overlap)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get appointment by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Appointment data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchAppointment
+      tags: [appointments]
+      summary: Update appointment status, reschedule, or alter in-place
+      description: >
+        Accepts 4 payload formats:
+        1. Cancel: { status: "CANCELLED", reason?: string }
+        2. Status change: { status: "IN_PROGRESS" | "COMPLETED" | "NO_SHOW" }
+        3. Reschedule: { reschedule: { startDatetime, resourceId?, addressId? } }
+        4. Alter in-place: { startDatetime?, professionalId?, modality?, addressId? }
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchAppointmentRequest"
+      responses:
+        "200":
+          description: Appointment updated (or reschedule returns cancelled + new)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatchAppointmentResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}/history:
+    get:
+      operationId: getAppointmentHistory
+      tags: [appointments]
+      summary: Get appointment status history
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Status history list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentHistoryResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Slots ─────────────────────────────────────────────────────────────────────
+
+  /slots:
+    get:
+      operationId: listSlots
+      tags: [slots]
+      summary: List available appointment slots
+      parameters:
+        - in: query
+          name: professionalId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: serviceId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+          description: Date in YYYY-MM-DD format
+        - in: query
+          name: modality
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotsResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Reports ───────────────────────────────────────────────────────────────────
+
+  /reports/appointments:
+    get:
+      operationId: getReportAppointments
+      tags: [reports]
+      summary: Appointments report (ADMIN only)
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: false
+          description: YYYY-MM-DD
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: false
+          description: YYYY-MM-DD
+        - in: query
+          name: professionalId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: serviceId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: modality
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: status
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: page
+          schema:
+            type: number
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: number
+          required: false
+      responses:
+        "200":
+          description: Appointments report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportAppointmentsResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reports/resources:
+    get:
+      operationId: getReportResources
+      tags: [reports]
+      summary: Resources report (ADMIN only)
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: false
+          description: YYYY-MM-DD
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: false
+          description: YYYY-MM-DD
+      responses:
+        "200":
+          description: Resources report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResourcesResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Audit Logs ────────────────────────────────────────────────────────────────
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs (ADMIN only)
+      parameters:
+        - in: query
+          name: action
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: entityType
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: entityId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: false
+          description: ISO-8601 datetime
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: false
+          description: ISO-8601 datetime
+        - in: query
+          name: page
+          schema:
+            type: number
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: number
+          required: false
+      responses:
+        "200":
+          description: Audit logs list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogsResponse"
         "401":
           description: Not authenticated
           content:
@@ -493,3 +1812,1082 @@ components:
           $ref: "#/components/schemas/ClientDashboard"
       required:
         - dashboard
+
+    # ── Clients ───────────────────────────────────────────────────────────────
+    ClientRow:
+      type: object
+      description: >
+        Raw client record from the clients table.
+        Name, email, and phone are stored in the users table (accessible via userId).
+        The full user object is only returned by POST /clients (create).
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        birthDate:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - status
+        - createdAt
+        - updatedAt
+
+    UserRow:
+      type: object
+      description: User record (name/email/phone stored here, not in clients/professionals).
+      properties:
+        id:
+          type: string
+        roleId:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - roleId
+        - name
+        - email
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        birthDate:
+          type: string
+        notes:
+          type: string
+      required:
+        - name
+        - email
+        - password
+
+    CreateClientResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserRow"
+        client:
+          $ref: "#/components/schemas/ClientRow"
+      required:
+        - user
+        - client
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        birthDate:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+
+    ClientResponse:
+      type: object
+      properties:
+        client:
+          $ref: "#/components/schemas/ClientRow"
+      required:
+        - client
+
+    ClientsListResponse:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientRow"
+      required:
+        - clients
+
+    # ── Addresses ─────────────────────────────────────────────────────────────
+    AddressRow:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        street:
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+        reference:
+          type: string
+          nullable: true
+        latitude:
+          type: string
+          nullable: true
+        longitude:
+          type: string
+          nullable: true
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clientId
+        - street
+        - number
+        - neighborhood
+        - city
+        - state
+        - postalCode
+        - isDefault
+        - createdAt
+        - updatedAt
+
+    UpsertAddressRequest:
+      type: object
+      properties:
+        street:
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+        reference:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        isDefault:
+          type: boolean
+      required:
+        - street
+        - number
+        - neighborhood
+        - city
+        - state
+        - postalCode
+
+    AddressResponse:
+      type: object
+      properties:
+        address:
+          allOf:
+            - $ref: "#/components/schemas/AddressRow"
+          nullable: true
+      required:
+        - address
+
+    # ── Professionals ─────────────────────────────────────────────────────────
+    ProfessionalRow:
+      type: object
+      description: >
+        Raw professional record from the professionals table.
+        Name, email, and phone are stored in the users table (accessible via userId).
+        The full user object is only returned by POST /professionals (create).
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        specialty:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateProfessionalRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        specialty:
+          type: string
+        bio:
+          type: string
+      required:
+        - name
+        - email
+        - password
+
+    CreateProfessionalResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserRow"
+        professional:
+          $ref: "#/components/schemas/ProfessionalRow"
+      required:
+        - user
+        - professional
+
+    UpdateProfessionalRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        specialty:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        status:
+          type: string
+
+    ProfessionalResponse:
+      type: object
+      properties:
+        professional:
+          $ref: "#/components/schemas/ProfessionalRow"
+      required:
+        - professional
+
+    ProfessionalsListResponse:
+      type: object
+      properties:
+        professionals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfessionalRow"
+      required:
+        - professionals
+
+    # ── Availability ──────────────────────────────────────────────────────────
+    AvailabilityRow:
+      type: object
+      properties:
+        id:
+          type: string
+        professionalId:
+          type: string
+        weekday:
+          type: number
+        startTime:
+          type: string
+        endTime:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - professionalId
+        - weekday
+        - startTime
+        - endTime
+        - active
+        - createdAt
+        - updatedAt
+
+    AvailabilityListResponse:
+      type: object
+      properties:
+        availability:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityRow"
+      required:
+        - availability
+
+    AvailabilityItemResponse:
+      type: object
+      properties:
+        availability:
+          $ref: "#/components/schemas/AvailabilityRow"
+      required:
+        - availability
+
+    CreateAvailabilityRequest:
+      type: object
+      properties:
+        weekday:
+          type: number
+        startTime:
+          type: string
+        endTime:
+          type: string
+        active:
+          type: boolean
+      required:
+        - weekday
+        - startTime
+        - endTime
+
+    UpdateAvailabilityRequest:
+      type: object
+      properties:
+        weekday:
+          type: number
+        startTime:
+          type: string
+        endTime:
+          type: string
+        active:
+          type: boolean
+
+    # ── Professional Services ─────────────────────────────────────────────────
+    ProfessionalServiceRow:
+      type: object
+      properties:
+        id:
+          type: string
+        professionalId:
+          type: string
+        serviceId:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - professionalId
+        - serviceId
+        - active
+        - createdAt
+
+    ProfessionalServicesListResponse:
+      type: object
+      properties:
+        professionalServices:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfessionalServiceRow"
+      required:
+        - professionalServices
+
+    ProfessionalServiceItemResponse:
+      type: object
+      properties:
+        professionalService:
+          $ref: "#/components/schemas/ProfessionalServiceRow"
+      required:
+        - professionalService
+
+    AddProfessionalServiceRequest:
+      type: object
+      properties:
+        serviceId:
+          type: string
+      required:
+        - serviceId
+
+    # ── Services ──────────────────────────────────────────────────────────────
+    ServiceRow:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: number
+        price:
+          type: string
+          description: Decimal stored as string (e.g. "120.00")
+        allowedModalities:
+          type: string
+          description: "IN_PERSON | HOME_CARE | BOTH"
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - durationMinutes
+        - price
+        - allowedModalities
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: number
+        price:
+          type: number
+        allowedModalities:
+          type: string
+      required:
+        - name
+        - durationMinutes
+        - price
+
+    UpdateServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: number
+        price:
+          type: number
+        allowedModalities:
+          type: string
+        status:
+          type: string
+
+    ServiceResponse:
+      type: object
+      properties:
+        service:
+          $ref: "#/components/schemas/ServiceRow"
+      required:
+        - service
+
+    ServicesListResponse:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRow"
+      required:
+        - services
+
+    # ── Resources ─────────────────────────────────────────────────────────────
+    ResourceRow:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          description: "MASSAGE_TABLE | ROOM | EQUIPMENT | OTHER"
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateResourceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+      required:
+        - name
+
+    UpdateResourceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+
+    ResourceResponse:
+      type: object
+      properties:
+        resource:
+          $ref: "#/components/schemas/ResourceRow"
+      required:
+        - resource
+
+    ResourcesListResponse:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceRow"
+      required:
+        - resources
+
+    # ── Appointments ──────────────────────────────────────────────────────────
+    AppointmentRow:
+      type: object
+      description: >
+        Raw appointment record. clientId, professionalId, serviceId, resourceId, addressId
+        are UUIDs (no embedded names). Use /reports/appointments for enriched data with names.
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        professionalId:
+          type: string
+        serviceId:
+          type: string
+        modality:
+          type: string
+          description: "IN_PERSON | HOME_CARE"
+        resourceId:
+          type: string
+          nullable: true
+        addressId:
+          type: string
+          nullable: true
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: "CONFIRMED | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW"
+        priceAtBooking:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clientId
+        - professionalId
+        - serviceId
+        - modality
+        - startDatetime
+        - endDatetime
+        - status
+        - priceAtBooking
+        - createdBy
+        - createdAt
+        - updatedAt
+
+    CreateAppointmentRequest:
+      type: object
+      properties:
+        professionalId:
+          type: string
+        serviceId:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        modality:
+          type: string
+        resourceId:
+          type: string
+        addressId:
+          type: string
+        notes:
+          type: string
+        clientId:
+          type: string
+          description: Admin only — CLIENT uses session
+      required:
+        - professionalId
+        - serviceId
+        - startDatetime
+        - modality
+
+    PatchAppointmentRequest:
+      type: object
+      description: >
+        Polymorphic: cancel, status change, reschedule, or alter in-place.
+      properties:
+        status:
+          type: string
+        reason:
+          type: string
+        reschedule:
+          type: object
+          properties:
+            startDatetime:
+              type: string
+              format: date-time
+            resourceId:
+              type: string
+              nullable: true
+            addressId:
+              type: string
+              nullable: true
+          required:
+            - startDatetime
+        professionalId:
+          type: string
+        modality:
+          type: string
+        addressId:
+          type: string
+          nullable: true
+        startDatetime:
+          type: string
+          format: date-time
+
+    AppointmentResponse:
+      type: object
+      properties:
+        appointment:
+          $ref: "#/components/schemas/AppointmentRow"
+      required:
+        - appointment
+
+    PatchAppointmentResponse:
+      type: object
+      description: >
+        For status/alter: { appointment }. For reschedule: { cancelled, appointment }.
+      properties:
+        appointment:
+          $ref: "#/components/schemas/AppointmentRow"
+        cancelled:
+          $ref: "#/components/schemas/AppointmentRow"
+
+    AppointmentsListResponse:
+      type: object
+      properties:
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentRow"
+      required:
+        - appointments
+
+    AppointmentStatusHistoryRow:
+      type: object
+      properties:
+        id:
+          type: string
+        appointmentId:
+          type: string
+        oldStatus:
+          type: string
+          nullable: true
+        newStatus:
+          type: string
+        changedBy:
+          type: string
+        reason:
+          type: string
+          nullable: true
+        oldStartDatetime:
+          type: string
+          format: date-time
+          nullable: true
+        oldEndDatetime:
+          type: string
+          format: date-time
+          nullable: true
+        newStartDatetime:
+          type: string
+          format: date-time
+          nullable: true
+        newEndDatetime:
+          type: string
+          format: date-time
+          nullable: true
+        oldResourceId:
+          type: string
+          nullable: true
+        newResourceId:
+          type: string
+          nullable: true
+        oldAddressId:
+          type: string
+          nullable: true
+        newAddressId:
+          type: string
+          nullable: true
+        changedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - appointmentId
+        - newStatus
+        - changedBy
+        - changedAt
+
+    AppointmentHistoryResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentStatusHistoryRow"
+      required:
+        - history
+
+    # ── Slots ─────────────────────────────────────────────────────────────────
+    AvailableSlot:
+      type: object
+      properties:
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+      required:
+        - startDatetime
+        - endDatetime
+
+    SlotsResponse:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailableSlot"
+        date:
+          type: string
+        professionalId:
+          type: string
+        serviceId:
+          type: string
+        modality:
+          type: string
+          nullable: true
+      required:
+        - slots
+        - date
+        - professionalId
+        - serviceId
+
+    # ── Reports ───────────────────────────────────────────────────────────────
+    AppointmentReportRow:
+      type: object
+      properties:
+        id:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        modality:
+          type: string
+        priceAtBooking:
+          type: string
+        clientName:
+          type: string
+          nullable: true
+        professionalName:
+          type: string
+          nullable: true
+        serviceName:
+          type: string
+          nullable: true
+        resourceName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - startDatetime
+        - endDatetime
+        - status
+        - modality
+        - priceAtBooking
+
+    AppointmentReportByStatus:
+      type: object
+      properties:
+        CONFIRMED:
+          type: number
+        IN_PROGRESS:
+          type: number
+        COMPLETED:
+          type: number
+        CANCELLED:
+          type: number
+        NO_SHOW:
+          type: number
+      required:
+        - CONFIRMED
+        - IN_PROGRESS
+        - COMPLETED
+        - CANCELLED
+        - NO_SHOW
+
+    AppointmentReportByModality:
+      type: object
+      properties:
+        IN_PERSON:
+          type: number
+        HOME_CARE:
+          type: number
+      required:
+        - IN_PERSON
+        - HOME_CARE
+
+    AppointmentReportSummary:
+      type: object
+      properties:
+        total:
+          type: number
+        byStatus:
+          $ref: "#/components/schemas/AppointmentReportByStatus"
+        byModality:
+          $ref: "#/components/schemas/AppointmentReportByModality"
+      required:
+        - total
+        - byStatus
+        - byModality
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: number
+        limit:
+          type: number
+        total:
+          type: number
+        totalPages:
+          type: number
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+
+    ReportAppointmentsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentReportRow"
+        summary:
+          $ref: "#/components/schemas/AppointmentReportSummary"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - summary
+        - pagination
+
+    ResourceReportByStatus:
+      type: object
+      properties:
+        CONFIRMED:
+          type: number
+        IN_PROGRESS:
+          type: number
+        COMPLETED:
+          type: number
+        CANCELLED:
+          type: number
+        NO_SHOW:
+          type: number
+      required:
+        - CONFIRMED
+        - IN_PROGRESS
+        - COMPLETED
+        - CANCELLED
+        - NO_SHOW
+
+    ResourceReportRow:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceName:
+          type: string
+        resourceStatus:
+          type: string
+        totalAppointments:
+          type: number
+        byStatus:
+          $ref: "#/components/schemas/ResourceReportByStatus"
+      required:
+        - resourceId
+        - resourceName
+        - resourceStatus
+        - totalAppointments
+        - byStatus
+
+    ReportPeriod:
+      type: object
+      properties:
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+      required:
+        - startDate
+        - endDate
+
+    ReportResourcesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceReportRow"
+        period:
+          $ref: "#/components/schemas/ReportPeriod"
+      required:
+        - data
+        - period
+
+    # ── Audit Logs ────────────────────────────────────────────────────────────
+    AuditLogRow:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        oldData:
+          nullable: true
+        newData:
+          nullable: true
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - action
+        - entityType
+        - entityId
+        - createdAt
+
+    AuditLogsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLogRow"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
