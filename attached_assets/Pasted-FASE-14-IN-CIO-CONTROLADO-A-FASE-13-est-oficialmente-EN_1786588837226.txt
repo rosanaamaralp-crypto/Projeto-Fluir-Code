@@ -1,0 +1,95 @@
+FASE 14 — INÍCIO CONTROLADO
+
+A FASE 13 está oficialmente ENCERRADA e APROVADA.
+
+IMPORTANTE:
+- NÃO altere nenhum arquivo ainda.
+- NÃO faça commit.
+- NÃO faça migration.
+- NÃO instale dependências.
+- NÃO inicie implementação.
+- NÃO altere funcionalidades de F1–F13.
+- Considere o workspace atual como BASE CONGELADA E APROVADA.
+
+Antes de qualquer implementação da FASE 14:
+
+1. Leia integralmente os documentos oficiais na seguinte hierarquia:
+   Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14.
+
+2. Identifique exatamente qual é o escopo oficial da FASE 14.
+
+3. Liste:
+   - objetivos da fase;
+   - telas obrigatórias;
+   - rotas;
+   - endpoints existentes que deverão ser utilizados;
+   - contratos OpenAPI envolvidos;
+   - componentes compartilhados necessários;
+   - regras de negócio;
+   - permissões;
+   - critérios de aceite;
+   - dependências de fases anteriores.
+
+4. Verifique o estado atual do workspace e confirme:
+   - F1–F13 preservadas;
+   - Fase 13 permanece exatamente no estado aprovado;
+   - nenhum requisito da Fase 14 já está parcialmente implementado;
+   - quais arquivos seriam potencialmente modificados.
+
+5. Compare a documentação oficial com os endpoints reais existentes.
+
+6. Se algum requisito da FASE 14 exigir:
+   - novo endpoint;
+   - alteração de endpoint existente;
+   - migration;
+   - alteração de regra de negócio;
+   - nova dependência;
+   - decisão arquitetural;
+   - mudança em funcionalidade já aprovada;
+
+   NÃO implemente.
+
+   Pare e informe exatamente:
+   - requisito;
+   - documento que exige;
+   - situação atual;
+   - alteração necessária;
+   - motivo pelo qual a alteração exige aprovação.
+
+7. Não invente endpoints, dados, regras ou comportamentos.
+
+8. Preserve obrigatoriamente o pipeline:
+   OpenAPI → Orval → api-client-react / api-zod.
+
+9. Não execute codegen ainda.
+
+10. Não escreva nenhum arquivo.
+
+ENTREGUE SOMENTE UM RELATÓRIO DE PRÉ-IMPLEMENTAÇÃO DA FASE 14 contendo:
+
+1. Escopo oficial da Fase 14
+2. Requisitos oficiais
+3. Estado atual do workspace
+4. Dependências da Fase 13
+5. Rotas envolvidas
+6. Endpoints envolvidos
+7. Contratos OpenAPI envolvidos
+8. Telas/componentes envolvidos
+9. Permissões
+10. Riscos e conflitos encontrados
+11. Alterações que seriam necessárias
+12. Alterações que exigem minha aprovação
+13. Plano técnico proposto, sem executar
+14. Critérios de aceite
+15. STATUS
+
+O STATUS FINAL deve ser exatamente um dos dois:
+
+FASE 14 PRONTA PARA IMPLEMENTAÇÃO
+
+ou
+
+FASE 14 BLOQUEADA — AGUARDANDO DECISÃO
+
+NÃO IMPLEMENTE NADA NESTA ETAPA.
+NÃO FAÇA COMMIT.
