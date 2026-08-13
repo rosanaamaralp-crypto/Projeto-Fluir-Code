@@ -1,0 +1,80 @@
+FASE 13 — ENCERRAMENTO E CONGELAMENTO
+
+A auditoria final da FASE 13 concluiu:
+
+STATUS: FASE 13 APROVÁVEL
+
+NÃO implemente uma nova fase.
+NÃO faça novas alterações funcionais.
+NÃO faça commit.
+NÃO faça migration.
+NÃO altere backend, frontend, OpenAPI ou codegen.
+NÃO corrija o foundation.test.js nesta etapa.
+
+A implementação da Fase 13 já foi aprovada com os seguintes pontos confirmados:
+
+- T-005 Agenda: 7 filtros server-side funcionando:
+  data, profissional, cliente, serviço, modalidade, status e recurso.
+- T-006 Novo Agendamento: cliente selecionável por nome/e-mail real, sem UUID manual.
+- T-012 Profissional: aba "Períodos Bloqueados" funcional.
+- Clientes: nome, e-mail e telefone provenientes de JOIN real com users.
+- Profissionais: nome, e-mail, telefone e especialidade provenientes de JOIN real com users.
+- OpenAPI atualizado e validado.
+- Orval/codegen executado.
+- api-client-react gerado corretamente.
+- api-zod gerado corretamente.
+- lib/api-zod/src/index.ts permanece compatível com o padrão da Fase 11.
+- Nenhum `format: uuid`.
+- Nenhum `format: email`.
+- Nenhum `type: integer`.
+- Nenhuma migration criada ou modificada.
+- F1–F11 preservadas.
+- Dead link de serviços removido.
+- DataTable com overflow-x-auto.
+- Permissões ADMIN/PROFESSIONAL/CLIENT validadas.
+- Responsividade validada.
+- T-019 Configurações permanece como placeholder.
+- /admin/notifications permanece como placeholder.
+- Build real aprovado com:
+  PORT=3000 BASE_PATH=/fluir-da-vida pnpm --filter @workspace/fluir-da-vida run build
+- pnpm typecheck: 0 erros.
+- pnpm test: 2 pass / 1 fail, sendo a falha do foundation.test.js pré-existente desde a Fase 2 e não causada pela Fase 13.
+
+OBSERVAÇÕES NÃO-BLOQUEANTES JÁ DOCUMENTADAS:
+
+1. PATCH /clients/:id e PATCH /professionals/:id não retornam os campos enriquecidos name/email/phone no corpo da resposta, embora as telas façam refetch e funcionem corretamente.
+2. foundation.test.js continua falhando porque contém uma expectativa obsoleta da Fase 1.
+
+NÃO corrija nenhuma dessas duas observações agora.
+
+TAREFA DE ENCERRAMENTO:
+
+1. NÃO modificar nenhum arquivo.
+2. NÃO executar codegen novamente.
+3. NÃO alterar OpenAPI.
+4. NÃO alterar banco ou migrations.
+5. NÃO alterar testes.
+6. NÃO alterar funcionalidades.
+7. Apenas verificar o estado atual do workspace.
+8. Confirmar que não existe commit novo realizado pelo agente.
+9. Confirmar que as alterações da Fase 13 continuam presentes.
+10. Confirmar que não há alterações acidentais fora do escopo da Fase 13.
+11. Se houver qualquer alteração inesperada, NÃO corrigir automaticamente. Apenas informar.
+
+Ao final, responda SOMENTE com um relatório curto contendo:
+
+1. STATUS FINAL DA FASE 13
+2. Arquivos atualmente modificados
+3. Confirmação de que nenhum commit foi realizado
+4. Confirmação de que nenhuma migration foi criada/modificada
+5. Confirmação de que F1–F11 permanecem preservadas
+6. Estado de:
+   - pnpm typecheck
+   - pnpm test
+   - build
+7. Pendências não-bloqueantes já documentadas
+8. Confirmação de que nenhuma alteração adicional foi feita
+
+IMPORTANTE:
+Depois desse relatório, PARE.
+Aguarde minha próxima autorização antes de qualquer alteração.
