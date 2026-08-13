@@ -28,7 +28,7 @@ Também existem **dois arquivos enviados para o Documento 06 — Home Care**, id
 | Arquivo enviado | Documento interno | Assunto                                                                                                            | Prioridade/uso |
 | --------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ | -------------- |
 | 01              | Documento 02      | [01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md](01-DOCUMENTO-02-REGRAS-DE-NEG-CIO.md)                                       | Alta           |
-| 02              | Documento 04      | [02-DOCUMENTO-04-MODELO-DE-DADOS.md](02-DOCUMENTO-04-MODELO-DE-DADOS.md)                                           | —              |
+| 02              | Documento 04      | [02-DOCUMENTO-04-MODELO-DE-DADOS.md](02-DOCUMENTO-04-MODELO-DE-DADOS.md) — **SUPERADO pelo Documento 13**          | HISTÓRICO      |
 | 03              | Documento 03      | [03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md](03-DOCUMENTO-03-PERFIS-E-PERMISS-ES.md)                                   | CRÍTICA        |
 | 04              | Documento 05      | [04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md](04-DOCUMENTO-05-AGENDA-E-CONTROLE-DAS-5-MACAS.md)               | CRÍTICA        |
 | 05              | Documento 06      | [05-DOCUMENTO-06-HOME-CARE.md](05-DOCUMENTO-06-HOME-CARE.md)                                                       | ALTA           |

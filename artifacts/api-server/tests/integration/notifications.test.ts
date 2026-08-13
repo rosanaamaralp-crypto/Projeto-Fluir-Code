@@ -19,7 +19,8 @@ import {
   type AppointmentTestExtras,
 } from "../helpers/seed.js";
 import { getDatabaseClient } from "@workspace/db";
-import { notifications } from "@workspace/db";
+import { notifications, users } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const { db: testDb } = getDatabaseClient();
 
@@ -685,5 +686,97 @@ describe("POST /api/notifications/:id/read — validações", () => {
       .post("/api/notifications/00000000-0000-0000-0000-000000000000/read")
       .set("Cookie", clientCookie);
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── IDOR CLIENT A × CLIENT B — Saneamento Pré-F16 ────────────────────────
+// Cobre explicitamente o cenário de dois usuários com o MESMO papel (CLIENT),
+// complementando os testes IDOR cross-role acima. Apenas QA — nenhuma
+// alteração de código de produção.
+
+describe("IDOR CLIENT A × CLIENT B — Saneamento Pré-F16", () => {
+  const clientBPassword = "SenhaForte123!";
+  let clientBEmail: string;
+  let clientBCookie: string;
+  let clientBNotifId: string;
+
+  beforeAll(async () => {
+    // Criar CLIENT B via ADMIN (mesmo padrão de clients.test.ts)
+    clientBEmail = `client-b-notif-idor-${Date.now()}@fluir.test`;
+    const created = await request
+      .post("/api/clients")
+      .set("Cookie", adminCookie)
+      .send({
+        name: "Client B IDOR Notificações",
+        email: clientBEmail,
+        password: clientBPassword,
+      });
+    expect(created.status, "beforeAll: criar CLIENT B").toBe(201);
+    clientBCookie = await loginAs(clientBEmail, clientBPassword);
+
+    // Semear notificação pertencente ao CLIENT B
+    const [userB] = await testDb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, clientBEmail));
+    expect(userB, "beforeAll: user do CLIENT B deve existir").toBeDefined();
+
+    const [notifB] = await testDb
+      .insert(notifications)
+      .values({
+        userId: userB!.id,
+        type: "SYSTEM",
+        title: "Notificação do CLIENT B",
+        message: "Pertence exclusivamente ao CLIENT B.",
+      })
+      .returning({ id: notifications.id });
+    clientBNotifId = notifB!.id;
+  });
+
+  it("Caso 1 — CLIENT A não vê notificações do CLIENT B na listagem", async () => {
+    // CLIENT B vê a própria notificação
+    const resB = await request.get("/api/notifications").set("Cookie", clientBCookie);
+    expect(resB.status).toBe(200);
+    const idsB = (resB.body.data as Array<{ id: string }>).map((n) => n.id);
+    expect(idsB).toContain(clientBNotifId);
+
+    // CLIENT A não vê a notificação do CLIENT B
+    const resA = await request.get("/api/notifications").set("Cookie", clientCookie);
+    expect(resA.status).toBe(200);
+    const idsA = (resA.body.data as Array<{ id: string }>).map((n) => n.id);
+    expect(idsA).not.toContain(clientBNotifId);
+  });
+
+  it("Caso 2 — CLIENT A tenta marcar notificação do CLIENT B como lida → 403", async () => {
+    const res = await request
+      .post(`/api/notifications/${clientBNotifId}/read`)
+      .set("Cookie", clientCookie);
+    expect(res.status).toBe(403);
+  });
+
+  it("Caso 3 — CLIENT A continua acessando e marcando as próprias notificações", async () => {
+    // Semear notificação nova para o CLIENT A
+    const [notifA] = await testDb
+      .insert(notifications)
+      .values({
+        userId: ids.clientUserId,
+        type: "SYSTEM",
+        title: "Notificação do CLIENT A",
+        message: "Pertence ao CLIENT A.",
+      })
+      .returning({ id: notifications.id });
+
+    // Acessa
+    const listRes = await request.get("/api/notifications").set("Cookie", clientCookie);
+    expect(listRes.status).toBe(200);
+    const idsA = (listRes.body.data as Array<{ id: string }>).map((n) => n.id);
+    expect(idsA).toContain(notifA!.id);
+
+    // Marca como lida
+    const readRes = await request
+      .post(`/api/notifications/${notifA!.id}/read`)
+      .set("Cookie", clientCookie);
+    expect(readRes.status).toBe(200);
+    expect(readRes.body.notification.readAt).toBeTruthy();
   });
 });

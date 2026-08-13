@@ -10,6 +10,9 @@ source_pdf: "2 - Modelo de Dados Fluir da Vida.pdf"
 
 > **Nota de conversão:** este arquivo foi convertido do PDF original para Markdown para uso como documentação de projeto no Replit. O conteúdo funcional foi preservado; a formatação pode ter pequenas diferenças de extração.
 
+> ⚠️ **DOCUMENTO SUPERADO — NÃO USAR COMO FONTE VIGENTE.**
+> Este documento (Doc 04) representa uma versão inicial do modelo de dados e foi **superado pelo Documento 13 — Arquitetura Técnica e Banco de Dados** ([13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md](13-DOCUMENTO-13-ARQUITETURA-T-CNICA-E-BANCO-DE-DADOS.md)), conforme a hierarquia do Doc 00. Qualquer análise, alteração ou verificação do banco de dados deve usar o Doc 13 e o schema real em `lib/db` como referência. Mantido apenas como registro histórico. *(Nota adicionada no Saneamento Pré-F16, 13/08/2026.)*
+
 FLUIR DA VIDA OFICIAL
 DOCUMENTO 04 — MODELO DE DADOS
 Versão: 1.0

@@ -1,0 +1,511 @@
+# SANEAMENTO PRÉ-F16 + GATE FORMAL DE INTEGRIDADE
+
+## Contexto
+
+Foi concluída uma auditoria geral de integridade do projeto Fluir da Vida Oficial após uma tentativa indevida de exclusão/restauração da Fase 15.
+
+A auditoria confirmou:
+
+* F1–F15 íntegras;
+* restauração da F15 completa;
+* 503/503 testes passando;
+* TypeScript sem erros;
+* nenhuma regressão identificada;
+* nenhuma vulnerabilidade IDOR encontrada;
+* nenhuma evidência de perda ou reversão indevida de código;
+* nenhum scope creep relevante.
+
+A auditoria seguinte classificou 10 pendências:
+
+* P1 — OpenAPI com 3 endpoints ausentes;
+* P2 — falta de teste explícito de IDOR em notificações;
+* P3 — T-019 Configurações Admin placeholder;
+* P4 — Notificações Admin placeholder;
+* P5 — T-003 Recuperação de senha;
+* P6 — T-001 Landing não roteada;
+* P7 — menu CLIENT conforme documentação;
+* P8 — Doc 04 desatualizado em relação ao Doc 13;
+* P9 — Doc 06 duplicado;
+* P10 — status PENDING documentado, mas não utilizado no fluxo vigente.
+
+A classificação já realizada foi:
+
+* P1 → C — Documentação
+* P2 → D — Teste/QA
+* P3 → F — Não corrigir agora
+* P4 → F — Não corrigir agora
+* P5 → E — Decisão de produto
+* P6 → E — Decisão de produto
+* P7 → F — Não corrigir
+* P8 → C — Documentação
+* P9 → C — Documentação
+* P10 → C — Documentação
+
+## OBJETIVO DESTA TAREFA
+
+Executar um **SANEAMENTO PRÉ-F16**, exclusivamente controlado, antes do início da F16.
+
+O objetivo NÃO é desenvolver novas funcionalidades.
+
+O objetivo é eliminar ambiguidades documentais e completar os testes de QA já identificados, preservando integralmente as fases congeladas.
+
+---
+
+# REGRA ABSOLUTA
+
+## NÃO ALTERAR FUNCIONALIDADES DE PRODUÇÃO SEM AUTORIZAÇÃO.
+
+Não implementar novas funcionalidades.
+
+Não refatorar código.
+
+Não melhorar UX.
+
+Não alterar arquitetura.
+
+Não alterar banco.
+
+Não alterar rotas existentes.
+
+Não alterar permissões.
+
+Não alterar comportamento da F1–F15.
+
+Não "aproveitar" para corrigir problemas não relacionados.
+
+Não apagar documentos.
+
+Não excluir arquivos.
+
+Não recriar fases.
+
+Não alterar AuthDocs já aprovados.
+
+Não modificar código de produção para acomodar esta tarefa.
+
+Se alguma correção exigir alteração de código de produção ou de uma fase congelada, PARE e apenas registre a necessidade como pendência.
+
+---
+
+# ETAPA 1 — BACKUP/ESTADO INICIAL
+
+Antes de qualquer alteração:
+
+1. Verificar `git status`.
+2. Verificar branch atual.
+3. Registrar commit/HEAD atual.
+4. Executar a suíte completa de testes.
+5. Executar TypeScript.
+6. Executar lint, se fizer parte dos comandos oficiais do projeto.
+
+Registrar:
+
+* commit inicial;
+* resultado dos testes;
+* resultado do TypeScript;
+* resultado do lint;
+* arquivos inicialmente modificados.
+
+NÃO alterar nada nesta etapa.
+
+---
+
+# ETAPA 2 — P8: DOC 04 × DOC 13
+
+Verificar exatamente a divergência entre:
+
+* Doc 04 — Modelo de Dados;
+* Doc 13 — Arquitetura Técnica e Banco.
+
+O Doc 13 é a referência técnica vigente.
+
+Adicionar SOMENTE uma indicação documental clara no Doc 04 informando que ele está superado pelo Doc 13 e não deve ser utilizado como fonte vigente do modelo de dados.
+
+Não alterar o conteúdo técnico do Doc 04 além do mínimo necessário para deixar seu status inequívoco.
+
+Não modificar Doc 13 além do estritamente necessário.
+
+Depois:
+
+* verificar se o Doc 00 precisa de uma referência de "superado" para o Doc 04;
+* se a alteração for necessária, fazê-la de forma mínima.
+
+---
+
+# ETAPA 3 — P10: STATUS PENDING
+
+O banco e o fluxo vigente NÃO devem ser alterados.
+
+A decisão vigente da F4 é:
+
+CREATE → CONFIRMED
+
+Não existe fluxo PENDING no MVP atual.
+
+Atualizar a documentação oficial de forma mínima para deixar explícito que:
+
+* PENDING aparece como referência histórica/documental;
+* não faz parte do fluxo vigente do MVP;
+* não deve ser implementado agora;
+* o comportamento aprovado pela F4 permanece CONFIRMED diretamente.
+
+NÃO alterar:
+
+* schema;
+* migration;
+* CHECK constraint;
+* backend;
+* frontend;
+* testes de produção existentes.
+
+---
+
+# ETAPA 4 — P9: DOC 06 DUPLICADO
+
+Não apagar nenhum arquivo nesta etapa.
+
+Identificar claramente:
+
+* qual é o documento duplicado;
+* se o conteúdo normativo é realmente idêntico;
+* qual arquivo deveria ser considerado canônico.
+
+Registrar a recomendação.
+
+Se a remoção de um dos arquivos exigir decisão do dono do projeto, NÃO remover.
+
+---
+
+# ETAPA 5 — P1: OPENAPI
+
+Existem 3 endpoints identificados como presentes no código e ausentes no OpenAPI:
+
+1. `PUT /clients/{clientId}/addresses`
+2. `PATCH /professionals/{profId}/blocked-periods/{id}`
+3. `DELETE /services/{id}`
+
+IMPORTANTE:
+
+Não adicionar esses endpoints automaticamente nesta etapa se isso exigir alterar artefatos congelados sem autorização.
+
+Primeiro:
+
+1. confirmar cada endpoint no código;
+2. confirmar sua origem/fase;
+3. confirmar autorização correspondente;
+4. confirmar proteção/permissões;
+5. confirmar se existe consumidor frontend;
+6. verificar se existe conflito com o contrato atual.
+
+Produzir uma recomendação individual para cada endpoint:
+
+* adicionar ao OpenAPI;
+* manter fora do OpenAPI;
+* ou remover futuramente.
+
+NÃO remover endpoints.
+
+NÃO alterar código.
+
+Se a atualização do OpenAPI for considerada segura e estiver explicitamente dentro do escopo documental desta tarefa, registrar exatamente quais arquivos seriam modificados antes de fazê-lo.
+
+---
+
+# ETAPA 6 — P2: TESTES DE IDOR DE NOTIFICAÇÕES
+
+Adicionar somente testes de segurança/QA, sem alterar código de produção.
+
+Cobrir explicitamente:
+
+### Caso 1
+
+CLIENT A tentando acessar notificações pertencentes ao CLIENT B.
+
+Esperado:
+
+`403` ou comportamento equivalente definido pelo contrato atual.
+
+### Caso 2
+
+CLIENT A tentando marcar como lida uma notificação pertencente ao CLIENT B.
+
+Esperado:
+
+`403`.
+
+### Caso 3
+
+Confirmar que CLIENT A continua conseguindo acessar e marcar como lida suas próprias notificações.
+
+IMPORTANTE:
+
+Os testes devem verificar o comportamento existente.
+
+Não modificar controllers, services, repositories ou middleware para "fazer o teste passar".
+
+Se o código atual falhar algum desses testes:
+
+* NÃO corrigir automaticamente;
+* parar;
+* registrar a falha;
+* identificar exatamente o arquivo/fase afetada;
+* solicitar autorização antes de modificar produção.
+
+---
+
+# ETAPA 7 — TESTE DE INVARIÂNCIA DA REMARCAÇÃO
+
+Adicionar, se possível sem alteração de produção, um teste explícito demonstrando que uma remarcação bem-sucedida mantém:
+
+* mesmo profissional;
+* mesmo serviço;
+* mesma modalidade;
+
+e altera somente os campos autorizados pela regra vigente, como:
+
+* horário;
+* recurso/endereço quando aplicável.
+
+Se o comportamento atual não corresponder exatamente à documentação:
+
+NÃO corrigir produção.
+
+Registrar a divergência para decisão.
+
+---
+
+# ETAPA 8 — NÃO IMPLEMENTAR P3/P4/P5/P6
+
+## P3 — T-019 Configurações Admin
+
+Não implementar.
+
+O placeholder foi formalmente autorizado na F13.
+
+Manter como está.
+
+## P4 — Notificações Admin
+
+Não implementar.
+
+O placeholder foi formalmente autorizado na F13.
+
+Manter como está.
+
+## P5 — Recuperação de senha
+
+Não implementar.
+
+Trata-se de decisão de produto.
+
+Registrar como pendência futura que necessita autorização formal/AuthDoc.
+
+## P6 — Landing
+
+Não rotear `/` para a Landing.
+
+Não alterar o fluxo de entrada.
+
+Registrar como decisão de produto pendente.
+
+---
+
+# ETAPA 9 — P7
+
+Não alterar o menu CLIENT.
+
+A auditoria confirmou que:
+
+* "Meus Agendamentos" e "Histórico" estão contemplados na mesma página;
+* a página possui separação entre próximos e histórico;
+* o AuthDoc F15 não exige duas rotas distintas.
+
+Classificar como:
+
+CONFORME — NÃO CORRIGIR.
+
+---
+
+# ETAPA 10 — AUDITORIA DE REGRESSÃO
+
+Depois das alterações permitidas:
+
+Executar novamente:
+
+1. todos os testes;
+2. TypeScript;
+3. lint;
+4. testes de banco;
+5. testes de autenticação;
+6. testes RBAC;
+7. testes IDOR;
+8. testes de agendamento;
+9. testes de notificações;
+10. testes relacionados à F15.
+
+Confirmar:
+
+* número total de testes;
+* número passando;
+* número falhando;
+* número ignorado;
+* erros TypeScript;
+* erros de lint.
+
+Comparar com o estado inicial.
+
+---
+
+# ETAPA 11 — AUDITORIA DOCUMENTAÇÃO × CÓDIGO
+
+Reexecutar a auditoria geral das fases F1–F15.
+
+Para cada fase, verificar:
+
+DOCUMENTAÇÃO → AUTHDOC → CÓDIGO → BANCO → API → FRONTEND → TESTES
+
+Não assumir que uma fase está correta apenas porque anteriormente foi aprovada.
+
+Validar novamente.
+
+Classificar cada item:
+
+🟢 Conforme
+🟡 Divergência controlada
+🟠 Pendência futura
+🔴 Bloqueador
+
+---
+
+# ETAPA 12 — VERIFICAÇÃO ESPECÍFICA DA F15
+
+Repetir integralmente a validação da restauração da F15.
+
+Confirmar:
+
+* 7 páginas;
+* rotas;
+* lazy imports;
+* CLIENT_NAV;
+* D1;
+* D2;
+* D3;
+* D4;
+* D5;
+* UpdateClientSchemaSelf;
+* transação users + clients;
+* ownership;
+* OpenAPI;
+* codegen;
+* testes D5;
+* testes IDOR;
+* ausência de alterações indevidas em F1–F14.
+
+Responder explicitamente:
+
+> "Todos os itens autorizados no AuthDoc F15 continuam presentes e funcionais?"
+
+A resposta deve ser SIM ou NÃO, com evidências.
+
+---
+
+# ETAPA 13 — GATE FORMAL PARA F16
+
+Ao final, produzir um relatório chamado:
+
+## GATE F16 — AUDITORIA PRÉ-INÍCIO
+
+O relatório deve conter:
+
+### 1. Estado inicial
+
+### 2. Alterações realizadas
+
+### 3. Alterações NÃO realizadas
+
+### 4. P1–P10 atualizados
+
+Tabela:
+
+| Pendência | Situação | Ação | Impacto |
+| --------- | -------- | ---- | ------- |
+
+### 5. F1–F15
+
+Tabela:
+
+| Fase | Integridade | Regressão | Observação |
+| ---- | ----------- | --------- | ---------- |
+
+### 6. Testes
+
+Informar números exatos.
+
+### 7. TypeScript
+
+Informar resultado.
+
+### 8. Git
+
+Informar:
+
+* HEAD inicial;
+* HEAD final;
+* arquivos modificados;
+* working tree final.
+
+### 9. Riscos
+
+Separar:
+
+* bloqueadores;
+* riscos altos;
+* riscos médios;
+* riscos baixos.
+
+### 10. Decisões de produto ainda pendentes
+
+Especialmente:
+
+* T-003 Recuperação de senha;
+* T-001 Landing.
+
+### 11. Itens deliberadamente congelados
+
+Registrar:
+
+* T-019;
+* Notificações Admin;
+* qualquer outra funcionalidade formalmente congelada.
+
+### 12. VEREDITO FINAL
+
+Escolher SOMENTE uma opção:
+
+🟢 F16 LIBERADA
+
+🟡 F16 LIBERADA COM PENDÊNCIAS CONTROLADAS
+
+🔴 F16 BLOQUEADA
+
+Explicar objetivamente o motivo.
+
+---
+
+# REGRA FINAL
+
+Esta tarefa é uma etapa de **saneamento e validação**, não uma nova fase funcional.
+
+O incidente da F15 NÃO deve ser usado como justificativa para refatorar ou reescrever código.
+
+A prioridade é:
+
+1. preservar o que já foi aprovado;
+2. eliminar ambiguidades documentais;
+3. aumentar a cobertura de testes sem alterar produção;
+4. comprovar novamente a integridade F1–F15;
+5. somente depois liberar a F16.
+
+Se qualquer alteração necessária ultrapassar esse escopo, NÃO executar.
+
+Registrar a necessidade e parar para autorização.

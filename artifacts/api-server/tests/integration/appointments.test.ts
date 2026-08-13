@@ -2078,3 +2078,61 @@ describe("F9 — IDOR: isolamento cross-user em appointments", () => {
     expect(res.status).toBe(403);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Invariância da remarcação — Saneamento Pré-F16
+// ═══════════════════════════════════════════════════════════════════════════
+// Demonstra explicitamente que uma remarcação bem-sucedida mantém o mesmo
+// profissional, serviço e modalidade, alterando apenas o horário (regra F4/F5.6).
+// Apenas QA — nenhuma alteração de código de produção.
+
+describe("Invariância da remarcação — Saneamento Pré-F16", () => {
+  it("remarcação mantém profissional, serviço e modalidade; altera apenas o horário", async () => {
+    const originalSlot = rSlot();
+    const newSlot = rSlot();
+
+    const createRes = await request
+      .post("/api/appointments")
+      .set("Cookie", clientCookie)
+      .send({
+        professionalId: ids.professionalId,
+        serviceId: ids.serviceId,
+        startDatetime: originalSlot,
+        modality: "IN_PERSON",
+      });
+    expect(createRes.status).toBe(201);
+    const orig = createRes.body.appointment as {
+      id: string;
+      clientId: string;
+      professionalId: string;
+      serviceId: string;
+      modality: string;
+      startDatetime: string;
+    };
+
+    const patchRes = await request
+      .patch(`/api/appointments/${orig.id}`)
+      .set("Cookie", clientCookie)
+      .send({ reschedule: { startDatetime: newSlot } });
+    expect(patchRes.status).toBe(200);
+    const novo = patchRes.body.appointment as typeof orig & { status: string };
+
+    // Invariantes — devem permanecer idênticos
+    expect(novo.clientId).toBe(orig.clientId);
+    expect(novo.professionalId).toBe(orig.professionalId);
+    expect(novo.serviceId).toBe(orig.serviceId);
+    expect(novo.modality).toBe(orig.modality);
+
+    // Único campo alterado autorizado pelo fluxo: horário
+    expect(novo.startDatetime).toBe(newSlot);
+    expect(novo.startDatetime).not.toBe(orig.startDatetime);
+
+    // Novo appointment nasce CONFIRMED; o original vai a CANCELLED
+    expect(novo.status).toBe("CONFIRMED");
+    const origAfter = await request
+      .get(`/api/appointments/${orig.id}`)
+      .set("Cookie", clientCookie);
+    expect(origAfter.status).toBe(200);
+    expect(origAfter.body.appointment.status).toBe("CANCELLED");
+  });
+});

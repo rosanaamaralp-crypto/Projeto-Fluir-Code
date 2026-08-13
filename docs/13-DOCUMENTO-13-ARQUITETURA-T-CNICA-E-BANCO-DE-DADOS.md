@@ -362,6 +362,8 @@ COMPLETED
 CANCELLED
 NO_SHOW
 
+> ⚠️ **Nota vigente (Saneamento Pré-F16, 13/08/2026):** o status `PENDING` consta acima apenas como referência histórica/documental e **não faz parte do fluxo vigente do MVP**. A decisão aprovada na Fase 4 estabelece que agendamentos são criados diretamente como `CONFIRMED` (`null ──CREATE──► CONFIRMED`), e o CHECK constraint do banco aceita somente `CONFIRMED / IN_PROGRESS / COMPLETED / CANCELLED / NO_SHOW`. `PENDING` não deve ser implementado sem nova autorização formal.
+
 21. REGRA DE MACA
     Se:
 
