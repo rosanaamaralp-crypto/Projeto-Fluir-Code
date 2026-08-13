@@ -1,0 +1,547 @@
+FASE 13 — AUDITORIA FINAL DE CONFORMIDADE
+
+IMPORTANTE: NÃO IMPLEMENTE NADA NESTA ETAPA.
+
+A Fase 13 — Admin foi implementada, mas antes de aprovar a fase precisamos realizar uma auditoria final contra os documentos oficiais.
+
+OBJETIVO DESTA ETAPA:
+Somente AUDITAR.
+Não corrigir.
+Não criar arquivos.
+Não modificar arquivos.
+Não instalar dependências.
+Não alterar backend.
+Não criar endpoints.
+Não criar migration.
+Não executar commit.
+
+==================================================
+1. HIERARQUIA DOCUMENTAL
+==================================================
+
+Releia os documentos oficiais nesta ordem de autoridade:
+
+Doc 18 > Doc 17 > Doc 15 > Doc 16 > Doc 14
+
+Compare a implementação atual com os requisitos desses documentos.
+
+Se houver conflito entre documentos, não invente uma solução.
+Informe exatamente o conflito e qual documento tem maior autoridade.
+
+==================================================
+2. PRESERVAÇÃO DAS FASES ANTERIORES
+==================================================
+
+Confirme que F1–F11 continuam preservadas.
+
+Verifique especialmente:
+
+- autenticação;
+- sessão por cookie;
+- login;
+- logout;
+- AuthContext;
+- PrivateRoute;
+- dashboards;
+- permissões por role;
+- endpoints existentes;
+- testes anteriores.
+
+Não altere nada para corrigir eventuais problemas.
+
+==================================================
+3. AUDITORIA DOS CLIENTES
+==================================================
+
+Audite:
+
+T-008 — Lista de Clientes
+T-009 — Cadastro de Cliente
+T-010 — Perfil do Cliente
+
+Verifique nos documentos oficiais:
+
+- quais campos devem aparecer;
+- se nome deve aparecer;
+- se e-mail deve aparecer;
+- se telefone deve aparecer;
+- status;
+- identificação do cliente;
+- paginação;
+- filtros;
+- ativação/desativação;
+- histórico/agendamentos;
+- endereços;
+- estados LOADING/EMPTY/ERROR/SUCCESS.
+
+ATENÇÃO:
+
+O relatório anterior informou:
+
+GET /api/clients e GET /api/professionals retornam somente dados das tabelas clients/professionals, enquanto nome, e-mail e telefone estão em users.
+
+Determine se isso realmente viola algum requisito oficial.
+
+NÃO corrija.
+
+Apenas informe.
+
+==================================================
+4. AUDITORIA DOS PROFISSIONAIS
+==================================================
+
+Audite:
+
+T-011 — Lista de Profissionais
+T-012 — Perfil do Profissional
+
+Verifique:
+
+- nome;
+- e-mail;
+- telefone;
+- especialidade;
+- status;
+- disponibilidade;
+- períodos bloqueados;
+- serviços;
+- agendamentos;
+- todas as abas previstas na documentação;
+- filtros;
+- paginação;
+- estados LOADING/EMPTY/ERROR/SUCCESS.
+
+Determine se os contratos atuais da API são suficientes.
+
+NÃO altere nada.
+
+==================================================
+5. AUDITORIA DO NOVO AGENDAMENTO
+==================================================
+
+Audite T-006.
+
+Verifique o fluxo:
+
+CLIENTE
+→ PROFISSIONAL
+→ SERVIÇO
+→ MODALIDADE
+→ DATA
+→ SLOT
+→ CRIAÇÃO DO AGENDAMENTO
+
+Verifique se:
+
+- cliente é selecionável de forma adequada;
+- profissional é selecionável;
+- serviço depende corretamente do profissional quando necessário;
+- modalidade é enviada;
+- data é enviada;
+- slot é obtido da API;
+- appointment é criado pela API real;
+- não existem mocks;
+- validações frontend existem;
+- backend continua sendo autoridade;
+- erros são tratados.
+
+ATENÇÃO:
+
+O frontend atualmente usa UUID manual para selecionar o cliente.
+
+Verifique nos documentos oficiais se isso é aceitável.
+
+NÃO corrija.
+
+Apenas classifique:
+
+- conforme;
+- parcialmente conforme;
+- não conforme.
+
+Explique o motivo com base nos documentos.
+
+==================================================
+6. AUDITORIA DA AGENDA
+==================================================
+
+Audite T-005.
+
+Confirme os filtros oficiais:
+
+- data;
+- profissional;
+- cliente;
+- serviço;
+- modalidade;
+- status;
+- recurso.
+
+Para cada filtro confirme:
+
+1. existe na UI;
+2. é enviado ao backend;
+3. não é filtrado somente no browser;
+4. o backend recebe o parâmetro correto.
+
+Confirme:
+
+- dados reais;
+- EMPTY;
+- LOADING;
+- ERROR;
+- SUCCESS;
+- identificação visual de status;
+- identificação de HOME_CARE.
+
+Não altere nada.
+
+==================================================
+7. AUDITORIA TELA POR TELA
+==================================================
+
+Audite individualmente:
+
+T-005 Agenda
+T-006 Novo Agendamento
+T-007 Detalhes do Agendamento
+T-008 Clientes
+T-009 Cadastro de Cliente
+T-010 Perfil do Cliente
+T-011 Profissionais
+T-012 Perfil do Profissional
+T-013 Serviços
+T-014 Cadastro de Serviço
+T-015 Recursos
+T-016 Detalhes da Maca
+T-017 Relatórios
+T-018 Auditoria
+T-019 Configurações
+
+Para cada tela informe:
+
+- requisito oficial;
+- rota;
+- arquivo;
+- endpoints utilizados;
+- dados reais;
+- LOADING;
+- EMPTY;
+- ERROR;
+- SUCCESS;
+- validações;
+- permissões;
+- responsividade;
+- ações destrutivas;
+- status:
+
+PASS
+ou
+PARTIAL
+ou
+FAIL.
+
+==================================================
+8. NOTIFICAÇÕES
+==================================================
+
+Audite somente o placeholder:
+
+/admin/notifications
+
+Confirme:
+
+- link existe no ADMIN_NAV;
+- rota existe;
+- placeholder existe;
+- não foram criados endpoints;
+- funcionalidade completa não foi implementada.
+
+Isso deverá permanecer para a FASE 20.
+
+==================================================
+9. CONFIGURAÇÕES
+==================================================
+
+Audite:
+
+/admin/settings
+
+Confirme que:
+
+- rota existe;
+- acesso é ADMIN;
+- existe apenas placeholder;
+- texto informa que configurações estarão disponíveis em breve;
+- nenhum endpoint foi criado;
+- nenhuma migration foi criada;
+- nenhuma funcionalidade foi inventada.
+
+==================================================
+10. OPENAPI / ORVAL
+==================================================
+
+Audite:
+
+lib/api-spec/openapi.yaml
+
+Verifique:
+
+- todos os endpoints usados realmente existem no backend;
+- nenhum endpoint foi inventado;
+- parâmetros correspondem aos validators/controllers;
+- response shapes correspondem ao backend.
+
+Procure explicitamente por:
+
+format: uuid
+format: email
+type: integer
+
+Informe se algum deles existe.
+
+Depois confirme:
+
+- codegen executado;
+- api-client-react gerado;
+- api-zod gerado;
+- typecheck das libs;
+- ausência de conflitos Zod v3/orval.
+
+Verifique obrigatoriamente:
+
+lib/api-zod/src/index.ts
+
+NÃO altere nada.
+
+==================================================
+11. TESTES
+==================================================
+
+Execute somente testes/validações, sem modificar código.
+
+Execute:
+
+pnpm typecheck
+
+pnpm test
+
+E o procedimento correto do ambiente Replit para:
+
+pnpm build
+
+Se o build exigir PORT ou BASE_PATH, descubra e utilize a configuração oficial do Replit para realizar uma validação real.
+
+Não classifique simplesmente como OK uma execução que não foi realmente concluída.
+
+==================================================
+12. FOUNDATION.TEST.JS
+==================================================
+
+O relatório anterior informou:
+
+foundation.test.js — FAIL
+
+Supostamente porque verifica schemas vazios da Fase 1.
+
+Investigue.
+
+Informe:
+
+- nome exato do teste;
+- expectativa;
+- resultado;
+- por que falha;
+- quando essa falha surgiu;
+- se Fase 13 causou a falha;
+- se o teste realmente é obsoleto;
+- se existe algum requisito documental que determine sua atualização.
+
+NÃO altere o teste.
+
+==================================================
+13. PERMISSÕES
+==================================================
+
+Valide funcionalmente:
+
+ADMIN → /admin/*
+PROFESSIONAL → /admin/*
+CLIENT → /admin/*
+
+Confirme:
+
+- frontend protege;
+- backend protege;
+- não-admin recebe 403 quando aplicável;
+- usuário não autenticado é redirecionado para login;
+- ADMIN consegue acessar todas as rotas administrativas.
+
+==================================================
+14. RESPONSIVIDADE
+==================================================
+
+Verifique visualmente as principais telas em:
+
+- desktop;
+- tablet;
+- celular aproximadamente 375px.
+
+Não precisa alterar nada.
+
+Informe problemas encontrados.
+
+==================================================
+15. MIGRATIONS
+==================================================
+
+Confirme por inspeção do git/diff:
+
+- nenhuma migration criada;
+- nenhuma migration modificada;
+- nenhum schema de banco alterado.
+
+==================================================
+16. GIT
+==================================================
+
+NÃO faça commit.
+
+Informe somente:
+
+git status
+
+e arquivos alterados/criados.
+
+Não reverta nada.
+
+Não faça reset.
+
+Não faça commit.
+
+==================================================
+17. RELATÓRIO FINAL
+==================================================
+
+Ao terminar, apresente SOMENTE o relatório de auditoria.
+
+Use exatamente esta estrutura:
+
+# AUDITORIA FINAL — FASE 13
+
+## 1. Resultado geral
+
+FASE 13 APROVÁVEL
+
+ou
+
+FASE 13 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+## 2. Tabela T-005 a T-019
+
+Para cada tela:
+
+Tela | Rota | Status | Problemas
+
+## 3. Clientes
+
+Conclusão:
+CONFORME / PARCIAL / NÃO CONFORME
+
+## 4. Profissionais
+
+Conclusão:
+CONFORME / PARCIAL / NÃO CONFORME
+
+## 5. Novo Agendamento
+
+Conclusão:
+CONFORME / PARCIAL / NÃO CONFORME
+
+## 6. Agenda
+
+Conclusão:
+CONFORME / PARCIAL / NÃO CONFORME
+
+## 7. OpenAPI / Orval
+
+Resultado detalhado.
+
+## 8. Testes
+
+typecheck:
+test:
+build:
+
+Informe números exatos.
+
+## 9. foundation.test.js
+
+Explique exatamente o problema.
+
+## 10. Permissões
+
+ADMIN:
+PROFESSIONAL:
+CLIENT:
+
+## 11. Responsividade
+
+Resultado.
+
+## 12. Migrations
+
+Confirmar SIM/NÃO.
+
+## 13. F1–F11
+
+Confirmar se permanecem preservadas.
+
+## 14. Problemas encontrados
+
+Separar em:
+
+A. Problemas somente de UI/frontend
+B. Problemas de contrato OpenAPI
+C. Problemas que exigiriam backend
+D. Problemas de teste
+E. Problemas de build
+F. Nenhum problema
+
+## 15. Correções necessárias
+
+Liste exatamente o que precisaria ser corrigido.
+
+NÃO CORRIJA.
+
+## 16. STATUS FINAL
+
+Somente uma destas duas opções:
+
+FASE 13 APROVÁVEL
+
+ou
+
+FASE 13 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+==================================================
+
+REGRA FINAL:
+
+NÃO IMPLEMENTE NENHUMA CORREÇÃO.
+
+NÃO CRIE ARQUIVOS.
+
+NÃO MODIFIQUE ARQUIVOS.
+
+NÃO INSTALE DEPENDÊNCIAS.
+
+NÃO ALTERE BACKEND.
+
+NÃO FAÇA MIGRATION.
+
+NÃO FAÇA COMMIT.
+
+Apenas audite e apresente o relatório.
+
+AGUARDE MINHA APROVAÇÃO ANTES DE QUALQUER CORREÇÃO.
