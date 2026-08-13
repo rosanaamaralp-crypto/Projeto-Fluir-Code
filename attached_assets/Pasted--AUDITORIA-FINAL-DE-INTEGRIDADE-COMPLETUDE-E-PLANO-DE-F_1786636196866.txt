@@ -1,0 +1,779 @@
+# AUDITORIA FINAL DE INTEGRIDADE, COMPLETUDE E PLANO DE FINALIZAÇÃO DO MVP
+
+## MODO OBRIGATÓRIO: SOMENTE LEITURA
+
+Esta etapa é exclusivamente de **auditoria, consolidação e planejamento**.
+
+### PROIBIDO nesta execução
+
+- Não alterar código de produção.
+- Não alterar frontend.
+- Não alterar backend.
+- Não alterar banco.
+- Não criar migration.
+- Não alterar OpenAPI.
+- Não executar codegen com alteração de arquivos.
+- Não alterar autenticação, RBAC ou ownership.
+- Não alterar App.tsx, AppLayout ou menus.
+- Não alterar nenhuma fase congelada F1–F16.
+- Não corrigir bugs encontrados.
+- Não fazer refactoring.
+- Não criar novas funcionalidades.
+- Não criar testes novos.
+- Não alterar documentação.
+- Não criar commits.
+- Não instalar dependências.
+- Não executar nenhuma implementação.
+
+Se encontrar algum problema, **apenas registre-o**.
+
+O objetivo desta execução é responder:
+
+> **Quanto realmente falta para considerar o MVP tecnicamente completo e pronto para produção, quais itens são realmente necessários, quais podem ser adiados e qual é a sequência de menor custo em créditos para finalizar o projeto?**
+
+---
+
+# 1. FONTE DA VERDADE
+
+Faça a auditoria utilizando, na seguinte ordem:
+
+1. AuthDocs/autorização formal das fases.
+2. Doc 18 — Pacote Mestre.
+3. Doc 17 — Plano Oficial.
+4. Doc 16 — API e Contratos.
+5. Doc 15 — Mapa Completo de Telas.
+6. Doc 14 — Regras completas.
+7. Doc 13 — Arquitetura Técnica e Banco.
+8. Docs 12–1.
+9. Código atual.
+10. Banco/schema/migrations.
+11. OpenAPI.
+12. Codegen.
+13. Testes.
+14. Histórico Git.
+
+Respeite a hierarquia documental já definida.
+
+Quando existir conflito documental, **não faça uma correção por conta própria**. Registre:
+
+- documento;
+- conflito;
+- decisão que prevaleceu;
+- fase/AuthDoc que estabeleceu a decisão;
+- consequência atual.
+
+---
+
+# 2. ESTADO BASE OBRIGATÓRIO
+
+Considere como ponto de partida:
+
+- F1–F15 concluídas e congeladas.
+- F16 — fechamento de QA do MVP — concluída.
+- Suíte atual: **509/509 testes passando**.
+- TypeScript: **0 erros**.
+- F15 foi restaurada após o incidente e posteriormente auditada.
+- O teste de concorrência **6 solicitações → 5 sucesso + 1 conflito** foi implementado.
+- Nenhuma F1–F15 deve ser reaberta nesta auditoria.
+- O problema conhecido de auto-seleção concorrente de maca foi identificado e NÃO deve ser corrigido nesta etapa.
+- O flaky histórico de 500/409 também não deve ser corrigido nesta etapa.
+
+Se algum desses fatos não corresponder ao estado real do repositório, registre a divergência em vez de alterar qualquer coisa.
+
+---
+
+# 3. AUDITORIA COMPLETA F1–F16
+
+Para cada fase F1–F16, produza:
+
+| Fase | Objetivo | Autorização | Implementado | Testado | Congelado | Regressão | Pendências |
+|---|---|---|---|---|---|---|---|
+
+Classifique cada fase:
+
+- 🟢 Completa
+- 🟡 Completa com pendência controlada
+- 🔴 Incompleta
+
+Não considere uma fase incompleta apenas porque existe alguma melhoria futura.
+
+Diferencie:
+
+**requisito obrigatório da fase**
+
+de
+
+**melhoria futura/pós-MVP**.
+
+---
+
+# 4. AUDITORIA INVERSA DA DOCUMENTAÇÃO
+
+Agora faça o caminho inverso:
+
+> "O que os documentos exigem que ainda não existe no código?"
+
+Procure especificamente:
+
+- funcionalidades;
+- telas;
+- rotas;
+- endpoints;
+- regras de negócio;
+- permissões;
+- testes;
+- estados de interface;
+- banco;
+- índices;
+- paginação;
+- segurança;
+- produção.
+
+Para cada item encontrado:
+
+| Item | Documento | Fase | Obrigatório MVP? | Implementado? | Autorização existente? | Ação |
+|---|---|---|---|---|---|---|
+
+Classifique a ação como:
+
+- IMPLEMENTAR ANTES DO MVP
+- IMPLEMENTAR ANTES DA PRODUÇÃO
+- DECISÃO DO PROPRIETÁRIO
+- PÓS-MVP
+- DOCUMENTAÇÃO
+- NÃO ALTERAR
+
+---
+
+# 5. AUDITORIA DE FUNCIONALIDADES DO MVP
+
+Verifique o sistema como produto completo.
+
+## ADMIN
+
+Verifique:
+
+- login;
+- dashboard;
+- clientes;
+- profissionais;
+- serviços;
+- recursos/macás;
+- agenda;
+- agendamentos;
+- relatórios;
+- auditoria;
+- configurações;
+- notificações;
+- permissões;
+- estados loading/empty/error/success.
+
+Identifique claramente o que é funcional e o que é placeholder autorizado.
+
+## PROFESSIONAL
+
+Verifique:
+
+- login;
+- dashboard;
+- agenda;
+- disponibilidade;
+- bloqueios;
+- clientes;
+- agendamentos;
+- cancelamento;
+- remarcação;
+- alteração;
+- home care;
+- recursos;
+- histórico;
+- notificações;
+- permissões.
+
+## CLIENT
+
+Verifique:
+
+- login;
+- dashboard;
+- novo agendamento;
+- wizard;
+- seleção de serviço;
+- profissional;
+- modalidade;
+- endereço;
+- maca quando presencial;
+- confirmação;
+- sucesso;
+- próximos agendamentos;
+- histórico;
+- cancelamento;
+- remarcação;
+- endereço;
+- perfil;
+- nascimento;
+- telefone;
+- proteção de e-mail/role/clientId/userId.
+
+Não implemente nada.
+
+---
+
+# 6. AUDITORIA DO AGENDAMENTO
+
+Faça uma auditoria específica do núcleo mais crítico.
+
+Verifique:
+
+- disponibilidade;
+- conflito de profissional;
+- conflito de cliente;
+- conflito de maca;
+- home care;
+- endereço;
+- duração;
+- preço congelado;
+- status;
+- cancelamento;
+- remarcação;
+- histórico;
+- concorrência;
+- integridade transacional;
+- constraints do banco.
+
+Analise separadamente o problema já identificado:
+
+> auto-seleção concorrente de maca.
+
+Não corrija.
+
+Determine:
+
+- impacto funcional;
+- risco;
+- se impede MVP;
+- se impede produção;
+- se deve entrar na próxima fase;
+- complexidade aproximada da correção;
+- arquivos que provavelmente seriam afetados.
+
+---
+
+# 7. AUDITORIA DE SEGURANÇA
+
+Verifique somente por leitura:
+
+- autenticação;
+- sessão;
+- cookies;
+- bcrypt;
+- rate limiting;
+- CORS;
+- Helmet;
+- body limit;
+- ownership;
+- IDOR;
+- RBAC;
+- acesso cruzado entre clientes;
+- acesso cruzado entre profissionais;
+- acesso administrativo;
+- notificações;
+- appointments;
+- addresses;
+- audit logs.
+
+Procure também:
+
+- endpoints sem autenticação indevida;
+- endpoints com role incorreta;
+- parâmetros UUID vulneráveis;
+- exposição de dados;
+- acesso indireto a recursos de outro usuário.
+
+Não corrigir nada.
+
+---
+
+# 8. AUDITORIA DE TESTES
+
+Verifique:
+
+- total de testes;
+- testes por módulo;
+- integração;
+- segurança;
+- IDOR;
+- concorrência;
+- banco;
+- notificações;
+- relatórios;
+- dashboards;
+- cancelamento;
+- remarcação;
+- home care;
+- macas.
+
+Compare com Doc 12 e Doc 17.
+
+Identifique:
+
+- testes obrigatórios ainda ausentes;
+- testes recomendados;
+- testes que podem ser pós-MVP;
+- flaky tests;
+- testes redundantes;
+- ausência de testes frontend/E2E.
+
+Importante:
+
+Não crie nenhum teste.
+
+---
+
+# 9. AUDITORIA DE PERFORMANCE
+
+Somente leitura.
+
+Analise:
+
+- endpoints de listagem;
+- appointments;
+- clients;
+- professionals;
+- notifications;
+- audit logs;
+- reports;
+- dashboards;
+- availability;
+- blocked periods.
+
+Verifique:
+
+- paginação;
+- filtros;
+- ordenação;
+- limites;
+- índices;
+- consultas potencialmente grandes;
+- N+1;
+- queries repetidas;
+- crescimento esperado dos dados.
+
+Para cada problema:
+
+| Problema | Impacto | MVP? | Produção? | Correção | Migration? | Complexidade |
+|---|---|---|---|---|---|---|
+
+Não altere nada.
+
+---
+
+# 10. AUDITORIA DE RESPONSIVIDADE
+
+Somente leitura.
+
+Analise as páginas dos três perfis:
+
+- desktop;
+- notebook;
+- tablet;
+- celular.
+
+Verifique o uso atual de:
+
+- sm:
+- md:
+- lg:
+- grids;
+- tabelas;
+- formulários;
+- wizard;
+- agenda;
+- menus;
+- modais.
+
+Classifique:
+
+- adequado;
+- provável problema;
+- problema confirmado.
+
+Não alterar frontend.
+
+---
+
+# 11. AUDITORIA DE OPENAPI E CODEGEN
+
+Compare:
+
+**Código ↔ OpenAPI ↔ Codegen ↔ Frontend**
+
+Identifique:
+
+- endpoints no código mas ausentes no OpenAPI;
+- endpoints no OpenAPI sem implementação;
+- hooks gerados ausentes;
+- divergências de schemas;
+- endpoints sem consumidores.
+
+Reavalie especificamente os três endpoints já identificados:
+
+- PUT /clients/{clientId}/addresses
+- PATCH /professionals/{profId}/blocked-periods/{id}
+- DELETE /services/{id}
+
+Não alterar OpenAPI nem executar codegen.
+
+Classifique cada um:
+
+- corrigir;
+- manter;
+- remover futuramente;
+- documentação apenas.
+
+---
+
+# 12. AUDITORIA DO BANCO
+
+Somente leitura.
+
+Verifique:
+
+- 14 tabelas;
+- constraints;
+- foreign keys;
+- unique;
+- CHECK;
+- EXCLUDE;
+- triggers;
+- histórico append-only;
+- preço imutável;
+- índices;
+- timestamps;
+- status;
+- recursos/macás;
+- home care;
+- integridade de appointments.
+
+Compare com Doc 13.
+
+Não criar migration.
+
+---
+
+# 13. DECISÕES DE PRODUTO
+
+Liste separadamente tudo que ainda depende de decisão do proprietário.
+
+Especialmente:
+
+### P5 — Recuperação de senha
+
+Determine:
+
+- documentação exige?
+- é MVP?
+- existe AuthDoc?
+- existe implementação?
+- impacto para produção?
+- recomendação.
+
+### P6 — Landing
+
+Determine:
+
+- componente existe?
+- está roteado?
+- documentação exige?
+- alterar a rota muda UX?
+- precisa de decisão?
+- recomendação.
+
+### T-019 — Configurações Admin
+
+Manter como placeholder se isso estiver formalmente autorizado.
+
+### Notificações Admin
+
+Manter como placeholder se isso estiver formalmente autorizado.
+
+Não implementar nenhum desses itens.
+
+---
+
+# 14. PREPARAÇÃO PARA PRODUÇÃO
+
+Audite o estado atual, sem modificar nada.
+
+Verifique:
+
+- deployment;
+- .replit;
+- build;
+- start command;
+- migrations;
+- seed;
+- banco de produção;
+- secrets;
+- SESSION_SECRET;
+- variáveis de ambiente;
+- HTTPS;
+- backup;
+- logs;
+- monitoramento;
+- health check;
+- rollback;
+- segurança;
+- dados iniciais;
+- procedimento de deploy.
+
+Classifique cada item:
+
+🟢 pronto  
+🟡 parcialmente pronto  
+🔴 ausente
+
+Importante:
+
+Não configurar produção.
+
+Não alterar secrets.
+
+Não criar deployment.
+
+Não criar migration.
+
+---
+
+# 15. BACKLOG FINAL
+
+Depois de toda a auditoria, consolide absolutamente tudo que falta em uma única tabela:
+
+| ID | Item | Categoria | Obrigatório MVP? | Obrigatório Produção? | Prioridade | Fase sugerida | Complexidade | AuthDoc necessário? |
+|---|---|---|---|---|---|---|---|---|
+
+Não duplicar itens.
+
+Não contar como pendência aquilo que já está formalmente congelado como placeholder.
+
+---
+
+# 16. CLASSIFICAÇÃO POR PRIORIDADE
+
+Crie quatro grupos:
+
+## A — BLOQUEADORES
+
+Sem esses itens não devemos considerar o MVP pronto ou colocar em produção.
+
+## B — IMPORTANTES ANTES DA PRODUÇÃO
+
+Não bloqueiam o desenvolvimento, mas devem ser tratados antes do go-live.
+
+## C — MELHORIAS RECOMENDADAS
+
+Podem ser feitas depois sem comprometer o MVP.
+
+## D — PÓS-MVP / NÃO ALTERAR
+
+Itens deliberadamente fora do escopo atual.
+
+---
+
+# 17. DEFINIÇÃO DO "MVP PRONTO"
+
+Responda objetivamente:
+
+> Se o objetivo for disponibilizar a aplicação para uso real por ADMIN, PROFESSIONAL e CLIENT, o que ainda é tecnicamente obrigatório?
+
+Não considere melhorias futuras.
+
+Liste somente os itens que realmente impediriam uma primeira utilização real.
+
+---
+
+# 18. DEFINIÇÃO DO "PROJETO PRONTO PARA PRODUÇÃO"
+
+Depois responda:
+
+> O que ainda precisa ser feito para colocar esta aplicação em produção com segurança?
+
+Separe:
+
+### Aplicação
+### Banco
+### Segurança
+### Performance
+### Responsividade
+### Deploy
+### Backup
+### Monitoramento
+### Operação
+
+---
+
+# 19. ESTRATÉGIA DE MENOR CUSTO EM CRÉDITOS
+
+Este ponto é MUITO importante.
+
+O proprietário já consumiu aproximadamente **US$ 100 em créditos do Replit** durante o desenvolvimento.
+
+Portanto, o plano final deve priorizar:
+
+1. menor número de fases;
+2. menor quantidade de arquivos alterados;
+3. menor exploração repetitiva;
+4. evitar refatorações;
+5. evitar reabrir fases congeladas;
+6. evitar alterações que não sejam necessárias para MVP;
+7. agrupar alterações realmente relacionadas;
+8. fazer primeiro auditoria e depois implementação;
+9. não implementar melhorias pós-MVP;
+10. não gastar créditos corrigindo problemas de baixo impacto.
+
+Para cada fase futura sugerida, informe:
+
+- objetivo;
+- arquivos estimados;
+- arquivos proibidos;
+- testes necessários;
+- complexidade;
+- risco;
+- dependências;
+- se pode ser agrupada com outra fase;
+- se realmente é necessária antes da produção.
+
+---
+
+# 20. PROPOSTA DE FASES FINAIS
+
+Com base em toda a auditoria, proponha a **menor quantidade possível de fases restantes** para chegar ao go-live.
+
+Não use automaticamente F17, F18, F19 etc.
+
+Se duas fases puderem ser agrupadas com segurança, agrupe.
+
+Para cada fase proposta:
+
+### FASE X — NOME
+
+**Objetivo**
+
+**Por que é necessária**
+
+**O que será alterado**
+
+**O que NÃO será alterado**
+
+**Arquivos autorizados**
+
+**Arquivos congelados**
+
+**Testes**
+
+**Critérios de aceite**
+
+**Dependências**
+
+**Risco**
+
+**Complexidade**
+
+**Estimativa de esforço relativa: Baixa/Média/Alta**
+
+---
+
+# 21. ORDEM FINAL RECOMENDADA
+
+Entregue uma sequência objetiva semelhante a:
+
+1. Auditoria/decisões restantes
+2. Correções obrigatórias do MVP
+3. Performance/paginação — se realmente necessária
+4. Responsividade — se realmente necessária
+5. Produção
+6. Go-live
+
+Mas NÃO assuma essa ordem automaticamente.
+
+Baseie a ordem nas evidências encontradas.
+
+---
+
+# 22. REGRA ABSOLUTA CONTRA ESCOPO CREEP
+
+Se durante a auditoria encontrar:
+
+- melhoria UX;
+- refatoração;
+- nova funcionalidade;
+- melhoria visual;
+- novo endpoint;
+- nova tabela;
+- melhoria arquitetural;
+- otimização não obrigatória;
+- item de backlog futuro;
+
+NÃO IMPLEMENTE.
+
+Apenas classifique como:
+
+**PÓS-MVP / FORA DO ESCOPO**
+
+---
+
+# 23. VEREDITO EXECUTIVO FINAL
+
+Finalize obrigatoriamente com:
+
+## STATUS ATUAL
+
+🟢 / 🟡 / 🔴
+
+## MVP
+
+- percentual estimado de conclusão;
+- o que já está pronto;
+- o que realmente falta.
+
+## PRODUÇÃO
+
+- percentual estimado de preparação;
+- bloqueadores;
+- riscos.
+
+## FASES RESTANTES
+
+Informe o menor número razoável de fases.
+
+## CUSTO
+
+Identifique quais fases tendem a consumir mais créditos do Replit e quais podem ser executadas com prompts pequenos.
+
+## RECOMENDAÇÃO
+
+Responda claramente:
+
+> **"Se o objetivo é gastar o mínimo possível de créditos e colocar o MVP em produção com segurança, quais são exatamente os próximos passos?"**
+
+---
+
+# REGRA FINAL
+
+Esta execução é **100% SOMENTE LEITURA**.
+
+Não altere nenhum arquivo.
+
+Não crie testes.
+
+Não corrija bugs.
+
+Não faça commits.
+
+Não implemente nada.
+
+Não reabra F1–F16.
+
+Entregue somente o **RELATÓRIO FINAL DE AUDITORIA + PLANO MÍNIMO PARA FINALIZAÇÃO DO MVP E GO-LIVE**.
+
+Não peça ao proprietário para executar novas auditorias antes de entregar esse relatório.
