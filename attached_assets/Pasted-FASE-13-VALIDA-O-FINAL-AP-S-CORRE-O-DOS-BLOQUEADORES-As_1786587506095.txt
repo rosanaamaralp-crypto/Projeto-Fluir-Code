@@ -1,0 +1,665 @@
+FASE 13 — VALIDAÇÃO FINAL APÓS CORREÇÃO DOS BLOQUEADORES
+
+As correções de conformidade da Fase 13 já foram implementadas.
+
+NÃO implemente nenhuma nova funcionalidade.
+NÃO altere nenhum arquivo.
+NÃO faça commit.
+NÃO crie migration.
+NÃO faça novas correções.
+
+Agora faça SOMENTE UMA AUDITORIA FINAL E VALIDAÇÃO FUNCIONAL COMPLETA da Fase 13.
+
+==================================================
+1. REGRA PRINCIPAL
+==================================================
+
+Não modificar código durante esta auditoria.
+
+Se encontrar qualquer problema:
+
+- NÃO corrija;
+- registre o problema;
+- informe o arquivo;
+- informe o requisito afetado;
+- informe se é frontend, backend, OpenAPI, teste ou documentação;
+- informe se bloqueia ou não a aprovação.
+
+==================================================
+2. OPENAPI / ORVAL
+==================================================
+
+Verificar:
+
+lib/api-spec/openapi.yaml
+
+Confirmar:
+
+- GET /api/reports/appointments possui:
+  startDate
+  endDate
+  professionalId
+  clientId
+  serviceId
+  modality
+  status
+  resourceId
+  page
+  limit
+
+- GET /api/professionals/{profId}/blocked-periods está documentado.
+
+Confirmar ZERO ocorrências de:
+
+format: uuid
+format: email
+type: integer
+
+Executar/verificar o codegen oficial do projeto SOMENTE se necessário para validação, sem modificar manualmente arquivos gerados.
+
+Depois verificar obrigatoriamente:
+
+lib/api-zod/src/index.ts
+
+Confirmar que continua compatível com o padrão da Fase 11.
+
+Verificar também:
+
+lib/api-client-react
+lib/api-zod
+
+e confirmar que os hooks/tipos correspondem ao OpenAPI.
+
+==================================================
+3. T-005 — AGENDA
+==================================================
+
+Validar a implementação completa.
+
+Filtros obrigatórios:
+
+1. data
+2. profissional
+3. cliente
+4. serviço
+5. modalidade
+6. status
+7. recurso
+
+Confirmar no frontend que todos são enviados para a API.
+
+Confirmar no backend que:
+
+clientId
+
+e
+
+resourceId
+
+são realmente aplicados na consulta ao banco.
+
+Não basta verificar apenas que aparecem na URL.
+
+Verificar o código do repository/query builder.
+
+Confirmar que NÃO existe:
+
+- carregamento completo de agendamentos;
+- filtragem posterior no browser;
+- mock;
+- filtro client-side indevido.
+
+Validar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+Validar paginação.
+
+==================================================
+4. T-006 — NOVO AGENDAMENTO
+==================================================
+
+Validar o fluxo completo:
+
+CLIENTE
+→ PROFISSIONAL
+→ SERVIÇO
+→ MODALIDADE
+→ DATA
+→ SLOT
+→ CRIAÇÃO
+
+Confirmar:
+
+- cliente é carregado pela API;
+- cliente aparece com identificação amigável;
+- não existe UUID manual;
+- não existem clientes mockados;
+- seleção do cliente envia o ID real;
+- profissional usa API real;
+- serviço usa API real;
+- modalidade usa dados reais;
+- data é enviada corretamente;
+- slots vêm da API;
+- criação usa endpoint real.
+
+Verificar dependências entre os selects.
+
+==================================================
+5. T-008 — CLIENTES
+==================================================
+
+Confirmar:
+
+- nome real;
+- e-mail real;
+- telefone real quando disponível;
+- status real;
+- demais campos reais.
+
+Verificar que os dados vêm do JOIN/API real.
+
+Não pode haver nomes ou dados hardcoded.
+
+Validar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+Validar paginação/filtros existentes.
+
+==================================================
+6. T-010 — PERFIL DO CLIENTE
+==================================================
+
+Verificar:
+
+- nome;
+- e-mail;
+- telefone;
+- informações pessoais;
+- endereço;
+- agendamentos;
+- status.
+
+Confirmar que os dados são reais.
+
+Validar ativar/desativar.
+
+Confirmar que ação destrutiva/desativação exige confirmação.
+
+Validar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+==================================================
+7. T-011 — PROFISSIONAIS
+==================================================
+
+Confirmar:
+
+- nome;
+- e-mail;
+- telefone quando disponível;
+- especialidade;
+- status;
+- demais campos previstos.
+
+Todos os dados devem ser reais.
+
+Validar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+Validar criação.
+
+==================================================
+8. T-012 — PERFIL DO PROFISSIONAL
+==================================================
+
+Confirmar todas as abas previstas:
+
+- informações;
+- disponibilidade;
+- serviços;
+- agendamentos;
+- períodos bloqueados.
+
+Confirmar que "Períodos Bloqueados" utiliza:
+
+GET /api/professionals/{profId}/blocked-periods
+
+através do hook gerado pelo Orval.
+
+Não pode existir mock.
+
+Validar:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+==================================================
+9. T-013 — SERVIÇOS
+==================================================
+
+Confirmar que:
+
+- não existe mais o dead link /admin/services/:id;
+- listagem funciona;
+- criação funciona;
+- ativar/desativar funciona;
+- confirmação existe quando aplicável;
+- dados vêm da API.
+
+==================================================
+10. T-015 / T-016 — RECURSOS
+==================================================
+
+Confirmar:
+
+- listagem real;
+- criação;
+- detalhe;
+- edição;
+- ativação/desativação;
+- confirmação;
+- estados LOADING/EMPTY/ERROR/SUCCESS.
+
+==================================================
+11. T-017 — RELATÓRIOS
+==================================================
+
+Confirmar:
+
+- dados reais;
+- paginação;
+- filtros server-side;
+- relatórios de agendamentos;
+- relatório de recursos;
+- summary cards;
+- estados completos.
+
+==================================================
+12. T-018 — AUDITORIA
+==================================================
+
+Confirmar:
+
+- dados reais do backend;
+- filtros;
+- paginação;
+- estados completos;
+- auditoria continua sendo gerada pelo backend.
+
+Não criar auditoria artificial no frontend.
+
+==================================================
+13. T-019 — CONFIGURAÇÕES
+==================================================
+
+Confirmar que permanece EXATAMENTE como placeholder:
+
+"Configurações disponíveis em breve"
+
+Sem:
+
+- endpoint novo;
+- migration;
+- dados inventados;
+- funcionalidade fictícia.
+
+==================================================
+14. NOTIFICAÇÕES
+==================================================
+
+Confirmar que:
+
+/admin/notifications
+
+continua sendo apenas placeholder.
+
+Não implementar funcionalidade da Fase 20.
+
+==================================================
+15. TODAS AS ROTAS
+==================================================
+
+Verificar individualmente:
+
+/admin
+/admin/schedule
+/admin/appointments/new
+/admin/appointments/:id
+/admin/clients
+/admin/clients/new
+/admin/clients/:id
+/admin/professionals
+/admin/professionals/:id
+/admin/services
+/admin/services/new
+/admin/resources
+/admin/resources/:id
+/admin/reports
+/admin/audit
+/admin/settings
+/admin/notifications
+
+Confirmar que todas carregam.
+
+==================================================
+16. PERMISSÕES
+==================================================
+
+Validar frontend E backend.
+
+ADMIN:
+
+deve acessar /admin/*.
+
+PROFESSIONAL:
+
+não deve acessar /admin/*.
+
+CLIENT:
+
+não deve acessar /admin/*.
+
+Não autenticado:
+
+deve ser redirecionado para login no frontend e receber 401 quando aplicável no backend.
+
+Testar especificamente endpoints administrativos relevantes e confirmar 403 para usuários sem permissão.
+
+==================================================
+17. RESPONSIVIDADE
+==================================================
+
+Validar visualmente pelo menos:
+
+375px
+768px
+desktop
+
+Verificar especialmente:
+
+- Agenda;
+- Clientes;
+- Profissionais;
+- Novo Agendamento;
+- Relatórios;
+- Auditoria;
+- tabelas;
+- formulários.
+
+Confirmar que o DataTable possui scroll horizontal interno quando necessário.
+
+Não pode existir overflow horizontal da página causado pelas tabelas.
+
+==================================================
+18. ESTADOS
+==================================================
+
+Para TODAS as telas T-005 até T-019:
+
+Confirmar existência e funcionamento de:
+
+LOADING
+EMPTY
+ERROR
+SUCCESS
+
+Não considerar apenas a existência textual do componente.
+
+Verificar se os estados estão realmente conectados às queries/mutations.
+
+==================================================
+19. AÇÕES DESTRUTIVAS
+==================================================
+
+Verificar:
+
+- cancelamento de agendamento;
+- ativar/desativar cliente;
+- ativar/desativar profissional, se aplicável;
+- ativar/desativar serviço;
+- desativar recurso;
+- outras ações destrutivas.
+
+Todas devem possuir confirmação apropriada.
+
+==================================================
+20. TESTES
+==================================================
+
+Executar separadamente:
+
+pnpm typecheck
+
+pnpm test
+
+Build oficial do projeto Replit.
+
+IMPORTANTE:
+
+Não dizer "build OK" apenas porque o TypeScript passou.
+
+Informar o comando EXATO usado para o build.
+
+Informar se PORT e BASE_PATH foram necessários.
+
+==================================================
+21. FOUNDATION.TEST.JS
+==================================================
+
+Se continuar falhando:
+
+"business schemas are intentionally absent in Phase 1"
+
+NÃO corrigir.
+
+Informar:
+
+- nome do teste;
+- resultado;
+- causa;
+- desde qual fase existe;
+- confirmação de que as alterações da Fase 13 não causaram a falha;
+- se houve ou não alteração no arquivo de schema nesta etapa.
+
+Não classificar pnpm test como totalmente aprovado se houver 1 teste falhando.
+
+==================================================
+22. MIGRATIONS
+==================================================
+
+Verificar:
+
+lib/db/migrations/
+
+Confirmar:
+
+- nenhuma migration nova;
+- nenhuma migration existente modificada.
+
+==================================================
+23. F1–F11
+==================================================
+
+Verificar git diff e histórico necessário.
+
+Confirmar que as alterações da Fase 13 não quebraram:
+
+- autenticação;
+- login;
+- logout;
+- AuthContext;
+- PrivateRoute;
+- dashboards;
+- endpoints anteriores;
+- regras de negócio anteriores.
+
+Se possível, executar testes relevantes das fases anteriores.
+
+==================================================
+24. GIT
+==================================================
+
+Executar:
+
+git status --short
+
+git diff --name-only
+
+NÃO fazer commit.
+
+Listar exatamente os arquivos modificados pela Fase 13 e pelas correções.
+
+Verificar se existe qualquer alteração não relacionada.
+
+==================================================
+25. RELATÓRIO FINAL
+==================================================
+
+NÃO escrever código depois da auditoria.
+
+Entregar SOMENTE o relatório.
+
+Formato obrigatório:
+
+# AUDITORIA FINAL — FASE 13
+
+## 1. STATUS GERAL
+
+Escolher exatamente:
+
+FASE 13 APROVÁVEL
+
+ou
+
+FASE 13 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+## 2. TABELA T-005 A T-019
+
+Para cada tela informar:
+
+- rota
+- endpoint
+- dados reais
+- loading
+- empty
+- error
+- success
+- responsividade
+- permissões
+- ações
+- status PASS/PARTIAL/FAIL
+
+## 3. T-005 — AGENDA
+
+Demonstrar individualmente os 7 filtros e confirmar server-side.
+
+## 4. T-006 — NOVO AGENDAMENTO
+
+Demonstrar o fluxo completo.
+
+## 5. T-012 — PERÍODOS BLOQUEADOS
+
+Confirmar endpoint, hook e aba.
+
+## 6. CLIENTES
+
+Confirmar contrato e dados reais.
+
+## 7. PROFISSIONAIS
+
+Confirmar contrato e dados reais.
+
+## 8. OPENAPI / ORVAL
+
+Informar:
+
+- endpoints;
+- schemas;
+- codegen;
+- api-client-react;
+- api-zod;
+- api-zod/src/index.ts;
+- formatos proibidos.
+
+## 9. TESTES
+
+Tabela:
+
+Comando | Resultado | Observação
+
+Incluir:
+
+pnpm typecheck
+pnpm test
+build
+testes funcionais
+
+## 10. FOUNDATION.TEST.JS
+
+Resultado separado e detalhado.
+
+## 11. PERMISSÕES
+
+ADMIN
+PROFESSIONAL
+CLIENT
+Não autenticado
+
+## 12. RESPONSIVIDADE
+
+375px
+768px
+desktop
+
+## 13. MIGRATIONS
+
+Confirmar nenhuma criada/modificada.
+
+## 14. F1–F11
+
+Confirmar preservação.
+
+## 15. GIT
+
+Listar arquivos modificados.
+
+Confirmar:
+
+NENHUM COMMIT REALIZADO.
+
+## 16. PROBLEMAS RESTANTES
+
+Somente problemas reais encontrados.
+
+## 17. CONCLUSÃO
+
+Não suavizar problemas.
+
+Se existir qualquer requisito obrigatório não atendido, classificar:
+
+FASE 13 NÃO APROVÁVEL — CORREÇÕES NECESSÁRIAS
+
+Se todos os requisitos obrigatórios estiverem comprovadamente atendidos:
+
+FASE 13 APROVÁVEL
+
+NÃO FAÇA NENHUMA CORREÇÃO NESTA AUDITORIA.
+AGUARDE MINHA APROVAÇÃO PARA QUALQUER NOVA ALTERAÇÃO.
