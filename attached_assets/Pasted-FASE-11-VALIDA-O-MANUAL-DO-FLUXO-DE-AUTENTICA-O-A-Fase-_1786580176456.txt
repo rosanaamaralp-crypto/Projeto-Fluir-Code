@@ -1,0 +1,71 @@
+FASE 11 — VALIDAÇÃO MANUAL DO FLUXO DE AUTENTICAÇÃO
+
+A Fase 11 já foi implementada e os gates técnicos passaram:
+- Backend: 500/500 testes
+- Frontend: typecheck 0 erros
+- Codegen + typecheck: 0 erros
+- Login renderizando
+- AuthContext, PrivateRoute e dashboards implementados
+
+NÃO implemente nenhuma nova funcionalidade e NÃO avance para a próxima fase.
+
+Faça apenas uma validação manual/funcional do fluxo atual no navegador.
+
+Verifique:
+
+1. Abrir a URL principal do projeto.
+2. Confirmar que usuário não autenticado é redirecionado para /login.
+3. Confirmar que a tela de login possui:
+   - campo e-mail
+   - campo senha
+   - botão Entrar
+   - tratamento de erro de credenciais
+4. Fazer login usando uma credencial válida existente no seed/documentação do projeto.
+5. Confirmar que o login chama POST /api/auth/login.
+6. Confirmar que a sessão é mantida pelo cookie.
+7. Confirmar que GET /api/auth/me identifica corretamente o usuário autenticado.
+8. Confirmar o redirecionamento para o dashboard correto conforme o role:
+   - ADMIN → /dashboard/admin
+   - PROFESSIONAL → /dashboard/professional
+   - CLIENT → /dashboard/client
+9. Confirmar que o dashboard apresenta dados reais da API, e não dados mockados.
+10. Confirmar que acessar diretamente uma rota protegida sem autenticação redireciona para /login.
+11. Confirmar que um usuário não consegue acessar o dashboard de outro role.
+12. Confirmar que o botão Sair chama POST /api/auth/logout.
+13. Após logout, confirmar que o usuário volta para /login e não consegue acessar o dashboard anterior.
+14. Verificar os logs do navegador/console e confirmar que não existem erros de runtime relacionados ao frontend.
+15. Verificar se existe algum erro HTTP inesperado durante o fluxo.
+
+IMPORTANTE:
+- Não modificar código.
+- Não criar arquivos.
+- Não instalar dependências.
+- Não corrigir problemas nesta etapa.
+- Apenas testar e relatar.
+
+No final, apresente:
+
+VALIDAÇÃO FASE 11
+
+Login: PASSOU/FALHOU
+AuthContext/sessão: PASSOU/FALHOU
+PrivateRoute: PASSOU/FALHOU
+Dashboard ADMIN: PASSOU/FALHOU
+Dashboard PROFESSIONAL: PASSOU/FALHOU
+Dashboard CLIENT: PASSOU/FALHOU
+Logout: PASSOU/FALHOU
+Proteção de rotas: PASSOU/FALHOU
+Console/runtime: OK/ERROS
+Integração Frontend/API: PASSOU/FALHOU
+
+Se algum teste falhar, NÃO corrija. Apenas informe:
+- qual teste falhou
+- erro observado
+- URL/endpoint envolvido
+- mensagem/log relevante
+- provável causa, se puder identificar
+
+STATUS FINAL:
+FASE 11 VALIDADA
+ou
+FASE 11 COM PENDÊNCIAS
