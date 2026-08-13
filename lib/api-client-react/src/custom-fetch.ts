@@ -373,7 +373,11 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  // credentials: 'include' ensures session cookies are sent on every request.
+  // The backend uses cookie-based sessions (connect.sid); without this the
+  // browser will not attach the cookie and every protected route returns 401.
+  const credentials = init.credentials ?? "include";
+  const response = await fetch(input, { ...init, method, headers, credentials });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

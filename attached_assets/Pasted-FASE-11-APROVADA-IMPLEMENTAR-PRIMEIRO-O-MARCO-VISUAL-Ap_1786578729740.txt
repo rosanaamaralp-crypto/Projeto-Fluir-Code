@@ -1,0 +1,102 @@
+FASE 11 APROVADA — IMPLEMENTAR PRIMEIRO O MARCO VISUAL
+
+Aprovo a Fase 11 com a seguinte decisão de escopo:
+
+D-01: opção (b) — implementar primeiro o marco visual: LOGIN + AUTENTICAÇÃO + DASHBOARD + LOGOUT.
+D-02: opção (b) — substituir a home estática por redirect para /login.
+D-03: manter o openapi.yaml manual nesta fase, atualizando-o com os endpoints realmente existentes no backend. Não criar nova infraestrutura de geração automática.
+D-04: opção (b) — F11 será focada no fluxo inicial/Admin. Profissional e Cliente serão expandidos posteriormente, após os gates desta etapa.
+
+ANTES DE IMPLEMENTAR:
+1. Não alterar backend, banco ou migrations.
+2. Ler novamente os contratos reais da API antes de implementar.
+3. Confirmar os endpoints reais de:
+   - POST /api/auth/login
+   - GET /api/auth/me
+   - POST /api/auth/logout
+   - dashboard admin
+4. Atualizar o OpenAPI somente com os contratos reais existentes.
+5. Regenerar o cliente Orval.
+6. Garantir credentials: 'include' no customFetch para preservar a sessão por cookie.
+7. Não utilizar mocks ou dados fictícios.
+
+IMPLEMENTAR NESTA ORDEM:
+
+1. Atualizar lib/api-spec/openapi.yaml com os endpoints necessários.
+2. Regenerar o cliente @workspace/api-client-react.
+3. Corrigir customFetch para enviar credentials: 'include'.
+4. Criar AuthContext com:
+   - user
+   - isLoading
+   - login()
+   - logout()
+   - restauração da sessão via GET /api/auth/me
+5. Criar useAuth().
+6. Criar PrivateRoute com proteção por autenticação e role.
+7. Criar src/pages/login.tsx:
+   - email
+   - senha
+   - validação com Zod
+   - login real via API
+   - mensagem de erro para credenciais inválidas
+8. Atualizar App.tsx:
+   - /login pública
+   - /admin/* protegida
+   - / como redirect para /login quando não autenticado
+9. Criar layout autenticado básico com:
+   - nome do usuário
+   - menu
+   - botão Sair
+10. Criar dashboard Admin inicial usando DADOS REAIS da API.
+11. Implementar logout real.
+12. Garantir que F5/reload preserve a sessão.
+13. Tratar estados LOADING, EMPTY e ERROR.
+
+NÃO IMPLEMENTAR AINDA:
+- telas completas de clientes
+- telas completas de profissionais
+- serviços
+- recursos
+- auditoria
+- relatórios
+- agenda completa
+- fluxo completo do profissional
+- fluxo completo do cliente
+
+Esses itens serão tratados depois que o primeiro marco visual estiver funcionando.
+
+CRITÉRIOS DE ACEITE:
+
+1. Abrir a URL do Replit sem autenticação → /login.
+2. Login válido de ADMIN → /admin.
+3. Login válido de PROFESSIONAL → /professional.
+4. Login válido de CLIENT → /client, mesmo que o dashboard seja mínimo nesta etapa.
+5. Login inválido → mensagem de erro.
+6. /admin sem autenticação → /login.
+7. Usuário com role incorreto não consegue acessar área de outro perfil.
+8. Dashboard Admin exibe dados reais da API.
+9. Logout destrói a sessão e retorna para /login.
+10. Recarregar a página mantém a sessão ativa.
+11. Nenhum mock ou dado fictício.
+12. Backend continua 500/500.
+13. Typecheck do frontend = 0 erros.
+14. Build do frontend = OK.
+15. Nenhuma migration criada ou alterada.
+16. Nenhuma alteração desnecessária no backend.
+
+IMPORTANTE:
+Não implemente as fases seguintes.
+Não altere regras de negócio.
+Não invente endpoints.
+Não prossiga se algum contrato da API estiver diferente do esperado: pare e informe a divergência.
+
+Ao terminar, apresente:
+- arquivos criados/modificados
+- endpoints realmente utilizados
+- testes executados
+- resultado do typecheck
+- resultado do build
+- resultado dos testes backend
+- como testar o login manualmente no navegador
+- credenciais de seed disponíveis, sem expor senhas em logs
+- STATUS FINAL DA FASE 11

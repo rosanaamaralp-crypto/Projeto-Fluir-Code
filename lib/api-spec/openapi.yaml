@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: dashboard
+    description: Dashboard operations
 paths:
   /healthz:
     get:
@@ -24,8 +28,182 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: User login
+      description: >
+        Authenticate with email and password.
+        On success, sets a session cookie (connect.sid).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: User logout
+      description: Destroys the current session. Requires active session cookie.
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Current user
+      description: Returns current session user data. Requires active session cookie.
+      responses:
+        "200":
+          description: Session user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Admin dashboard
+      description: >
+        Returns admin dashboard indicators calculated from real database data.
+        Requires ADMIN role (roleId=1).
+      responses:
+        "200":
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboardResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/professional:
+    get:
+      operationId: getProfessionalDashboard
+      tags: [dashboard]
+      summary: Professional dashboard
+      description: >
+        Returns professional dashboard indicators.
+        PROFESSIONAL uses session; ADMIN must provide professionalId query param.
+      parameters:
+        - in: query
+          name: professionalId
+          schema:
+            type: string
+          required: false
+          description: Required for ADMIN role; ignored for PROFESSIONAL (uses session)
+      responses:
+        "200":
+          description: Professional dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalDashboardResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/client:
+    get:
+      operationId: getClientDashboard
+      tags: [dashboard]
+      summary: Client dashboard
+      description: >
+        Returns client dashboard indicators.
+        CLIENT uses session; ADMIN must provide clientId query param.
+      parameters:
+        - in: query
+          name: clientId
+          schema:
+            type: string
+          required: false
+          description: Required for ADMIN role; ignored for CLIENT (uses session)
+      responses:
+        "200":
+          description: Client dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientDashboardResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
+    # ── Health ────────────────────────────────────────────────────────────────
     HealthStatus:
       type: object
       properties:
@@ -33,3 +211,285 @@ components:
           type: string
       required:
         - status
+
+    # ── Auth ──────────────────────────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    LoginUser:
+      type: object
+      description: >
+        User returned by POST /auth/login.
+        Note: uses "id" (not "userId"). phone and lastLoginAt are nullable.
+      properties:
+        id:
+          type: string
+        roleId:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - roleId
+        - name
+        - email
+        - status
+        - createdAt
+        - updatedAt
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/LoginUser"
+      required:
+        - user
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    SessionUser:
+      type: object
+      description: >
+        Session user returned by GET /auth/me.
+        Note: uses "userId" (not "id") — this is the session data shape.
+      properties:
+        userId:
+          type: string
+        roleId:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - userId
+        - roleId
+        - name
+        - email
+
+    MeResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/SessionUser"
+      required:
+        - user
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required:
+            - code
+            - message
+      required:
+        - error
+
+    # ── Admin dashboard ───────────────────────────────────────────────────────
+    ResourceOccupancy:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceName:
+          type: string
+        appointmentsToday:
+          type: number
+      required:
+        - resourceId
+        - resourceName
+        - appointmentsToday
+
+    AdminDashboard:
+      type: object
+      properties:
+        appointmentsToday:
+          type: number
+        upcomingAppointments:
+          type: number
+        completedToday:
+          type: number
+        cancelledToday:
+          type: number
+        homeCareToday:
+          type: number
+        resourceOccupancy:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceOccupancy"
+      required:
+        - appointmentsToday
+        - upcomingAppointments
+        - completedToday
+        - cancelledToday
+        - homeCareToday
+        - resourceOccupancy
+
+    AdminDashboardResponse:
+      type: object
+      properties:
+        dashboard:
+          $ref: "#/components/schemas/AdminDashboard"
+      required:
+        - dashboard
+
+    # ── Professional dashboard ────────────────────────────────────────────────
+    NextAppointmentProfessional:
+      type: object
+      properties:
+        id:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        clientName:
+          type: string
+          nullable: true
+        serviceName:
+          type: string
+          nullable: true
+        modality:
+          type: string
+        resourceName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - startDatetime
+        - modality
+
+    UpcomingAppointmentProfessional:
+      type: object
+      properties:
+        id:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        clientName:
+          type: string
+          nullable: true
+        serviceName:
+          type: string
+          nullable: true
+        modality:
+          type: string
+      required:
+        - id
+        - startDatetime
+        - modality
+
+    ProfessionalDashboard:
+      type: object
+      properties:
+        nextAppointment:
+          allOf:
+            - $ref: "#/components/schemas/NextAppointmentProfessional"
+          nullable: true
+        upcomingAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpcomingAppointmentProfessional"
+        appointmentsToday:
+          type: number
+        completedToday:
+          type: number
+        cancelledToday:
+          type: number
+      required:
+        - upcomingAppointments
+        - appointmentsToday
+        - completedToday
+        - cancelledToday
+
+    ProfessionalDashboardResponse:
+      type: object
+      properties:
+        dashboard:
+          $ref: "#/components/schemas/ProfessionalDashboard"
+      required:
+        - dashboard
+
+    # ── Client dashboard ──────────────────────────────────────────────────────
+    NextAppointmentClient:
+      type: object
+      properties:
+        id:
+          type: string
+        startDatetime:
+          type: string
+          format: date-time
+        professionalName:
+          type: string
+          nullable: true
+        serviceName:
+          type: string
+          nullable: true
+        modality:
+          type: string
+      required:
+        - id
+        - startDatetime
+        - modality
+
+    ClientDashboard:
+      type: object
+      properties:
+        nextAppointment:
+          allOf:
+            - $ref: "#/components/schemas/NextAppointmentClient"
+          nullable: true
+        upcomingAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/NextAppointmentClient"
+        pastAppointmentsCount:
+          type: number
+      required:
+        - upcomingAppointments
+        - pastAppointmentsCount
+
+    ClientDashboardResponse:
+      type: object
+      properties:
+        dashboard:
+          $ref: "#/components/schemas/ClientDashboard"
+      required:
+        - dashboard

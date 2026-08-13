@@ -51,7 +51,10 @@ export default defineConfig({
       workspace: apiZodSrc,
       client: "zod",
       target: "generated",
-      schemas: { path: "generated/types", type: "typescript" },
+      // No `schemas` option: TypeScript types are derived via z.infer<typeof Schema>.
+      // Generating a separate types/ folder caused duplicate named exports (e.g.
+      // LoginResponse as both a Zod schema value and a TypeScript type) which
+      // TypeScript could not resolve even with `export type *` re-exports.
       mode: "split",
       clean: true,
       prettier: true,

@@ -4,3 +4,4 @@
 - [Fase 5.6 — ALTER in-place](fase56-alter.md) — update() no service; AlterAppointmentSchema integrado ao union; resolveResource com excludeAppointmentId; resourceId em UpdateAppointmentFieldsData
 - [Fase 8 — Notificações](fase8-notifications.md) — session.userId (não .id); seed FK order; concurrency test flaky pré-existente
 - [Fase 10 — Segurança](fase10-security.md) — PayloadTooLargeError precisa handler explícito; CORS+credentials exige origin não-wildcard; trust proxy antes do rate limiter
+- [Fase 11 — Frontend Marco Visual](fase11-frontend.md) — orval v8.23 quirks (Zod v3 vs v4, schemas option, index.ts append); AuthContext shape normalization login vs /me
