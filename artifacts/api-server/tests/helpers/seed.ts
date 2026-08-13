@@ -172,6 +172,79 @@ export async function seedConcurrencyExtras(ids: TestUsers): Promise<Concurrency
   };
 }
 
+export interface SixConcurrencyExtras {
+  /** IDs dos 4 profissionais adicionais (prof3..prof6) */
+  extraProfIds: string[];
+  /** Emails dos 4 clientes adicionais (client3..client6) */
+  extraClientEmails: string[];
+  /** IDs dos 4 resources adicionais (macas 2..5) */
+  extraResourceIds: string[];
+}
+
+/** Emails usados exclusivamente pelo teste F16 de 6 concorrências */
+export const QA16_EMAILS = {
+  profs: [3, 4, 5, 6].map((n) => `qa16-prof${n}@fluir.test`),
+  clients: [3, 4, 5, 6].map((n) => `qa16-client${n}@fluir.test`),
+};
+
+/**
+ * F16 — Fixtures para o teste literal do Doc 17 §46 (6 simultâneas → 5 + 1×409).
+ * Cria 4 profissionais e 4 clientes adicionais (somam 6 com os já existentes)
+ * e 4 macas adicionais (somam 5 com "Sala Teste Fase4").
+ * Aditivo — não altera nenhum fixture existente.
+ */
+export async function seedSixConcurrencyExtras(ids: TestUsers): Promise<SixConcurrencyExtras> {
+  const profHash = await bcrypt.hash(TEST_PASSWORDS.professional, SALT_ROUNDS);
+  const clientHash = await bcrypt.hash(TEST_PASSWORDS.client, SALT_ROUNDS);
+
+  const extraProfIds: string[] = [];
+  for (const email of QA16_EMAILS.profs) {
+    const [pUser] = await db
+      .insert(users)
+      .values({ roleId: 2, name: `Prof QA16 ${email}`, email, passwordHash: profHash })
+      .returning({ id: users.id });
+    const [prof] = await db
+      .insert(professionals)
+      .values({ userId: pUser!.id, specialty: "Massoterapeuta QA16", bio: "F16" })
+      .returning({ id: professionals.id });
+    await db
+      .insert(professionalServices)
+      .values({ professionalId: prof!.id, serviceId: ids.serviceId, active: true })
+      .onConflictDoNothing();
+    for (let w = 0; w <= 6; w++) {
+      await db.insert(availability).values({
+        professionalId: prof!.id,
+        weekday: w,
+        startTime: "08:00",
+        endTime: "20:00",
+        active: true,
+      });
+    }
+    extraProfIds.push(prof!.id);
+  }
+
+  const extraClientEmails: string[] = [];
+  for (const email of QA16_EMAILS.clients) {
+    const [cUser] = await db
+      .insert(users)
+      .values({ roleId: 3, name: `Cliente QA16 ${email}`, email, passwordHash: clientHash })
+      .returning({ id: users.id });
+    await db.insert(clients).values({ userId: cUser!.id, birthDate: "1991-03-15" });
+    extraClientEmails.push(email);
+  }
+
+  const extraResourceIds: string[] = [];
+  for (let n = 2; n <= 5; n++) {
+    const [res] = await db
+      .insert(resources)
+      .values({ name: `Maca QA16 ${n}`, type: "MASSAGE_TABLE", status: "ACTIVE" })
+      .returning({ id: resources.id });
+    extraResourceIds.push(res!.id);
+  }
+
+  return { extraProfIds, extraClientEmails, extraResourceIds };
+}
+
 /**
  * Cria fixtures adicionais necessárias para testes de appointments:
  * - Resource (para IN_PERSON)
@@ -282,6 +355,9 @@ export async function cleanTestData(): Promise<void> {
       // Fase 4: emails adicionais de testes de appointments
       "client2-appt@fluir.test",
       "prof2-appt@fluir.test",
+      // F16: emails do teste de 6 concorrências (Doc 17 §46)
+      ...QA16_EMAILS.profs,
+      ...QA16_EMAILS.clients,
     ];
 
     // Fase 4: limpar appointments e status_history vinculados a usuários de teste
@@ -385,6 +461,8 @@ export async function cleanTestData(): Promise<void> {
 
     // Limpar resources de teste (Fase 4)
     await pgClient.query("DELETE FROM resources WHERE name = 'Sala Teste Fase4'");
+    // F16: macas adicionais do teste de 6 concorrências
+    await pgClient.query("DELETE FROM resources WHERE name LIKE 'Maca QA16 %'");
 
     // Reativar triggers imediatamente após o cleanup
     await pgClient.query("ALTER TABLE appointment_status_history ENABLE TRIGGER trg_appt_history_no_delete");

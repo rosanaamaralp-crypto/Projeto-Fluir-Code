@@ -8,4 +8,5 @@
 - [Fase 13 — Admin Module](fase13-admin.md) — orval mutations use `{ data }` key always; Empty sub-components; useListSlots enabled cast; client/prof API name limitation
 - [Fase 13 — Bloqueadores de Conformidade](fase13-corrections.md) — Drizzle leftJoin → string | null; filtros reports; enriquecimento users JOIN; blocked-periods openapi
 - [Fase 14 — Módulo Profissional](fase14-professional.md) — useProfessionalSelf hook; enabled as any; T-023 gap; DELETE /blocked-periods/:id sem profId; schemas OpenAPI
+- [F16 — QA de concorrência](f16-qa.md) — auto-seleção de maca não é concorrência-segura; seed Maca 01–05 ativo no DB de testes; slots por arquivo
 - [Fase 15 — Módulo Cliente](fase15-client.md) — D5 backend expandido (name/phone); changedAt em historyRow; enabled as any; wizard /client/book; 500/500 testes

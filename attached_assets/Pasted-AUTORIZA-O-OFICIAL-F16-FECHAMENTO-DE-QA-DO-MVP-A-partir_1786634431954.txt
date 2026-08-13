@@ -1,0 +1,174 @@
+AUTORIZAÇÃO OFICIAL — F16
+FECHAMENTO DE QA DO MVP
+
+A partir deste comando, a F16 operacional será oficialmente definida como:
+
+F16 = FECHAMENTO DE QA DO MVP
+
+Correspondência documental:
+- Plano oficial Doc 17 — Fase 19: Testes completos
+- Doc 12 — Plano de Testes
+- AuthDocs e decisões já aprovadas das F1–F15
+
+OBJETIVO
+
+Fechar os gaps de QA necessários para considerar o MVP tecnicamente validado, sem reabrir ou refazer nenhuma fase anterior.
+
+REGRA FUNDAMENTAL
+
+F1–F15 estão CONGELADAS.
+
+NÃO reimplementar, refatorar ou reauditar integralmente F1–F15.
+NÃO reler todos os documentos 00–18 novamente.
+NÃO alterar funcionalidades já aprovadas apenas para melhoria.
+NÃO implementar novas funcionalidades de produto nesta fase.
+
+ESCOPO AUTORIZADO DA F16
+
+1. TESTE DE CONCORRÊNCIA
+
+Implementar o teste literal previsto no Doc 17 §46:
+
+6 solicitações simultâneas para o mesmo recurso/conflito:
+- 5 devem obter sucesso;
+- 1 deve receber conflito HTTP 409.
+
+O teste deve ser aditivo e preferencialmente ficar em arquivo de teste existente ou novo arquivo de teste de integração.
+
+2. QA DOS FLUXOS CRÍTICOS DO MVP
+
+Verificar, utilizando o código e os testes existentes, os seguintes fluxos:
+
+ADMIN:
+- autenticação;
+- cadastro/gestão;
+- profissionais;
+- clientes;
+- serviços;
+- recursos/macás;
+- agenda;
+- relatórios;
+- auditoria.
+
+PROFESSIONAL:
+- login;
+- agenda;
+- disponibilidade;
+- bloqueios;
+- visualização dos atendimentos;
+- alteração/remarcação/cancelamento conforme autorizado.
+
+CLIENT:
+- login;
+- dashboard;
+- cadastro/atualização;
+- endereço;
+- novo agendamento;
+- escolha de serviço/profissional/horário;
+- modalidade presencial/Home Care;
+- confirmação;
+- cancelamento;
+- remarcação;
+- histórico.
+
+3. TESTES DE SEGURANÇA/OWNERSHIP
+
+Não criar nova arquitetura de segurança.
+
+Apenas verificar os testes já existentes e, se houver algum gap pequeno e diretamente relacionado aos fluxos críticos, adicionar testes aditivos.
+
+4. REGRA SOBRE O FLAKY 500/409
+
+NÃO alterar código de produção automaticamente.
+
+Se o teste de 6 concorrências revelar novamente o comportamento 500 vs 409:
+
+- registrar exatamente a causa;
+- identificar o arquivo responsável;
+- NÃO modificar produção sem nova autorização;
+- informar se o critério de aceite da F16 ficou bloqueado.
+
+5. FRONTEND
+
+NÃO criar uma suíte completa de testes frontend nesta fase.
+
+Fazer somente validação dos fluxos críticos existentes e identificar problemas funcionais evidentes.
+
+Testes E2E completos ficam fora do escopo da F16.
+
+FORA DO ESCOPO
+
+Não implementar:
+
+- recuperação de senha T-003;
+- Landing T-001;
+- T-019 Configurações Admin;
+- Notificações Admin;
+- novos endpoints;
+- alteração do OpenAPI;
+- codegen;
+- migrations;
+- novos índices;
+- paginação estrutural;
+- alterações de RBAC;
+- alterações no motor de agendamento;
+- alterações nas notificações;
+- alterações nas páginas congeladas, salvo se for identificado um defeito funcional bloqueador diretamente relacionado ao critério de aceite da F16.
+
+PERFORMANCE
+
+Não executar uma auditoria completa de performance nesta fase.
+
+Apenas registrar problemas evidentes encontrados durante os testes.
+
+RESPONSIVIDADE
+
+Não executar auditoria formal de responsividade nesta fase.
+
+Será tratada em fase posterior.
+
+PRODUÇÃO
+
+Deploy, banco de produção, backup, secrets, HTTPS, monitoramento e preparação operacional ficam fora da F16.
+
+CRITÉRIOS DE ACEITE
+
+A F16 será considerada concluída quando:
+
+1. O teste de concorrência de 6 solicitações estiver implementado e passar como:
+   5 sucesso + 1 conflito 409.
+
+2. Todos os testes existentes continuarem passando.
+
+3. TypeScript continuar com 0 erros.
+
+4. Nenhuma regressão F1–F15 for encontrada.
+
+5. Os fluxos críticos do MVP dos três perfis forem validados.
+
+6. Qualquer problema encontrado fora do escopo for apenas REGISTRADO, não implementado.
+
+7. Nenhuma funcionalidade nova for criada sem autorização.
+
+RELATÓRIO FINAL OBRIGATÓRIO
+
+Ao terminar, NÃO faça outra auditoria geral do projeto.
+
+Entregue somente:
+
+A. Testes antes/depois
+B. Resultado do teste de concorrência 6 → 5 + 1
+C. Fluxos críticos validados
+D. Problemas encontrados
+E. Problemas corrigidos
+F. Problemas encontrados fora do escopo
+G. Arquivos alterados
+H. Confirmação de que nenhuma fase F1–F15 foi reaberta
+I. TypeScript
+J. Git
+K. VEREDITO: F16 CONCLUÍDA ou F16 BLOQUEADA
+
+IMPORTANTE:
+Priorize execução objetiva e economia de créditos.
+Não faça exploração documental ampla novamente.
+Use as conclusões das auditorias já realizadas como baseline.
