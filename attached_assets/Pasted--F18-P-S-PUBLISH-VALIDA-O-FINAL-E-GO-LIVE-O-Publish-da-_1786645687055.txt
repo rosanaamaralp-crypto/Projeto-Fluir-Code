@@ -1,0 +1,155 @@
+# F18 — PÓS-PUBLISH: VALIDAÇÃO FINAL E GO-LIVE
+
+O Publish da F18 foi executado manualmente pelo proprietário.
+
+A partir deste momento, NÃO faça nova auditoria geral e NÃO reanalise F1–F17.
+
+Use como baseline:
+
+* F1–F17 concluídas;
+* F17: 519/519 testes, TypeScript 0 erros;
+* commit F17: `05cc423`;
+* código de produção atual é o aprovado na F17.
+
+## OBJETIVO
+
+Concluir somente a validação operacional da F18 e preparar o Go-Live.
+
+## EXECUÇÃO — ORDEM OBRIGATÓRIA
+
+### 1. Deployment
+
+Verificar somente:
+
+* deployment publicado;
+* HTTPS funcionando;
+* `/api/healthz` retornando 200;
+* frontend carregando;
+* API respondendo.
+
+### 2. Banco de produção
+
+Confirmar que o banco de produção foi criado pela plataforma.
+
+Executar somente os mecanismos já existentes:
+
+* `migrate` idempotente;
+* `seed` idempotente;
+* `bootstrap:admin`, se necessário.
+
+NÃO criar migration nova.
+NÃO alterar schema.
+NÃO alterar código de produção.
+
+### 3. ADMIN inicial
+
+Se o bootstrap exigir credenciais, PARAR e solicitar ao proprietário os dados necessários de forma segura.
+
+Nunca imprimir senha nos logs ou relatório.
+
+### 4. Smoke test mínimo
+
+Validar somente os fluxos críticos:
+
+* abertura do frontend;
+* login ADMIN;
+* acesso ao dashboard;
+* login/fluxo CLIENT;
+* criação de agendamento;
+* confirmação;
+* login PROFESSIONAL;
+* visualização do agendamento;
+* healthcheck.
+
+Não executar E2E completo.
+
+### 5. Segurança operacional
+
+Confirmar apenas:
+
+* HTTPS;
+* SESSION_SECRET presente;
+* CORS_ORIGIN correto;
+* banco de produção separado do desenvolvimento.
+
+Não modificar autenticação/RBAC.
+
+### 6. Documentação operacional
+
+Criar somente um documento curto contendo:
+
+* como publicar;
+* como validar healthcheck;
+* como executar migration;
+* como executar seed/bootstrap;
+* como fazer rollback usando os recursos da plataforma;
+* procedimento mínimo de backup/restauração disponível.
+
+Não criar documentação adicional.
+
+## REGRA DE PARADA
+
+Se qualquer etapa exigir:
+
+* alteração de código;
+* migration;
+* mudança de schema;
+* alteração de RBAC/auth;
+* nova dependência;
+* alteração de OpenAPI/codegen;
+* configuração externa não prevista;
+
+PARAR imediatamente e informar o bloqueio.
+
+Não tentar corrigir automaticamente.
+
+## CRITÉRIOS DE ACEITE
+
+F18 somente será considerada concluída se:
+
+* deployment publicado;
+* HTTPS funcionando;
+* `/api/healthz` = 200;
+* banco de produção criado;
+* migration executada;
+* seed mínimo executado;
+* ADMIN disponível;
+* smoke tests críticos aprovados;
+* código F17 preservado;
+* nenhum arquivo de produção alterado sem autorização;
+* procedimento operacional documentado.
+
+## ECONOMIA DE CRÉDITOS
+
+IMPORTANTE:
+
+Esta é uma execução final e concentrada.
+
+Não:
+
+* explorar arquivos desnecessariamente;
+* repetir auditorias;
+* executar testes completos de 519 testes;
+* investigar problemas históricos;
+* procurar melhorias;
+* corrigir itens pós-MVP;
+* iniciar F19;
+* refatorar;
+* fazer análises que não sejam necessárias para os critérios acima.
+
+Use comandos e arquivos existentes sempre que possível.
+
+Ao final, apresentar somente:
+
+1. Deployment: OK/NOK
+2. Banco produção: OK/NOK
+3. Migration: OK/NOK
+4. Seed: OK/NOK
+5. ADMIN: OK/NOK
+6. Smoke tests: OK/NOK
+7. HTTPS/Secrets/CORS: OK/NOK
+8. Arquivos alterados
+9. Git status
+10. Veredito F18: 🟢 CONCLUÍDA ou 🔴 BLOQUEADA
+
+NÃO iniciar qualquer outra fase.
