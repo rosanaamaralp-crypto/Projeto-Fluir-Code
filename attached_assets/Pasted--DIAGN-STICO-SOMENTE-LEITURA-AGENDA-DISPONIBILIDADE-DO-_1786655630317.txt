@@ -1,0 +1,109 @@
+# DIAGNÓSTICO SOMENTE LEITURA — AGENDA/DISPONIBILIDADE DO PROFISSIONAL
+
+## OBJETIVO
+
+Foi identificado no uso do sistema em produção que não está evidente onde o PROFISSIONAL consegue criar/configurar sua própria agenda e disponibilidade.
+
+Antes de qualquer implementação, realizar SOMENTE diagnóstico.
+
+NÃO alterar código.
+NÃO alterar banco.
+NÃO criar migration.
+NÃO criar telas.
+NÃO alterar rotas.
+NÃO alterar OpenAPI/codegen.
+NÃO criar testes.
+NÃO fazer commit.
+NÃO iniciar nova fase.
+NÃO executar auditoria geral do projeto.
+
+## O QUE PRECISO DESCOBRIR
+
+Verificar no código atual e na documentação já existente:
+
+### 1. FRONTEND
+
+Identificar:
+
+* existe página de configuração de disponibilidade do PROFISSIONAL?
+* qual é o caminho/rota?
+* ela aparece no menu do PROFISSIONAL?
+* existe formulário para:
+
+  * dia da semana;
+  * horário inicial;
+  * horário final;
+  * ativar/desativar disponibilidade;
+* é possível editar disponibilidade existente?
+* é possível excluir/desativar disponibilidade?
+* existe tela de bloqueio de períodos?
+* a agenda visual do profissional é diferente da configuração de disponibilidade?
+
+Informar os caminhos exatos dos arquivos.
+
+### 2. BACKEND
+
+Verificar se já existem endpoints para:
+
+* consultar disponibilidade do próprio profissional;
+* criar disponibilidade;
+* alterar disponibilidade;
+* remover/desativar disponibilidade;
+* consultar bloqueios;
+* criar bloqueios;
+* alterar/cancelar bloqueios.
+
+Informar método HTTP + rota + arquivo responsável.
+
+### 3. BANCO
+
+Verificar SOMENTE leitura:
+
+* tabela `availability`;
+* campos existentes;
+* tabela `blocked_periods`;
+* constraints relevantes.
+
+NÃO alterar schema.
+
+### 4. DOCUMENTAÇÃO
+
+Verificar nos documentos consolidados já existentes qual era o comportamento esperado para o PROFISSIONAL configurar sua agenda/disponibilidade.
+
+Não reconciliar documentos conflitantes por conta própria.
+
+Se houver divergência documental, apontar explicitamente.
+
+### 5. CONCLUSÃO
+
+Classificar o estado em uma destas categorias:
+
+🟢 IMPLEMENTADO E ACESSÍVEL
+A funcionalidade existe e está acessível; informar exatamente onde.
+
+🟡 IMPLEMENTADO NO BACKEND, MAS SEM UI/ACESSO ADEQUADO
+Endpoints existem, mas o profissional não consegue utilizar a funcionalidade adequadamente pela interface.
+
+🔴 NÃO IMPLEMENTADO
+Não existe funcionalidade suficiente para o profissional configurar sua disponibilidade.
+
+## IMPORTANTE
+
+Não corrigir nada nesta etapa.
+
+Não gastar créditos implementando.
+
+Não criar prompt adicional.
+
+Entregar somente:
+
+1. evidências encontradas;
+2. arquivos envolvidos;
+3. rotas existentes;
+4. endpoints existentes;
+5. estado do banco;
+6. documentação correspondente;
+7. classificação final;
+8. se for 🟡 ou 🔴, estimativa objetiva do menor conjunto de alterações necessário para tornar a funcionalidade utilizável.
+
+Parar após o diagnóstico.
