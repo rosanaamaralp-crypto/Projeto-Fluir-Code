@@ -1,0 +1,111 @@
+# DIAGNÓSTICO SOMENTE LEITURA — AGENDAMENTO CRIADO PELO PROFISSIONAL
+
+## OBJETIVO
+
+Verificar se o sistema atualmente permite que um usuário com perfil PROFESSIONAL crie um novo agendamento em nome de um CLIENTE.
+
+Este diagnóstico é somente leitura.
+
+NÃO alterar nenhum arquivo.
+NÃO criar código.
+NÃO criar migration.
+NÃO alterar banco.
+NÃO fazer commit.
+
+## REQUISITO FUNCIONAL
+
+O sistema deve permitir dois caminhos:
+
+1. CLIENT criar seu próprio agendamento.
+2. PROFESSIONAL criar um agendamento em nome de um CLIENTE.
+
+Esse segundo fluxo é necessário porque existem clientes que possuem dificuldade para utilizar o aplicativo.
+
+ADMIN também deve continuar podendo criar agendamentos conforme as permissões já existentes.
+
+## VERIFICAR
+
+Analise somente o necessário para responder:
+
+### 1. Backend
+
+Verificar se as APIs existentes de appointments permitem:
+
+- PROFESSIONAL criar appointment;
+- informar client_id;
+- informar professional_id;
+- selecionar service_id;
+- selecionar modalidade;
+- selecionar data/hora;
+- utilizar maca quando presencial;
+- utilizar endereço quando home care.
+
+Verificar especificamente RBAC e ownership.
+
+### 2. Frontend PROFESSIONAL
+
+Verificar se existe:
+
+- botão "Novo agendamento";
+- formulário de novo agendamento;
+- seleção de cliente;
+- seleção de serviço;
+- seleção de modalidade;
+- seleção de horário;
+- seleção/reserva de maca;
+- endereço para home care;
+- confirmação do agendamento.
+
+### 3. Reutilização
+
+Identificar se o fluxo de booking do CLIENT pode ser reutilizado/adaptado para o PROFESSIONAL sem alterar o backend.
+
+Identificar exatamente quais componentes/hooks/services já existentes podem ser reutilizados.
+
+### 4. Cadastro do cliente
+
+Verificar se o PROFESSIONAL pode:
+
+- selecionar um cliente existente;
+- cadastrar um novo cliente durante o processo de agendamento;
+
+ou se o cadastro de novo cliente precisa continuar sendo feito separadamente.
+
+Não implementar nada neste diagnóstico.
+
+### 5. Documentação
+
+Comparar apenas com os requisitos já documentados do projeto, especialmente a regra de que o profissional também deve poder registrar o agendamento do cliente.
+
+Não reinterpretar requisitos.
+
+## RELATÓRIO FINAL
+
+Responder objetivamente:
+
+1. 🟢 Já existe completo.
+2. 🟡 Backend existe, mas falta interface.
+3. 🟡 Interface existe, mas há alguma limitação.
+4. 🔴 É necessário implementar backend + frontend.
+
+Informar:
+
+- arquivos relevantes;
+- endpoints existentes;
+- permissões atuais;
+- hooks/componentes reutilizáveis;
+- exatamente o que falta;
+- estimativa de complexidade: baixa/média/alta;
+- se exige alteração de banco;
+- se exige alteração de OpenAPI/codegen;
+- se exige AuthDoc.
+
+## REGRA DE PARADA
+
+NÃO implementar nada.
+
+Se houver necessidade de alteração de código, apenas apresentar a menor implementação necessária e aguardar autorização.
+
+Não realizar auditoria geral do projeto.
+Não procurar outros problemas.
+Não alterar funcionalidades existentes.
