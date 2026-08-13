@@ -1,0 +1,366 @@
+# AUDIT DOC — DEFINIÇÃO FORMAL DA F16 ANTES DE QUALQUER IMPLEMENTAÇÃO
+
+## MODO OBRIGATÓRIO: SOMENTE LEITURA
+
+NÃO altere nenhum arquivo.
+
+NÃO crie código.
+
+NÃO crie testes.
+
+NÃO altere banco, migration, OpenAPI, codegen, rotas, frontend ou backend.
+
+NÃO faça commit.
+
+O objetivo desta tarefa é resolver documentalmente a ambiguidade sobre o que deve ser chamado de **Fase 16 (F16)** antes de qualquer implementação.
+
+---
+
+# 1. CONTEXTO
+
+As fases operacionais F1–F15 já foram executadas, auditadas e congeladas.
+
+A auditoria anterior confirmou:
+
+- F1–F15 íntegras;
+- F15 restaurada integralmente após incidente de exclusão/restauração;
+- 507/507 testes passando na última execução;
+- TypeScript sem erros;
+- nenhuma alteração indevida em código de produção;
+- nenhuma vulnerabilidade IDOR encontrada;
+- pendências remanescentes devidamente classificadas;
+- F16 ainda NÃO possui AuthDoc próprio.
+
+Existe, entretanto, uma divergência entre:
+
+1. a numeração operacional usada durante o desenvolvimento;
+2. a numeração do Plano Oficial dos Docs 17/18.
+
+Por isso, NÃO assuma que "F16" significa automaticamente "Fase 16 do Doc 17".
+
+---
+
+# 2. OBJETIVO
+
+Realize uma **AUDITORIA DOCUMENTAL DE DEFINIÇÃO DA F16**.
+
+Precisamos descobrir, com base exclusivamente nos documentos e evidências existentes:
+
+> Qual deve ser o escopo oficial da próxima fase de desenvolvimento após F15?
+
+Analise a documentação e o código somente para identificar:
+
+- o que já foi implementado;
+- o que já foi autorizado;
+- o que já foi congelado;
+- o que ainda falta;
+- quais itens pertencem realmente à próxima fase;
+- quais itens devem permanecer para fases posteriores;
+- quais itens exigem decisão do proprietário do projeto.
+
+---
+
+# 3. FONTES OBRIGATÓRIAS
+
+Analise prioritariamente:
+
+- Doc 00 — Índice e Hierarquia
+- Doc 10 — MVP e Ordem
+- Doc 11 — Backlog Futuro
+- Doc 12 — Plano de Testes
+- Doc 13 — Arquitetura Técnica e Banco
+- Doc 14 — Regras Completas
+- Doc 15 — Mapa Completo de Telas
+- Doc 16 — API e Contratos
+- Doc 17 — Plano Oficial
+- Doc 18 — Pacote Mestre
+- AuthDocs F1–F15
+- documentos de encerramento/congelamento das fases
+- código atual
+- testes atuais
+- histórico Git somente para evidência
+
+NÃO substitua uma fonte por conhecimento externo.
+
+Quando houver conflito documental, registre o conflito explicitamente.
+
+---
+
+# 4. RECONSTRUA O MAPA REAL F1–F15
+
+Monte uma tabela:
+
+| Fase operacional | Objetivo real | Documento/AuthDoc | Implementado | Testado | Congelado | Observação |
+|---|---|---|---|---|---|---|
+
+Determine quais fases do Plano Oficial dos Docs 17/18:
+
+- já foram absorvidas pelas F1–F15;
+- foram parcialmente absorvidas;
+- ainda não foram executadas;
+- não devem mais receber o mesmo número operacional.
+
+NÃO altere nenhuma numeração existente.
+
+---
+
+# 5. AUDITORIA DAS CANDIDATAS À PRÓXIMA FASE
+
+Analise individualmente as seguintes possibilidades identificadas na auditoria anterior:
+
+### Candidata A — Fechamento formal de testes / QA
+
+Verificar:
+
+- teste literal de concorrência "6 solicitações simultâneas → 5 sucesso + 1 conflito";
+- cobertura de frontend;
+- gaps restantes do Doc 12;
+- flaky 500 vs 409;
+- necessidade ou não de alterar código de produção;
+- critérios de aceite possíveis.
+
+### Candidata B — Performance
+
+Verificar:
+
+- consultas;
+- índices;
+- paginação;
+- agenda;
+- dashboard;
+- relatórios;
+- possíveis gargalos;
+- necessidade de alterações no banco;
+- necessidade de migration;
+- necessidade de alterar queries existentes.
+
+### Candidata C — Responsividade
+
+Verificar:
+
+- desktop;
+- notebook;
+- tablet;
+- celular;
+- breakpoints;
+- telas ADMIN;
+- telas PROFESSIONAL;
+- telas CLIENT;
+- formulários;
+- agenda;
+- dashboard;
+- eventuais gaps documentados.
+
+### Candidata D — Preparação para Produção
+
+Verificar:
+
+- banco de produção;
+- migrations;
+- seed;
+- variáveis de ambiente;
+- HTTPS;
+- backup;
+- logs;
+- monitoramento;
+- deploy;
+- segurança operacional;
+- checklist de produção.
+
+---
+
+# 6. MATRIZ DE DECISÃO DOCUMENTAL
+
+Para cada candidata, produza:
+
+| Candidata | Evidência documental | Já implementada? | Falta | Arquivos que seriam alterados | Toca fase congelada? | Exige AuthDoc? | Risco |
+|---|---|---|---|---|---|---|---|
+
+IMPORTANTE:
+
+Não escolha a fase.
+
+Não dê preferência subjetiva.
+
+Apenas apresente as evidências para que o proprietário do projeto possa decidir.
+
+---
+
+# 7. AUDITORIA DOS ITENS PENDENTES
+
+Reavalie também:
+
+- P1 — OpenAPI dessincronizado;
+- P2 — IDOR de notificações;
+- P3 — T-019 Configurações Admin;
+- P4 — Notificações Admin;
+- P5 — T-003 Recuperação de senha;
+- P6 — T-001 Landing;
+- P7 — Menu CLIENT;
+- P8 — Doc 04 superado;
+- P9 — Doc 06 duplicado;
+- P10 — status PENDING;
+- flaky de concorrência.
+
+Classifique cada um como:
+
+- pode entrar na F16;
+- deve permanecer fora da F16;
+- depende de decisão do proprietário;
+- pertence a fase posterior;
+- já resolvido.
+
+NÃO implemente nada.
+
+---
+
+# 8. REGRA ABSOLUTA DE PROTEÇÃO
+
+Considere como congelados, salvo autorização explícita em AuthDoc:
+
+- banco/schema;
+- migrations;
+- OpenAPI;
+- codegen;
+- autenticação;
+- RBAC;
+- ownership;
+- motor de agendamento;
+- notificações;
+- App.tsx;
+- AppLayout;
+- menus;
+- páginas F13;
+- páginas F14;
+- páginas F15;
+- código de produção das fases anteriores.
+
+Se uma candidata exigir alteração nesses arquivos, apenas registre:
+
+> "Exige AuthDoc específico e não pode ser alterado nesta auditoria."
+
+---
+
+# 9. NÃO CONFUNDIR AUDITORIA COM IMPLEMENTAÇÃO
+
+Esta tarefa NÃO é para:
+
+- corrigir;
+- refatorar;
+- melhorar;
+- otimizar;
+- implementar;
+- criar testes;
+- atualizar OpenAPI;
+- apagar documentos;
+- alterar documentos;
+- corrigir flaky;
+- criar migrations.
+
+Esta tarefa é exclusivamente para **definir documentalmente o próximo escopo**.
+
+---
+
+# 10. RESULTADO OBRIGATÓRIO
+
+Entregue um relatório chamado:
+
+# AUDITORIA DOCUMENTAL — DEFINIÇÃO DA F16
+
+Com exatamente estas seções:
+
+## 1. Veredito executivo
+
+Responder:
+
+- Existe definição suficiente para iniciar F16?
+- Qual é a ambiguidade?
+- O que precisa ser decidido antes da implementação?
+
+## 2. Mapa F1–F15
+
+Tabela completa.
+
+## 3. Mapa Doc 17/18 × F1–F15
+
+Mostrar quais fases oficiais já foram absorvidas.
+
+## 4. Candidatas à F16
+
+A, B, C e D, com evidências.
+
+## 5. Pendências P1–P10
+
+Classificação atualizada.
+
+## 6. Arquivos potencialmente afetados
+
+Separar:
+
+- somente leitura;
+- arquivos que poderiam receber alterações;
+- arquivos congelados;
+- arquivos que exigiriam AuthDoc.
+
+## 7. Riscos
+
+Separar:
+
+- crítico;
+- alto;
+- médio;
+- baixo.
+
+Não criar riscos hipotéticos sem evidência.
+
+## 8. Dependências
+
+Mostrar o que cada candidata depende para começar.
+
+## 9. Critérios de aceite possíveis
+
+Para cada candidata, listar apenas critérios derivados dos documentos existentes.
+
+## 10. Decisões necessárias do proprietário
+
+Lista objetiva das decisões que preciso tomar.
+
+## 11. Recomendação processual
+
+NÃO recomendar qual candidata escolher.
+
+A recomendação deve ser somente:
+
+> "Não iniciar implementação até que o escopo da F16 seja explicitamente definido e autorizado por AuthDoc."
+
+## 12. GATE FINAL
+
+Classificar como uma das opções:
+
+🟢 AUTORIZADA PARA IMPLEMENTAÇÃO  
+🟡 NECESSITA DECISÃO/AUTORIZAÇÃO  
+🔴 BLOQUEADA
+
+Neste momento, se não existir AuthDoc F16, o resultado esperado é:
+
+🟡 NECESSITA DECISÃO/AUTORIZAÇÃO
+
+---
+
+# 11. REGRA FINAL
+
+NÃO altere nenhum arquivo durante esta tarefa.
+
+NÃO faça commit.
+
+NÃO execute implementação.
+
+NÃO "prepare" código.
+
+NÃO escolha a F16 por conta própria.
+
+O objetivo é produzir a base documental para que o proprietário do projeto possa responder:
+
+> "Qual será oficialmente a F16?"
+
+Somente depois dessa decisão deverá ser criado o AuthDoc F16 e, em uma etapa separada, autorizada a implementação.
