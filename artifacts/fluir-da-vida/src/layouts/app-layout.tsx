@@ -4,13 +4,15 @@
  * Doc 15 §8 (menu Admin), §26 (menu Profissional), §35 (menu Cliente).
  * Fase 13: ADMIN_NAV atualizado com Agenda e Notificações.
  */
-import { type ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { ROLES } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
+  Menu,
   LayoutDashboard,
   Users,
   Briefcase,
@@ -122,7 +124,13 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Fecha o menu móvel ao navegar para outra página
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location]);
 
   if (!user) return null;
 
@@ -136,46 +144,79 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
   }
 
+  const sidebarContent = (
+    <>
+      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+        {navItems.map((item) => (
+          <NavLink key={item.href} item={item} />
+        ))}
+      </nav>
+
+      <Separator />
+
+      <div className="p-3 space-y-2">
+        <div className="px-2 py-1">
+          <p className="text-xs font-medium truncate">{user.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{getRoleLabel(user.roleId)}</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <aside className="flex w-56 flex-col border-r bg-card">
+      {/* Sidebar — somente desktop/tablet */}
+      <aside className="hidden md:flex w-56 flex-col border-r bg-card">
         <div className="flex h-14 items-center px-4">
           <span className="font-semibold tracking-tight">Fluir da Vida</span>
         </div>
         <Separator />
-
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {navItems.map((item) => (
-            <NavLink key={item.href} item={item} />
-          ))}
-        </nav>
-
-        <Separator />
-
-        <div className="p-3 space-y-2">
-          <div className="px-2 py-1">
-            <p className="text-xs font-medium truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{getRoleLabel(user.roleId)}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </Button>
-        </div>
+        {sidebarContent}
       </aside>
 
+      {/* Menu móvel (drawer) */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-64 p-0 flex flex-col md:hidden">
+          <div className="flex h-14 items-center px-4">
+            <SheetTitle className="font-semibold tracking-tight text-base">
+              Fluir da Vida
+            </SheetTitle>
+          </div>
+          <Separator />
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
+
       {/* Conteúdo principal */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="h-full p-6">
-          {children}
-        </div>
-      </main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header — somente celular */}
+        <header className="flex md:hidden h-14 shrink-0 items-center gap-2 border-b bg-card px-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Abrir menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <span className="font-semibold tracking-tight">Fluir da Vida</span>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="h-full p-4 md:p-6">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
