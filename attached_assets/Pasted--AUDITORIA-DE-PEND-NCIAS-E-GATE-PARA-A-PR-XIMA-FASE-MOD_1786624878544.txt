@@ -1,0 +1,425 @@
+# AUDITORIA DE PENDÊNCIAS E GATE PARA A PRÓXIMA FASE
+
+## MODO ESTRITO — SOMENTE LEITURA
+
+A auditoria geral de integridade da aplicação foi concluída e confirmou que a aplicação está íntegra após o incidente de exclusão/restauração da Fase 15.
+
+**NÃO MODIFIQUE NENHUM ARQUIVO.**
+**NÃO ESCREVA CÓDIGO.**
+**NÃO EXECUTE MIGRATIONS.**
+**NÃO ALTERE OPENAPI.**
+**NÃO EXECUTE CODEGEN COM ALTERAÇÕES.**
+**NÃO FAÇA COMMIT.**
+**NÃO CORRIJA AUTOMATICAMENTE NENHUMA PENDÊNCIA.**
+
+Esta etapa é exclusivamente para classificação e tomada de decisão.
+
+---
+
+## 1. OBJETIVO
+
+Com base na auditoria geral já realizada, faça uma segunda auditoria focada exclusivamente nas pendências encontradas.
+
+Para cada pendência, determine:
+
+1. O que exatamente está pendente.
+2. Qual documento determina ou menciona esse requisito.
+3. Se existe AuthDoc autorizando sua implementação.
+4. Em qual fase a correção deve ocorrer.
+5. Se é uma pendência real ou apenas documental.
+6. Se pode afetar fases já concluídas.
+7. Se deve ser corrigida agora ou permanecer congelada.
+8. Qual o risco de alterar o item neste momento.
+9. Qual seria a ação recomendada.
+10. Se a ação exige nova autorização formal.
+
+---
+
+# 2. PENDÊNCIAS A AUDITAR
+
+Analise obrigatoriamente todos os itens abaixo.
+
+### P1 — OpenAPI dessincronizado
+
+Foram identificados 3 endpoints existentes no código mas ausentes do OpenAPI:
+
+* PUT /clients/{clientId}/addresses
+* PATCH /professionals/{profId}/blocked-periods/{id}
+* DELETE /services/{id}
+
+Verifique:
+
+* por que cada endpoint existe;
+* qual fase o criou;
+* se possui AuthDoc;
+* se algum frontend depende dele;
+* se deveria estar no OpenAPI;
+* se deve ser adicionado agora ou em fase futura;
+* se existe risco de executar codegen neste momento.
+
+NÃO corrigir.
+
+---
+
+### P2 — IDOR de notificações
+
+A auditoria identificou que:
+
+* a proteção de ownership existe;
+* porém não há teste explícito de CLIENT tentando acessar/alterar notificação de outro usuário.
+
+Verifique:
+
+* GET /api/notifications
+* POST /api/notifications/:id/read
+
+Confirme a proteção existente no código.
+
+Depois determine:
+
+* se falta apenas teste;
+* em qual fase o teste deve ser incluído;
+* se a ausência do teste representa risco atual;
+* se é necessário novo AuthDoc.
+
+NÃO criar os testes.
+
+---
+
+### P3 — T-019 Configurações Admin
+
+Verifique o estado atual da tela T-019.
+
+Determine:
+
+* o que a documentação exige;
+* o que o código possui;
+* se é placeholder;
+* qual fase autorizou originalmente T-019;
+* se existe AuthDoc autorizando implementação;
+* se T-019 pertence à F13 ou a uma fase posterior;
+* se deve permanecer congelada.
+
+NÃO implementar.
+
+---
+
+### P4 — Notificações Admin
+
+Verifique:
+
+* documentação;
+* mapa de telas;
+* AuthDocs;
+* código atual;
+* rotas;
+* endpoints.
+
+Determine se a funcionalidade está realmente pendente e qual fase deveria implementá-la.
+
+NÃO implementar.
+
+---
+
+### P5 — T-003 Recuperação de senha
+
+A auditoria indicou:
+
+> T-003 está documentada, porém nunca foi autorizada em AuthDoc.
+
+Verifique cuidadosamente a hierarquia documental.
+
+Determine:
+
+* se T-003 faz parte do MVP;
+* se é obrigatória;
+* se existe algum AuthDoc autorizando;
+* se existe backend parcial;
+* se existe frontend parcial;
+* em qual fase deveria entrar;
+* se deve ser tratada como requisito futuro.
+
+IMPORTANTE:
+Não implementar T-003 nesta auditoria.
+
+---
+
+### P6 — T-001 Landing
+
+Verifique:
+
+* existência de home.tsx;
+* rota atual "/";
+* documentação do T-001;
+* AuthDocs;
+* comportamento atual do redirecionamento.
+
+Determine se:
+
+* T-001 está implementada;
+* está parcialmente implementada;
+* está apenas criada mas não roteada;
+* foi deliberadamente deixada de fora por alguma decisão anterior.
+
+Não alterar a rota.
+
+---
+
+### P7 — Menu CLIENT
+
+A auditoria encontrou:
+
+> "Meus Agendamentos" e "Histórico" apontam para a mesma rota.
+
+Verifique a documentação oficial e o AuthDoc F15.
+
+Determine se isso:
+
+* é comportamento correto;
+* é apenas uma diferença visual;
+* exige duas telas;
+* exige apenas duas seções na mesma tela;
+* ou precisa ser corrigido futuramente.
+
+Não alterar o menu.
+
+---
+
+### P8 — Doc 04 x Doc 13
+
+A auditoria identificou que o Doc 04 é uma versão antiga do modelo de dados e que o Doc 13 é a fonte oficial atual.
+
+Verifique:
+
+* se Doc 13 efetivamente substitui Doc 04;
+* se Doc 04 está explicitamente marcado como superado;
+* se existe risco de o Replit utilizar Doc 04 indevidamente;
+* se a documentação precisa de uma correção;
+* se essa correção pode ser feita sem alterar código.
+
+Não modificar documentos nesta etapa.
+
+---
+
+### P9 — Doc 06 duplicado
+
+Verifique os arquivos relacionados ao documento de Home Care.
+
+Determine:
+
+* quais arquivos são duplicados;
+* qual é o documento oficial;
+* se existe alguma diferença de conteúdo;
+* se apagar/mesclar algum arquivo pode causar perda de informação.
+
+NÃO apagar nenhum arquivo.
+
+---
+
+### P10 — Status PENDING
+
+A auditoria identificou uma divergência:
+
+* Doc 13 menciona PENDING;
+* banco atual não permite PENDING;
+* fases posteriores adotaram CONFIRMED como estado inicial.
+
+Faça uma auditoria documental completa.
+
+Determine:
+
+* qual decisão prevaleceu;
+* qual AuthDoc ou fase estabeleceu CONFIRMED;
+* se PENDING deve ser considerado obsoleto;
+* se o banco está correto;
+* se o Doc 13 precisa ser atualizado futuramente.
+
+NÃO alterar banco nem documentação.
+
+---
+
+# 3. AUDITORIA INVERSA
+
+Depois de analisar as 10 pendências, faça uma busca inversa:
+
+## Procure por requisitos documentados que ainda NÃO tenham implementação.
+
+Compare:
+
+* Doc 18
+* Doc 17
+* Doc 16
+* Doc 15
+* Doc 14
+* Doc 13
+* AuthDocs
+* código
+* banco
+* OpenAPI
+* rotas
+* hooks
+* testes
+
+Liste qualquer requisito documentado sem implementação.
+
+Para cada um, informe:
+
+| Requisito | Documento | Fase | AuthDoc? | Implementado? | Deve implementar agora? | Observação |
+
+Não implemente nada.
+
+---
+
+# 4. AUDITORIA DE SCOPE CREEP
+
+Faça também o inverso:
+
+Procure funcionalidades existentes no código que:
+
+* não estejam documentadas;
+* não tenham AuthDoc;
+* não pertençam ao escopo de nenhuma fase;
+* possam representar scope creep.
+
+Para cada ocorrência:
+
+* funcionalidade;
+* arquivos envolvidos;
+* fase que aparentemente criou;
+* documentação encontrada;
+* AuthDoc encontrado;
+* classificação: legítima / documentada posteriormente / scope creep.
+
+Não remover nada.
+
+---
+
+# 5. AUDITORIA DA RESTAURAÇÃO DA F15
+
+Faça uma verificação específica adicional da F15.
+
+Compare:
+
+* AuthDoc F15;
+* estado atual do Git;
+* páginas F15;
+* rotas;
+* hooks;
+* validators;
+* controllers;
+* OpenAPI;
+* testes;
+* AppLayout;
+* CLIENT_NAV.
+
+Confirme explicitamente:
+
+> "Todos os itens autorizados no AuthDoc F15 continuam presentes após a restauração?"
+
+Liste qualquer diferença encontrada.
+
+Não modificar nada.
+
+---
+
+# 6. AUDITORIA DE REGRESSÃO F1–F15
+
+Confirme que nenhuma pendência identificada exige alteração em:
+
+* F1
+* F2
+* F3
+* F4
+* F5
+* F6/F7
+* F8
+* F9
+* F10
+* F11
+* F12
+* F13
+* F14
+* F15
+
+Caso uma pendência possa afetar uma fase congelada, classifique como:
+
+🔴 NÃO ALTERAR — FASE CONGELADA
+
+e explique por quê.
+
+---
+
+# 7. CLASSIFICAÇÃO FINAL
+
+Ao final, classifique cada pendência em exatamente uma destas categorias:
+
+### A — CORRIGIR ANTES DA PRÓXIMA FASE
+
+Problema real que pode comprometer a continuidade.
+
+### B — CORRIGIR DENTRO DE UMA FASE FUTURA
+
+Está correto permanecer como está agora.
+
+### C — DOCUMENTAÇÃO
+
+Não existe problema no software; apenas documentação precisa ser alinhada posteriormente.
+
+### D — TESTE/QA
+
+Código está correto, mas falta cobertura de teste.
+
+### E — DECISÃO DE PRODUTO
+
+Necessita decisão antes de implementação.
+
+### F — NÃO CORRIGIR
+
+Comportamento atual é intencional e está de acordo com a decisão oficial.
+
+---
+
+# 8. GATE PARA FASE 16
+
+No final, responda obrigatoriamente:
+
+## GATE F16
+
+### 🟢 PODE INICIAR F16
+
+ou
+
+### 🟡 PODE INICIAR F16 COM PENDÊNCIAS CONTROLADAS
+
+ou
+
+### 🔴 NÃO INICIAR F16
+
+Se escolher 🟡 ou 🔴, liste exatamente quais itens impedem ou condicionam o avanço.
+
+---
+
+# 9. REGRA ABSOLUTA
+
+Esta é uma auditoria.
+
+**Não transforme nenhuma recomendação em implementação.**
+
+Não criar arquivos.
+Não editar arquivos.
+Não apagar arquivos.
+Não mover arquivos.
+Não modificar banco.
+Não alterar OpenAPI.
+Não executar codegen para aplicar mudanças.
+Não instalar dependências.
+Não alterar rotas.
+Não alterar frontend.
+Não alterar backend.
+Não alterar testes.
+
+Somente:
+
+**LER → COMPARAR → VALIDAR → CLASSIFICAR → REPORTAR.**
+
+Ao terminar, apresente um relatório objetivo, baseado em evidências, indicando exatamente o que está correto, o que está pendente, o que deve ficar congelado e o que precisa de autorização futura.
