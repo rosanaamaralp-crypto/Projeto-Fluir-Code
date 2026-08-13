@@ -141,7 +141,7 @@ export default function ProfessionalBlockedPeriods() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-2xl">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Ban className="h-6 w-6" />
@@ -152,7 +152,7 @@ export default function ProfessionalBlockedPeriods() {
             </p>
           </div>
           {profId && (
-            <Button onClick={() => setShowForm((v) => !v)} size="sm" className="gap-1">
+            <Button onClick={() => setShowForm((v) => !v)} size="sm" className="gap-1 shrink-0">
               <Plus className="h-4 w-4" />
               Novo Bloqueio
             </Button>
@@ -226,11 +226,11 @@ export default function ProfessionalBlockedPeriods() {
         {/* ERROR */}
         {isError && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {listErr instanceof Error ? listErr.message : "Erro ao carregar bloqueios."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>

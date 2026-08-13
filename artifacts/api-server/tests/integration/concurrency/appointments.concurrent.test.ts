@@ -266,20 +266,24 @@ describe("Caso C — mesmo resource, client+professional diferentes, mesmo horá
       // Usar d+13 14:00 UTC — slot ainda não ocupado por nenhum teste anterior
       const startDatetime = fixedSlot(13, 14);
 
-      // client1+prof1 vs client2+prof2, mesmo horário, mesmo resource (único ativo)
-      // resolveResource() auto-seleciona o único resource ACTIVE para ambos
+      // client1+prof1 vs client2+prof2, mesmo horário, MESMO resource EXPLÍCITO.
+      // F17.4: a auto-seleção agora resolve colisões escolhendo outra maca
+      // livre (comportamento desejado), então a disputa pela MESMA maca —
+      // que é o que o OBS-C exige provar — precisa ser explícita.
       const [r1, r2] = await Promise.all([
         request.post("/api/appointments").set("Cookie", clientCookie).send({
           professionalId: ids.professionalId,
           serviceId: ids.serviceId,
           startDatetime,
           modality: "IN_PERSON",
+          resourceId: extras.resourceId,
         }),
         request.post("/api/appointments").set("Cookie", client2Cookie).send({
           professionalId: extras2.prof2Id,
           serviceId: ids.serviceId,
           startDatetime,
           modality: "IN_PERSON",
+          resourceId: extras.resourceId,
         }),
       ]);
 

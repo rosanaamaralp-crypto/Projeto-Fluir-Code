@@ -1,0 +1,287 @@
+# AUTHDOC F17 — POLIMENTO FINAL PRÉ-PRODUÇÃO
+## FLUIR DA VIDA OFICIAL
+
+OBJETIVO
+
+Executar a última fase de implementação antes do Go-Live.
+
+Esta fase NÃO é uma nova auditoria geral do projeto.
+
+A auditoria consolidada F1–F16 já foi concluída:
+- F1–F16 aprovadas;
+- 509/509 testes passando;
+- TypeScript = 0 erros;
+- nenhuma regressão conhecida;
+- banco/schema congelados;
+- RBAC/auth/ownership congelados;
+- OpenAPI/codegen congelados, exceto se explicitamente autorizado abaixo;
+- Admin congelado, exceto onde explicitamente autorizado;
+- F16 fechada.
+
+IMPORTANTE:
+Não reabrir F1–F16.
+Não refatorar código existente sem necessidade.
+Não procurar melhorias fora do escopo.
+Não executar nova auditoria geral.
+Não alterar itens classificados como pós-MVP.
+
+==================================================
+ESCOPO AUTORIZADO DA F17
+==================================================
+
+### F17.1 — RESPONSIVIDADE CLIENT
+
+Prioridade máxima.
+
+Tornar utilizáveis em celular as telas do perfil CLIENT, principalmente:
+
+- /client
+- /client/book
+- fluxo completo do wizard de agendamento
+- /client/appointments
+- /client/addresses
+- /client/profile
+- demais telas CLIENT que efetivamente apresentem problemas de layout
+
+Meta mínima:
+- funcionamento em viewport de aproximadamente 375px;
+- nenhum overflow horizontal relevante;
+- botões acessíveis;
+- campos e formulários utilizáveis;
+- wizard navegável;
+- tabelas/listagens adaptadas quando existentes;
+- modais e confirmações utilizáveis em celular.
+
+Não alterar comportamento de negócio.
+Não alterar APIs.
+Não alterar RBAC.
+Não alterar banco.
+
+### F17.2 — RESPONSIVIDADE PROFESSIONAL
+
+Corrigir a responsividade das telas PROFESSIONAL necessárias para uso real:
+
+- dashboard;
+- agenda;
+- disponibilidade;
+- blocked periods;
+- clientes;
+- detalhes de cliente;
+- agendamentos;
+- notificações;
+- demais telas Professional que apresentem problemas evidentes.
+
+Meta:
+- uso adequado em desktop e celular;
+- sem overflow horizontal relevante;
+- agenda e formulários utilizáveis;
+- preservar integralmente o comportamento existente.
+
+### F17.3 — RECUPERAÇÃO DE SENHA T-003
+
+IMPLEMENTAR.
+
+Esta decisão foi tomada pelo proprietário do projeto.
+
+Objetivo:
+permitir que CLIENT, PROFESSIONAL e ADMIN recuperem a senha sem intervenção manual.
+
+Implementação mínima e segura:
+
+1. tela "Esqueci minha senha";
+2. solicitação por e-mail;
+3. geração de token seguro, temporário e de uso único;
+4. expiração do token;
+5. envio de e-mail;
+6. tela para definir nova senha;
+7. invalidação do token após uso;
+8. não revelar se o e-mail existe ou não;
+9. aplicar rate limiting apropriado;
+10. senha armazenada usando o mecanismo de hash já existente no projeto.
+
+IMPORTANTE:
+Antes de criar novas tabelas/migrations, verificar se existe estrutura reutilizável já existente.
+
+Se uma migration for realmente indispensável:
+PARAR e informar antes de alterar o banco.
+
+Não inventar infraestrutura externa de e-mail.
+Se o projeto já possuir mecanismo/configuração de e-mail reutilizável, utilizar.
+Se não existir, implementar uma abstração mínima configurável por ambiente e documentar claramente quais secrets/variáveis serão necessários para produção.
+
+### F17.4 — AUTO-SELEÇÃO CONCORRENTE DE MACA
+
+Corrigir o problema já identificado na F16:
+
+Atualmente, quando resourceId não é informado, múltiplas solicitações simultâneas podem selecionar a mesma maca por leitura prévia e gerar 409 mesmo existindo outras macas livres.
+
+Objetivo:
+
+Para 6 solicitações simultâneas disputando 5 macas:
+- exatamente 5 devem conseguir;
+- 1 deve receber conflito;
+- nenhuma maca pode sofrer double-booking;
+- manter EXCLUDE constraint como última proteção.
+
+Implementação mínima:
+- retry controlado quando houver conflito de exclusão de recurso;
+- reconsultar maca disponível;
+- no máximo 2 ou 3 tentativas;
+- não alterar a regra de negócio;
+- não alterar schema;
+- não remover constraints;
+- não implementar mecanismo complexo de locking se não for necessário.
+
+Adicionar teste específico.
+
+O teste deve comprovar:
+- concorrência;
+- 5 sucessos;
+- 1 conflito;
+- 5 macas distintas;
+- nenhum double-booking.
+
+### F17.5 — TESTES
+
+Executar obrigatoriamente:
+
+1. suíte completa atual;
+2. novos testes da recuperação de senha;
+3. novos testes da seleção concorrente de maca;
+4. TypeScript API;
+5. TypeScript frontend.
+
+Não criar suíte E2E completa.
+
+Não instalar frameworks de teste novos sem necessidade.
+
+Não aumentar dependências do projeto sem justificativa.
+
+==================================================
+ITENS EXPRESSAMENTE FORA DA F17
+==================================================
+
+NÃO IMPLEMENTAR:
+
+- Landing T-001;
+- paginação de appointments;
+- paginação de clients;
+- paginação de professionals;
+- paginação de services;
+- paginação de resources;
+- responsividade Admin;
+- notificações Admin;
+- configurações Admin;
+- monitoramento avançado;
+- performance geral;
+- novos índices;
+- novas migrations, salvo se absolutamente indispensável para recuperação de senha e previamente informado;
+- E2E completo;
+- refatoração arquitetural;
+- redesign;
+- mudanças de UX não relacionadas à responsividade;
+- alterações no OpenAPI, salvo necessidade absolutamente inevitável da recuperação de senha;
+- alteração do schema existente sem autorização adicional.
+
+P1 — OpenAPI continua fora do escopo.
+
+PENDING continua fora do escopo.
+
+Flaky 500/409 histórico continua apenas registrado.
+
+==================================================
+PROTEÇÃO DAS FASES CONGELADAS
+==================================================
+
+Não alterar:
+
+- schema/migrations existentes;
+- regras de RBAC;
+- middleware de autenticação/ownership;
+- AppLayout;
+- menus Admin/Professional/Client;
+- funcionalidades Admin F13;
+- funcionalidades Professional que não sejam responsividade;
+- funcionalidades Client que não sejam responsividade;
+- OpenAPI/codegen;
+- constraints existentes.
+
+Exceção autorizada:
+- appointments.service.ts somente para o retry de seleção de maca;
+- arquivos necessários exclusivamente para T-003;
+- classes/layout das páginas CLIENT/PROFESSIONAL para responsividade;
+- novos testes;
+- novos helpers estritamente necessários.
+
+==================================================
+ESTRATÉGIA DE EXECUÇÃO — ECONOMIA DE CRÉDITOS
+==================================================
+
+IMPORTANTE:
+
+Esta é uma execução concentrada.
+
+Não faça uma nova auditoria completa F1–F16.
+
+Não percorra todos os documentos procurando problemas adicionais.
+
+Use a auditoria consolidada já fornecida como baseline.
+
+Primeiro:
+1. localizar os arquivos exatos necessários;
+2. implementar o escopo acima;
+3. testar;
+4. corrigir apenas falhas diretamente relacionadas ao escopo;
+5. executar regressão final.
+
+Se encontrar problema fora do escopo:
+NÃO corrigir.
+Registrar no relatório final.
+
+Se uma alteração exigir reabrir uma fase congelada além das exceções expressamente autorizadas:
+PARAR e solicitar autorização.
+
+==================================================
+CRITÉRIOS DE ACEITE F17
+==================================================
+
+F17 somente será considerada concluída se:
+
+- CLIENT utilizável em viewport de 375px;
+- PROFESSIONAL utilizável em viewport de 375px;
+- wizard de booking utilizável em celular;
+- recuperação de senha funcional;
+- token de recuperação seguro e expirável;
+- seleção concorrente de 6→5+1 funcionando;
+- nenhuma violação de integridade no banco;
+- suíte completa verde;
+- TypeScript = 0 erros;
+- nenhuma regressão em F1–F16;
+- nenhuma alteração fora do escopo;
+- nenhum novo problema crítico ou alto introduzido.
+
+Ao final apresentar:
+
+1. arquivos alterados;
+2. resumo objetivo de cada alteração;
+3. testes antes/depois;
+4. TypeScript;
+5. regressão F1–F16;
+6. problemas encontrados fora do escopo;
+7. git status;
+8. commit/hash final;
+9. veredito F17.
+
+NÃO iniciar F18 nesta execução.
+
+==================================================
+REGRA FINAL
+==================================================
+
+F17 é a última fase de desenvolvimento funcional antes da produção.
+
+Não adicionar funcionalidades por iniciativa própria.
+
+Não transformar esta fase em "melhorias gerais".
+
+Executar somente o que está autorizado acima.

@@ -86,24 +86,24 @@ export default function ProfessionalProfile() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <div className="grid grid-cols-3 gap-y-3">
-                <span className="text-muted-foreground">Nome</span>
-                <span className="col-span-2 font-medium">
+              <div className="grid grid-cols-3 gap-y-1 sm:gap-y-3">
+                <span className="col-span-3 sm:col-span-1 text-muted-foreground">Nome</span>
+                <span className="col-span-3 sm:col-span-2 font-medium mb-2 sm:mb-0 break-words">
                   {professional?.name ?? user?.name ?? "—"}
                 </span>
 
-                <span className="text-muted-foreground">E-mail</span>
-                <span className="col-span-2">
+                <span className="col-span-3 sm:col-span-1 text-muted-foreground">E-mail</span>
+                <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">
                   {professional?.email ?? user?.email ?? "—"}
                 </span>
 
-                <span className="text-muted-foreground">Telefone</span>
-                <span className="col-span-2">
+                <span className="col-span-3 sm:col-span-1 text-muted-foreground">Telefone</span>
+                <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">
                   {professional?.phone ?? "—"}
                 </span>
 
-                <span className="text-muted-foreground">Especialidade</span>
-                <span className="col-span-2">
+                <span className="col-span-3 sm:col-span-1 text-muted-foreground">Especialidade</span>
+                <span className="col-span-3 sm:col-span-2 break-words">
                   {professional?.specialty ?? "—"}
                 </span>
               </div>

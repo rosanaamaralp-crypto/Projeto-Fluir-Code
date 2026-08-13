@@ -77,15 +77,15 @@ export default function ProfessionalSchedule() {
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
           <Input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-44"
+            className="w-full sm:w-44"
           />
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -107,11 +107,11 @@ export default function ProfessionalSchedule() {
         {/* ERROR */}
         {isError && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error ? error.message : "Erro ao carregar agenda."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>

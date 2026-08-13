@@ -138,17 +138,17 @@ export default function ProfessionalAppointmentDetail() {
     <AppLayout>
       <div className="space-y-6 max-w-2xl">
         {/* Header */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/professional/schedule")}
-            className="gap-1"
+            className="gap-1 shrink-0 -ml-2 sm:ml-0"
           >
             <ArrowLeft className="h-4 w-4" />
             Agenda
           </Button>
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight">
             Detalhes do Atendimento
           </h1>
         </div>
@@ -164,11 +164,11 @@ export default function ProfessionalAppointmentDetail() {
         {/* ERROR */}
         {isError && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error ? error.message : "Erro ao carregar o atendimento."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>
@@ -212,18 +212,18 @@ export default function ProfessionalAppointmentDetail() {
                 <Separator />
 
                 {/* Dados legíveis — Decisão B */}
-                <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+                <div className="grid grid-cols-3 gap-x-4 gap-y-1 sm:gap-y-2">
                   {/* Cliente */}
-                  <span className="text-muted-foreground">Cliente</span>
-                  <span className="col-span-2 font-medium">
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Cliente</span>
+                  <span className="col-span-3 sm:col-span-2 font-medium mb-2 sm:mb-0 break-words">
                     {clientData === undefined
                       ? <span className="text-muted-foreground italic">carregando…</span>
                       : (clientName ?? "Nome não informado")}
                   </span>
 
                   {/* Serviço */}
-                  <span className="text-muted-foreground">Serviço</span>
-                  <span className="col-span-2">
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Serviço</span>
+                  <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">
                     {svcsData === undefined
                       ? <span className="text-muted-foreground italic">carregando…</span>
                       : (serviceMap[apt.serviceId] ?? "Serviço não encontrado")}
@@ -232,8 +232,8 @@ export default function ProfessionalAppointmentDetail() {
                   {/* Recurso / Maca — somente presencial */}
                   {apt.modality === "IN_PERSON" && apt.resourceId && (
                     <>
-                      <span className="text-muted-foreground">Maca</span>
-                      <span className="col-span-2">
+                      <span className="col-span-3 sm:col-span-1 text-muted-foreground">Maca</span>
+                      <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">
                         {resourcesData === undefined
                           ? <span className="text-muted-foreground italic">carregando…</span>
                           : (resourceMap[apt.resourceId] ?? "Maca não encontrada")}
@@ -244,8 +244,8 @@ export default function ProfessionalAppointmentDetail() {
                   {/* Endereço — somente Home Care */}
                   {apt.modality === "HOME_CARE" && (
                     <>
-                      <span className="text-muted-foreground">Endereço</span>
-                      <span className="col-span-2">
+                      <span className="col-span-3 sm:col-span-1 text-muted-foreground">Endereço</span>
+                      <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">
                         {clientData === undefined ? (
                           <span className="text-muted-foreground italic">carregando…</span>
                         ) : clientAddress ? (
@@ -265,8 +265,8 @@ export default function ProfessionalAppointmentDetail() {
                   )}
 
                   {/* Preço */}
-                  <span className="text-muted-foreground">Valor</span>
-                  <span className="col-span-2">R$ {apt.priceAtBooking}</span>
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Valor</span>
+                  <span className="col-span-3 sm:col-span-2 break-words">R$ {apt.priceAtBooking}</span>
                 </div>
 
                 {apt.notes && (

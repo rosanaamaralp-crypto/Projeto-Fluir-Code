@@ -41,6 +41,10 @@ import NotFound from "@/pages/not-found";
 
 // Páginas síncronas (marco visual F11)
 import LoginPage from "@/pages/login";
+
+// T-003 (F17.3) — Recuperação de senha (públicas, lazy)
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 import AdminDashboard from "@/pages/admin/dashboard";
 import ProfessionalDashboard from "@/pages/professional/dashboard";
 import ClientDashboard from "@/pages/client/dashboard";
@@ -129,6 +133,12 @@ function Router() {
       <Switch>
         {/* Públicas */}
         <Route path="/login" component={LoginPage} />
+        <Route path="/forgot-password">
+          <Suspense fallback={<LoadingScreen />}><ForgotPasswordPage /></Suspense>
+        </Route>
+        <Route path="/reset-password">
+          <Suspense fallback={<LoadingScreen />}><ResetPasswordPage /></Suspense>
+        </Route>
 
         {/* ── Admin (ordem importa: mais específicas primeiro) ─────────────── */}
         <Route path="/admin/appointments/new">

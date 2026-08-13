@@ -76,11 +76,11 @@ export default function ProfessionalNotifications() {
         {/* ERROR */}
         {isError && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error ? error.message : "Erro ao carregar notificações."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>
@@ -107,7 +107,7 @@ export default function ProfessionalNotifications() {
                   className={isUnread ? "border-primary/40 bg-primary/5" : ""}
                 >
                   <CardContent className="py-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           {isUnread && (
@@ -127,7 +127,7 @@ export default function ProfessionalNotifications() {
                           variant="outline"
                           onClick={() => handleMarkRead(n.id)}
                           disabled={markReadMutation.isPending}
-                          className="flex-shrink-0"
+                          className="flex-shrink-0 self-start sm:self-auto"
                         >
                           Marcar como lida
                         </Button>

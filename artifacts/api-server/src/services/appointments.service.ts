@@ -18,6 +18,7 @@
  * - "HOME_CARE":  resource_id NULL, address_id NOT NULL
  */
 
+import { sql } from "drizzle-orm";
 import type { DrizzleDB } from "../lib/db-types.js";
 import { AppointmentsRepository, type AppointmentRow } from "../repositories/appointments.repository.js";
 import { AppointmentStatusHistoryRepository } from "../repositories/appointment-status-history.repository.js";
@@ -207,6 +208,13 @@ async function resolveResource(
     return resourceId;
   }
 
+  // F17.4 — Serializar a auto-seleção concorrente com advisory lock transacional
+  // (liberado automaticamente no COMMIT/ROLLBACK). Sem isso, N transações
+  // simultâneas leem o mesmo estado e escolhem a mesma maca — apenas 1 vence.
+  // Afeta somente o caminho de auto-seleção; resourceId explícito não passa aqui.
+  // A EXCLUDE constraint permanece como proteção definitiva.
+  await db.execute(sql`SELECT pg_advisory_xact_lock(hashtext('appointments_resource_auto_select'))`);
+
   // Auto-selecionar primeiro resource livre
   for (const r of allActive) {
     const occupied = await AppointmentsRepository.findActiveByResourceInRange(db, r.id, start, end);
@@ -221,6 +229,27 @@ async function resolveResource(
   }
 
   throw new ConflictError("Nenhuma sala disponível neste horário.");
+}
+
+/**
+ * F17.4 — Detecta violação da EXCLUDE constraint de resource (23P01 em
+ * excl_resource_no_overlap). Usado exclusivamente para o retry da
+ * auto-seleção de maca: quando duas transações concorrentes auto-selecionam
+ * a mesma maca por leitura prévia, a perdedora pode reconsultar e tentar
+ * outra maca livre. Conflitos de cliente/profissional NÃO são retryados
+ * (retentar produziria o mesmo resultado).
+ */
+function isResourceExclusionConflict(err: unknown): boolean {
+  const candidate =
+    typeof err === "object" && err !== null && "cause" in err
+      ? ((err as { cause?: unknown }).cause ?? err)
+      : err;
+  return (
+    typeof candidate === "object" &&
+    candidate !== null &&
+    (candidate as { code?: string }).code === "23P01" &&
+    (candidate as { constraint?: string }).constraint === "excl_resource_no_overlap"
+  );
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────
@@ -261,9 +290,69 @@ export const AppointmentsService = {
       ipAddress: string | null;
     },
   ): Promise<AppointmentRow> {
-    const { input, sessionUserId, sessionRoleId, ipAddress } = params;
+    const { input } = params;
 
-    const created = await db.transaction(async (tx) => {
+    // F17.4 — Retry controlado da auto-seleção de maca:
+    // somente IN_PERSON sem resourceId explícito; máx. 3 tentativas.
+    // A EXCLUDE constraint permanece como proteção definitiva; o retry apenas
+    // reconsulta as macas livres após perder a disputa (rollback da tx).
+    const isAutoSelect = input.modality === "IN_PERSON" && !input.resourceId;
+    const maxAttempts = isAutoSelect ? 3 : 1;
+
+    let created: AppointmentRow | undefined;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        created = await AppointmentsService.createAttempt(db, params);
+        break;
+      } catch (err) {
+        if (attempt < maxAttempts && isResourceExclusionConflict(err)) {
+          continue;
+        }
+        throw err;
+      }
+    }
+    if (!created) {
+      // Inalcançável (o loop retorna ou lança), mas satisfaz o narrowing do TS
+      throw new ConflictError("Conflito de horário: já existe um agendamento neste intervalo.");
+    }
+
+    // F8 — Notificações (best-effort: falha não reverte o agendamento)
+    try {
+      const [clientRec, professionalRec] = await Promise.all([
+        ClientsRepository.findById(db, created.clientId),
+        ProfessionalsRepository.findById(db, created.professionalId),
+      ]);
+      if (clientRec?.userId && professionalRec?.userId) {
+        await NotificationService.notifyAppointmentCreated(db, {
+          clientUserId: clientRec.userId,
+          professionalUserId: professionalRec.userId,
+          appointmentId: created.id,
+          startDatetime: created.startDatetime,
+        });
+      }
+    } catch {
+      // best-effort: falha na notificação não reverte o agendamento
+    }
+
+    return created;
+  },
+
+  /**
+   * F17.4 — Uma tentativa de criação (validações + insert) dentro de uma
+   * transaction. Extraído de create() para permitir o retry controlado da
+   * auto-seleção de maca sem duplicar a lógica. Comportamento inalterado.
+   */
+  async createAttempt(
+    db: DrizzleDB,
+    params: {
+      input: CreateAppointmentInput;
+      sessionUserId: string;
+      sessionRoleId: number;
+      ipAddress: string | null;
+    },
+  ): Promise<AppointmentRow> {
+    const { input, sessionUserId, sessionRoleId, ipAddress } = params;
+    return await db.transaction(async (tx) => {
       // 1. Resolver client
       let clientId: string;
       if (sessionRoleId === ROLES.CLIENT) {
@@ -442,26 +531,6 @@ export const AppointmentsService = {
 
       return appointment;
     });
-
-    // F8 — Notificações (best-effort: falha não reverte o agendamento)
-    try {
-      const [clientRec, professionalRec] = await Promise.all([
-        ClientsRepository.findById(db, created.clientId),
-        ProfessionalsRepository.findById(db, created.professionalId),
-      ]);
-      if (clientRec?.userId && professionalRec?.userId) {
-        await NotificationService.notifyAppointmentCreated(db, {
-          clientUserId: clientRec.userId,
-          professionalUserId: professionalRec.userId,
-          appointmentId: created.id,
-          startDatetime: created.startDatetime,
-        });
-      }
-    } catch {
-      // best-effort: falha na notificação não reverte o agendamento
-    }
-
-    return created;
   },
 
   /**

@@ -1,0 +1,305 @@
+# EXECUÇÃO F17 — MODO ECONÔMICO / EXECUÇÃO FINAL
+
+Você já possui e analisou o AUTHDOC F17 — POLIMENTO FINAL PRÉ-PRODUÇÃO.
+
+A auditoria consolidada F1–F16 já foi concluída e NÃO deve ser repetida.
+
+## REGRA PRINCIPAL
+
+EXECUTE A F17 AGORA.
+
+Não faça nova auditoria geral.
+
+Não reanalise F1–F16.
+
+Não percorra novamente todos os documentos.
+
+Não procure melhorias adicionais.
+
+Não faça refatoração.
+
+Não faça exploração desnecessária.
+
+O objetivo é gastar o mínimo possível de créditos e concluir somente o escopo autorizado.
+
+---
+
+# ESCOPO EXATO
+
+## 1. RESPONSIVIDADE CLIENT
+
+Corrigir somente problemas necessários para uso em aproximadamente 375px.
+
+Prioridade:
+
+1. `/client/book`
+2. wizard completo de booking
+3. `/client`
+4. `/client/appointments`
+5. `/client/addresses`
+6. `/client/profile`
+
+Corrigir somente problemas reais de layout.
+
+Não alterar lógica de negócio.
+
+Não alterar APIs.
+
+Não alterar RBAC.
+
+Não alterar banco.
+
+Não fazer redesign.
+
+---
+
+## 2. RESPONSIVIDADE PROFESSIONAL
+
+Corrigir somente problemas necessários para uso em aproximadamente 375px.
+
+Prioridade:
+
+1. dashboard
+2. agenda
+3. disponibilidade
+4. blocked periods
+5. clientes
+6. detalhes de cliente
+7. agendamentos
+8. notificações
+
+Preservar integralmente o comportamento atual.
+
+Não alterar regras de negócio.
+
+---
+
+# 3. RECUPERAÇÃO DE SENHA — T-003
+
+Implementar o mínimo necessário para recuperação de senha.
+
+Obrigatório:
+
+* tela "Esqueci minha senha";
+* solicitação por e-mail;
+* token seguro;
+* token temporário;
+* token de uso único;
+* expiração;
+* nova senha;
+* invalidação após uso;
+* não revelar se o e-mail existe;
+* rate limiting;
+* reutilizar o mecanismo de hash existente.
+
+## REGRA CRÍTICA
+
+Antes de alterar banco:
+
+Verifique rapidamente se existe estrutura reutilizável.
+
+SE UMA NOVA MIGRATION OU ALTERAÇÃO DE SCHEMA FOR ABSOLUTAMENTE NECESSÁRIA:
+
+### PARE IMEDIATAMENTE.
+
+Não crie migration.
+
+Não altere schema.
+
+Não continue explorando alternativas.
+
+Informe:
+
+* por que é necessária;
+* arquivo que seria alterado;
+* qual estrutura seria criada;
+* impacto.
+
+Aguarde autorização.
+
+## E-MAIL
+
+Reutilize qualquer infraestrutura de e-mail já existente.
+
+Se não existir infraestrutura de e-mail:
+
+Não instalar serviços complexos.
+
+Não criar integração externa arbitrária.
+
+Implemente somente uma abstração mínima configurável por ambiente, caso isso seja suficiente para o escopo.
+
+Liste os secrets necessários para produção.
+
+---
+
+# 4. AUTO-SELEÇÃO CONCORRENTE DE MACAS
+
+Corrigir somente o problema identificado na F16.
+
+Arquivo prioritário:
+
+`appointments.service.ts`
+
+Objetivo:
+
+6 solicitações simultâneas disputando 5 macas:
+
+* 5 × sucesso;
+* 1 × 409;
+* 5 macas diferentes;
+* nenhum double-booking.
+
+Implementação mínima:
+
+* retry controlado;
+* nova consulta de maca livre após conflito;
+* máximo de 2–3 tentativas;
+* preservar EXCLUDE constraint;
+* não alterar schema;
+* não criar locking complexo.
+
+Adicionar/ajustar teste específico.
+
+Não modificar outras partes do motor de agendamento.
+
+---
+
+# 5. TESTES OBRIGATÓRIOS
+
+Após implementação:
+
+1. suíte completa;
+2. testes de recuperação de senha;
+3. teste concorrente 6→5+1;
+4. TypeScript API;
+5. TypeScript frontend.
+
+Não criar E2E completo.
+
+Não instalar framework de testes novo.
+
+Não aumentar dependências sem necessidade.
+
+---
+
+# 6. PROIBIDO
+
+NÃO implementar:
+
+* Landing T-001;
+* paginação;
+* responsividade Admin;
+* notificações Admin;
+* configurações Admin;
+* performance geral;
+* novos índices;
+* novas migrations, salvo se previamente autorizadas;
+* E2E completo;
+* redesign;
+* refatoração arquitetural;
+* melhorias UX não relacionadas à responsividade;
+* P1 OpenAPI;
+* PENDING;
+* monitoramento avançado;
+* F18.
+
+Não reabrir F1–F16.
+
+Não tocar:
+
+* schema existente;
+* migrations existentes;
+* RBAC;
+* ownership;
+* AppLayout;
+* menus;
+* funcionalidades Admin;
+* OpenAPI/codegen;
+* constraints.
+
+---
+
+# 7. ESTRATÉGIA DE ECONOMIA DE CRÉDITOS
+
+IMPORTANTE:
+
+Você está executando esta fase com orçamento limitado.
+
+Portanto:
+
+* não faça análise exploratória extensa;
+* não leia arquivos que não sejam necessários;
+* não repita verificações já concluídas na F16;
+* não reaudite funcionalidades já aprovadas;
+* não procure problemas fora do escopo;
+* não execute testes repetidamente sem motivo;
+* não faça múltiplas abordagens para o mesmo problema.
+
+Use a auditoria F1–F16 como baseline confiável.
+
+Faça:
+
+LOCALIZAR → ALTERAR → TESTAR → CORRIGIR FALHAS DO ESCOPO → REGRESSÃO FINAL.
+
+---
+
+# 8. REGRA DE PARADA
+
+PARE e peça autorização somente se ocorrer:
+
+* migration necessária para T-003;
+* alteração de schema;
+* alteração de RBAC;
+* alteração de OpenAPI/codegen;
+* alteração de fases congeladas fora das exceções;
+* necessidade de infraestrutura externa não disponível;
+* descoberta de bloqueador técnico real.
+
+Problemas fora do escopo devem apenas ser registrados no relatório final.
+
+---
+
+# 9. CRITÉRIOS DE CONCLUSÃO
+
+F17 estará concluída quando:
+
+* CLIENT utilizável em 375px;
+* PROFESSIONAL utilizável em 375px;
+* wizard de booking utilizável em celular;
+* recuperação de senha funcional;
+* token seguro, temporário e de uso único;
+* seleção concorrente 6→5+1 funcionando;
+* nenhum double-booking;
+* suíte completa verde;
+* TypeScript API = 0 erros;
+* TypeScript frontend = 0 erros;
+* nenhuma regressão F1–F16;
+* nenhuma alteração fora do escopo.
+
+---
+
+# 10. RELATÓRIO FINAL
+
+Ao terminar, apresentar somente:
+
+1. arquivos alterados;
+2. alteração feita em cada arquivo;
+3. testes antes/depois;
+4. resultado da suíte;
+5. TypeScript;
+6. teste 6→5+1;
+7. recuperação de senha;
+8. responsividade Client/Professional;
+9. problemas fora do escopo;
+10. git status;
+11. commit/hash;
+12. veredito F17.
+
+NÃO iniciar F18.
+
+NÃO pedir novo escopo.
+
+NÃO fazer nova auditoria.
+
+EXECUTE A F17 AGORA, DE FORMA CONCENTRADA E ECONÔMICA.

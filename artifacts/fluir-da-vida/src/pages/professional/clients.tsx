@@ -84,11 +84,11 @@ export default function ProfessionalClients() {
         {/* ERROR */}
         {isError && !isLoading && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error ? error.message : "Erro ao carregar clientes."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>

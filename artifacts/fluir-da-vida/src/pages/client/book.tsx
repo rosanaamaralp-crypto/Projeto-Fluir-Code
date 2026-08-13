@@ -219,7 +219,7 @@ export default function ClientBook() {
   // ── RENDER ───────────────────────────────────────────────────────────────
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-xl">
+      <div className="space-y-6 w-full max-w-xl">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Novo Agendamento</h1>
           <p className="text-sm text-muted-foreground">
@@ -277,8 +277,8 @@ export default function ClientBook() {
                           }));
                         }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
                             <p className="font-medium text-sm">{svc.name}</p>
                             {svc.description && (
                               <p className="text-xs text-muted-foreground mt-0.5">
@@ -358,13 +358,14 @@ export default function ClientBook() {
               {/* Aviso HOME_CARE sem endereço */}
               {state.modality === "HOME_CARE" && !addrData?.address && (
                 <Alert>
-                  <AlertDescription className="flex items-center justify-between">
+                  <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-sm">
                       Você precisa de um endereço cadastrado para Home Care.
                     </span>
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full sm:w-auto shrink-0"
                       onClick={() => navigate("/client/addresses")}
                     >
                       Cadastrar endereço
@@ -594,29 +595,29 @@ export default function ClientBook() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between py-1.5 border-b">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                   <span className="text-muted-foreground">Serviço</span>
-                  <span className="font-medium">{state.service?.name}</span>
+                  <span className="font-medium text-right">{state.service?.name}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                   <span className="text-muted-foreground">Modalidade</span>
-                  <span className="font-medium">
+                  <span className="font-medium text-right">
                     {modalityLabel(state.modality!)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                   <span className="text-muted-foreground">Profissional</span>
-                  <span className="font-medium">{state.professional?.name}</span>
+                  <span className="font-medium text-right">{state.professional?.name}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                   <span className="text-muted-foreground">Data e horário</span>
-                  <span className="font-medium capitalize">
+                  <span className="font-medium capitalize text-right">
                     {state.startDatetime ? fmtDatetime(state.startDatetime) : "—"}
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                   <span className="text-muted-foreground">Valor</span>
-                  <span className="font-medium">
+                  <span className="font-medium text-right">
                     R${" "}
                     {Number(state.service?.price ?? 0)
                       .toFixed(2)
@@ -624,7 +625,7 @@ export default function ClientBook() {
                   </span>
                 </div>
                 {state.modality === "HOME_CARE" && addrData?.address && (
-                  <div className="flex justify-between py-1.5 border-b">
+                  <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-1.5 border-b">
                     <span className="text-muted-foreground">Endereço</span>
                     <span className="font-medium text-right">
                       {addrData.address.street}, {addrData.address.number}
@@ -706,9 +707,10 @@ export default function ClientBook() {
                 </div>
               )}
 
-              <div className="flex gap-3 justify-center pt-2">
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center">
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     if (state.createdAppointmentId) {
                       navigate(`/client/appointments/${state.createdAppointmentId}`);
@@ -720,6 +722,7 @@ export default function ClientBook() {
                   Ver meus agendamentos
                 </Button>
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setState(INITIAL);
                   }}

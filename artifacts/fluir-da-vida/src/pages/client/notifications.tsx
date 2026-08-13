@@ -104,11 +104,11 @@ export default function ClientNotifications() {
                 <div
                   key={n.id}
                   className={[
-                    "flex items-start justify-between gap-4 px-4 py-3",
+                    "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
                     !n.readAt ? "bg-muted/40" : "",
                   ].join(" ")}
                 >
-                  <div className="flex-1 space-y-0.5">
+                  <div className="flex-1 space-y-0.5 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">{n.title}</p>
                       {!n.readAt && (
@@ -132,6 +132,7 @@ export default function ClientNotifications() {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full shrink-0 sm:w-auto"
                       disabled={markRead.isPending}
                       onClick={() => handleMarkRead(n.id)}
                     >

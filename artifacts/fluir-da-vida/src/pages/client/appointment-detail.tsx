@@ -196,11 +196,12 @@ export default function ClientAppointmentDetail() {
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-2xl">
-        <div className="flex items-center gap-3">
+      <div className="space-y-6 w-full max-w-2xl">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
+            className="-ml-2 sm:ml-0"
             onClick={() => navigate("/client/appointments")}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -296,9 +297,10 @@ export default function ClientAppointmentDetail() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {!confirmCancel && !rescheduleMode && (
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row">
                       <Button
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => setRescheduleMode(true)}
                       >
                         <Calendar className="h-4 w-4 mr-1.5" />
@@ -306,6 +308,7 @@ export default function ClientAppointmentDetail() {
                       </Button>
                       <Button
                         variant="destructive"
+                        className="w-full sm:w-auto"
                         onClick={() => setConfirmCancel(true)}
                       >
                         Cancelar agendamento
@@ -468,7 +471,7 @@ export default function ClientAppointmentDetail() {
                       histData.history.map((h) => (
                         <div
                           key={h.id}
-                          className="flex items-center justify-between text-sm py-1 border-b last:border-0"
+                          className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-sm py-1 border-b last:border-0"
                         >
                           <span>
                             <span className="text-muted-foreground">

@@ -61,7 +61,7 @@ export default function ProfessionalDashboard() {
         {/* ERROR */}
         {isError && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error
                   ? error.message
@@ -115,7 +115,7 @@ export default function ProfessionalDashboard() {
             </Card>
 
             {/* Indicadores do dia */}
-            <div className="grid gap-4 grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">

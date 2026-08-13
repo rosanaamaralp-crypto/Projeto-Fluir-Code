@@ -64,7 +64,7 @@ export default function ClientDashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
               Olá, {user?.name?.split(" ")[0] ?? ""}
@@ -73,7 +73,10 @@ export default function ClientDashboard() {
               Seus agendamentos e histórico
             </p>
           </div>
-          <Button onClick={() => navigate("/client/book")}>
+          <Button
+            onClick={() => navigate("/client/book")}
+            className="w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4 mr-1.5" />
             Novo Agendamento
           </Button>
@@ -134,13 +137,14 @@ export default function ClientDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-muted-foreground">
                       Você não tem agendamentos futuros confirmados.
                     </p>
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => navigate("/client/book")}
                     >
                       Agendar agora
@@ -172,9 +176,9 @@ export default function ClientDashboard() {
                     {data.dashboard.upcomingAppointments.map((apt) => (
                       <div
                         key={apt.id}
-                        className="flex items-center justify-between py-1.5 border-b last:border-0"
+                        className="flex items-start justify-between gap-2 py-1.5 border-b last:border-0"
                       >
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium capitalize">
                             {formatDatetime(apt.startDatetime)}
                           </p>
@@ -182,7 +186,7 @@ export default function ClientDashboard() {
                             {apt.professionalName ?? "—"} · {apt.serviceName ?? "—"}
                           </p>
                         </div>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="shrink-0">
                           {modalityLabel(apt.modality)}
                         </Badge>
                       </div>

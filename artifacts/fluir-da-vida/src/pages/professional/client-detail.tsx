@@ -108,11 +108,11 @@ export default function ProfessionalClientDetail() {
         {/* ERROR */}
         {isError && !isLoading && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>
                 {error instanceof Error ? error.message : "Erro ao carregar dados do cliente."}
               </span>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="sm:ml-4 self-start sm:self-auto">
                 Tentar novamente
               </Button>
             </AlertDescription>
@@ -133,18 +133,18 @@ export default function ProfessionalClientDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-0 text-sm">
-                <div className="grid grid-cols-3 gap-y-3">
-                  <span className="text-muted-foreground">Nome</span>
-                  <span className="col-span-2 font-medium">{client.name ?? "—"}</span>
+                <div className="grid grid-cols-3 gap-y-1 sm:gap-y-3">
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Nome</span>
+                  <span className="col-span-3 sm:col-span-2 font-medium mb-2 sm:mb-0 break-words">{client.name ?? "—"}</span>
 
-                  <span className="text-muted-foreground">Telefone</span>
-                  <span className="col-span-2">{client.phone ?? "—"}</span>
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Telefone</span>
+                  <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">{client.phone ?? "—"}</span>
 
-                  <span className="text-muted-foreground">E-mail</span>
-                  <span className="col-span-2">{client.email ?? "—"}</span>
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">E-mail</span>
+                  <span className="col-span-3 sm:col-span-2 mb-2 sm:mb-0 break-words">{client.email ?? "—"}</span>
 
-                  <span className="text-muted-foreground">Nascimento</span>
-                  <span className="col-span-2">{formatDate(client.birthDate)}</span>
+                  <span className="col-span-3 sm:col-span-1 text-muted-foreground">Nascimento</span>
+                  <span className="col-span-3 sm:col-span-2 break-words">{formatDate(client.birthDate)}</span>
                 </div>
               </CardContent>
             </Card>
