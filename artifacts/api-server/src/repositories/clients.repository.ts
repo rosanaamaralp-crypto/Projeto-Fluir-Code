@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, exists, or, sql } from "drizzle-orm";
 import type { DrizzleDB as DB } from "../lib/db-types.js";
-import { appointments, clients, users } from "@workspace/db";
+import { appointments, auditLogs, clients, professionals, users } from "@workspace/db";
 
 export interface ClientRow {
   id: string;
@@ -41,6 +41,40 @@ const withUserSelect = {
   createdAt: clients.createdAt,
   updatedAt: clients.updatedAt,
 } as const;
+
+/**
+ * F20 — Predicado de relacionamento profissional → cliente (IDOR safe).
+ * Um cliente é considerado "do profissional" quando:
+ *  (a) já possui atendimento com o profissional (regra original T-023/T-025); OU
+ *  (b) foi cadastrado por esse profissional (audit_logs CLIENT_CREATED, F20),
+ *      permitindo agendar imediatamente após o cadastro, sem depender do ADMIN.
+ * Reutiliza estruturas existentes — nenhuma alteração de banco.
+ */
+function professionalRelationshipPredicate(db: DB, professionalId: string) {
+  return or(
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(appointments)
+        .where(and(
+          eq(appointments.clientId, clients.id),
+          eq(appointments.professionalId, professionalId),
+        )),
+    ),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(auditLogs)
+        .innerJoin(professionals, eq(professionals.userId, auditLogs.userId))
+        .where(and(
+          eq(auditLogs.action, "CLIENT_CREATED"),
+          eq(auditLogs.entityType, "clients"),
+          eq(auditLogs.entityId, clients.id),
+          eq(professionals.id, professionalId),
+        )),
+    ),
+  );
+}
 
 export const ClientsRepository = {
   async findById(db: DB, id: string): Promise<ClientRow | null> {
@@ -114,22 +148,10 @@ export const ClientsRepository = {
    */
   async findByProfessionalId(db: DB, professionalId: string): Promise<ClientWithUser[]> {
     return db
-      .selectDistinct({
-        id: clients.id,
-        userId: clients.userId,
-        name: users.name,
-        email: users.email,
-        phone: users.phone,
-        birthDate: clients.birthDate,
-        notes: clients.notes,
-        status: clients.status,
-        createdAt: clients.createdAt,
-        updatedAt: clients.updatedAt,
-      })
-      .from(appointments)
-      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .selectDistinct(withUserSelect)
+      .from(clients)
       .innerJoin(users, eq(clients.userId, users.id))
-      .where(eq(appointments.professionalId, professionalId));
+      .where(professionalRelationshipPredicate(db, professionalId));
   },
 
   /**
@@ -143,24 +165,12 @@ export const ClientsRepository = {
     professionalId: string,
   ): Promise<ClientWithUser | null> {
     const rows = await db
-      .selectDistinct({
-        id: clients.id,
-        userId: clients.userId,
-        name: users.name,
-        email: users.email,
-        phone: users.phone,
-        birthDate: clients.birthDate,
-        notes: clients.notes,
-        status: clients.status,
-        createdAt: clients.createdAt,
-        updatedAt: clients.updatedAt,
-      })
-      .from(appointments)
-      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .selectDistinct(withUserSelect)
+      .from(clients)
       .innerJoin(users, eq(clients.userId, users.id))
       .where(and(
-        eq(appointments.clientId, clientId),
-        eq(appointments.professionalId, professionalId),
+        eq(clients.id, clientId),
+        professionalRelationshipPredicate(db, professionalId),
       ))
       .limit(1);
     return rows[0] ?? null;

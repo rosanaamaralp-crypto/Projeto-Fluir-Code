@@ -104,7 +104,7 @@ describe("GET /api/clients/:id", () => {
 });
 
 describe("POST /api/clients", () => {
-  it("retorna 403 se não for ADMIN", async () => {
+  it("CLIENT não pode criar cliente (403) — F20", async () => {
     const res = await request
       .post("/api/clients")
       .set("Cookie", clientCookie)
@@ -114,6 +114,63 @@ describe("POST /api/clients", () => {
         password: "Senha123456!",
       });
     expect(res.status).toBe(403);
+  });
+
+  it("F20: PROFESSIONAL cria cliente e ele entra em seus clientes (relacionamento)", async () => {
+    const res = await request
+      .post("/api/clients")
+      .set("Cookie", profCookie)
+      .send({
+        name: "Cliente do Profissional F20",
+        email: `criado-pelo-prof-${Date.now()}@fluir.test`,
+        password: "Senha123456!",
+        phone: "(11) 98888-0000",
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.client).toBeDefined();
+    expect(res.body.user.passwordHash).toBeUndefined();
+    const newClientId = res.body.client.id as string;
+
+    // Aparece na lista "Meus Clientes" do profissional
+    const list = await request.get("/api/me/professional/clients").set("Cookie", profCookie);
+    expect(list.status).toBe(200);
+    const found = (list.body.clients as Array<{ id: string }>).find((c) => c.id === newClientId);
+    expect(found).toBeDefined();
+
+    // Detalhe acessível pelo profissional criador
+    const detail = await request
+      .get(`/api/me/professional/clients/${newClientId}`)
+      .set("Cookie", profCookie);
+    expect(detail.status).toBe(200);
+  });
+
+  it("F20: cliente criado pelo ADMIN não fica visível ao profissional sem relacionamento (404)", async () => {
+    const res = await request
+      .post("/api/clients")
+      .set("Cookie", adminCookie)
+      .send({
+        name: "Cliente do Admin F20",
+        email: `criado-pelo-admin-f20-${Date.now()}@fluir.test`,
+        password: "Senha123456!",
+      });
+    expect(res.status).toBe(201);
+
+    const detail = await request
+      .get(`/api/me/professional/clients/${res.body.client.id}`)
+      .set("Cookie", profCookie);
+    expect(detail.status).toBe(404);
+  });
+
+  it("F20: PROFESSIONAL com email duplicado recebe 409 (sem duplicidade)", async () => {
+    const res = await request
+      .post("/api/clients")
+      .set("Cookie", profCookie)
+      .send({
+        name: "Duplicado Prof",
+        email: TEST_EMAILS.client, // já existe
+        password: "Senha123456!",
+      });
+    expect(res.status).toBe(409);
   });
 
   it("ADMIN cria client com sucesso", async () => {

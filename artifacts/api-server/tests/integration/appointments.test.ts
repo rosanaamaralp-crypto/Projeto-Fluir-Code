@@ -195,6 +195,32 @@ describe("POST /api/appointments", () => {
     expect(res.status).toBe(404);
   });
 
+  it("F20: cliente recém-cadastrado pelo PROFESSIONAL pode ser agendado imediatamente (201)", async () => {
+    const created = await request
+      .post("/api/clients")
+      .set("Cookie", profCookie)
+      .send({
+        name: "Cliente F20 Fluxo",
+        email: `cliente-f20-fluxo-${Date.now()}@fluir.test`,
+        password: "Senha123456!",
+      });
+    expect(created.status).toBe(201);
+    const newClientId = created.body.client.id as string;
+
+    const res = await request
+      .post("/api/appointments")
+      .set("Cookie", profCookie)
+      .send({
+        professionalId: ids.professionalId,
+        clientId: newClientId,
+        serviceId: ids.serviceId,
+        startDatetime: uniqueSlot(),
+        modality: "IN_PERSON",
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.appointment.clientId).toBe(newClientId);
+  });
+
   it("F19: PROFESSIONAL não pode agendar para cliente sem relacionamento (404)", async () => {
     // client2 nunca teve atendimento com o profissional principal
     const res = await request

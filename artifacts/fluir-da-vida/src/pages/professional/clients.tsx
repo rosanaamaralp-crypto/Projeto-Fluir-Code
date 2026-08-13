@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, ChevronRight, Search } from "lucide-react";
+import { Users, ChevronRight, Search, Plus } from "lucide-react";
 
 export default function ProfessionalClients() {
   const [searchName, setSearchName] = useState("");
@@ -42,14 +42,23 @@ export default function ProfessionalClients() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-2xl">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6" />
-            Meus Clientes
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Clientes relacionados aos seus atendimentos
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+              <Users className="h-6 w-6" />
+              Meus Clientes
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Clientes relacionados aos seus atendimentos
+            </p>
+          </div>
+          {/* F20: cadastro de cliente pelo profissional */}
+          <Link href="/professional/clients/new">
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              Novo Cliente
+            </Button>
+          </Link>
         </div>
 
         {/* Busca */}

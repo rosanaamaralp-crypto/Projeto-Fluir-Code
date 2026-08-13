@@ -1,0 +1,304 @@
+# AUTHDOC F20 — CADASTRO DE CLIENTE PELO PROFISSIONAL
+
+## FLUIR DA VIDA OFICIAL
+
+### OBJETIVO
+
+Implementar a possibilidade de o PROFESSIONAL cadastrar um novo CLIENT diretamente pelo sistema.
+
+Essa necessidade foi identificada após o uso real do MVP em produção.
+
+O objetivo é permitir que o profissional consiga cadastrar um cliente durante sua rotina de atendimento e, em seguida, realizar o agendamento para esse cliente sem depender do ADMIN.
+
+A funcionalidade deve ser simples, segura e reutilizar ao máximo a estrutura existente.
+
+---
+
+# 1. REGRA DE NEGÓCIO
+
+Alterar a regra atual:
+
+### Atualmente
+
+POST `/api/clients` aceita criação de cliente somente pelo ADMIN.
+
+### Nova regra
+
+ADMIN e PROFESSIONAL podem criar CLIENTES.
+
+CLIENT não pode criar outro CLIENT.
+
+O PROFESSIONAL poderá criar um cliente para viabilizar seu próprio atendimento/agendamento.
+
+---
+
+# 2. SEGURANÇA E OWNERSHIP
+
+Esta alteração NÃO deve transformar PROFESSIONAL em administrador.
+
+O PROFESSIONAL continua sem acesso a:
+
+- criação/edição de profissionais;
+- serviços;
+- recursos/macas;
+- configurações administrativas;
+- permissões;
+- auditoria administrativa;
+- outros módulos exclusivos do ADMIN.
+
+Ao criar um CLIENT, registrar corretamente quem realizou a criação, utilizando o mecanismo de auditoria existente, caso já aplicável.
+
+O PROFESSIONAL não deve ganhar acesso irrestrito à lista global de clientes.
+
+Após a criação, o cliente deve ficar disponível para o profissional que o cadastrou para fins de atendimento/agendamento.
+
+Reutilizar o conceito de ownership/relacionamento profissional → cliente já utilizado pela F19.
+
+NÃO inventar uma nova regra de relacionamento se a estrutura existente puder ser reutilizada.
+
+---
+
+# 3. CADASTRO DO CLIENTE
+
+Reutilizar a tela, validações e componentes existentes de cadastro de cliente do ADMIN sempre que possível.
+
+Campos mínimos existentes:
+
+- nome;
+- data de nascimento;
+- telefone;
+- e-mail;
+- senha, se atualmente obrigatória no cadastro interno;
+- endereço, quando aplicável.
+
+Antes de alterar o modelo de cadastro, verificar como o cadastro de cliente atualmente funciona no ADMIN.
+
+Não duplicar lógica desnecessariamente.
+
+---
+
+# 4. FLUXO DO PROFESSIONAL
+
+O PROFESSIONAL deverá ter uma forma clara de:
+
+**Clientes → Novo Cliente**
+
+ou equivalente dentro da área PROFESSIONAL.
+
+Após salvar:
+
+1. cliente é criado;
+2. cliente fica associado ao profissional conforme a regra de relacionamento existente;
+3. profissional recebe confirmação de sucesso;
+4. profissional pode visualizar o cliente;
+5. profissional pode iniciar um novo agendamento para esse cliente.
+
+Se for possível reutilizar o fluxo já existente de `/professional/book`, preferir essa abordagem.
+
+---
+
+# 5. INTEGRAÇÃO COM F19
+
+A funcionalidade deve funcionar naturalmente com a F19.
+
+Fluxo esperado:
+
+**Professional → Novo Cliente → Salvar → Cliente criado → Novo Agendamento → Cliente selecionado → Serviço vinculado → Modalidade → Data → Horário → Confirmação**
+
+Não alterar as regras já implementadas na F19.
+
+Continuam obrigatórias:
+
+- profissional agenda somente para si próprio;
+- `professionalId` não pode ser usado para spoofing;
+- serviço precisa estar vinculado ao profissional;
+- regras de disponibilidade continuam válidas;
+- bloqueios continuam válidos;
+- regras de maca continuam válidas;
+- regras de Home Care/endereço continuam válidas.
+
+---
+
+# 6. BACKEND
+
+Investigar primeiro os endpoints existentes.
+
+Se o endpoint POST `/api/clients` já possuir toda a lógica necessária, fazer a menor alteração possível na autorização.
+
+Não criar outro endpoint se não for necessário.
+
+Alteração esperada:
+
+- ADMIN → continua podendo criar;
+- PROFESSIONAL → passa a poder criar;
+- CLIENT → continua proibido.
+
+Validar ownership/relacionamento conforme a arquitetura existente.
+
+Não alterar banco se não for absolutamente necessário.
+
+Antes de criar migration, PARAR e informar.
+
+---
+
+# 7. FRONTEND
+
+Adicionar somente a interface necessária para PROFESSIONAL.
+
+Preferência:
+
+- botão "Novo Cliente" na página/listagem de Clientes do PROFESSIONAL;
+- formulário reutilizado do cadastro existente;
+- feedback de sucesso/erro;
+- após cadastro, permitir continuar para o agendamento.
+
+Não fazer redesign.
+
+Não alterar AppLayout global.
+
+Não alterar menus de ADMIN ou CLIENT.
+
+---
+
+# 8. DUPLICIDADE
+
+Manter as regras existentes para e-mail/identificação de usuário.
+
+Se o e-mail já existir:
+
+- não criar duplicidade;
+- retornar mensagem segura e compreensível;
+- não expor informações desnecessárias sobre contas existentes.
+
+Reutilizar a validação existente.
+
+---
+
+# 9. TESTES
+
+Adicionar somente os testes necessários para esta alteração.
+
+Obrigatórios:
+
+1. ADMIN continua podendo criar cliente;
+2. PROFESSIONAL consegue criar cliente;
+3. CLIENT continua sem poder criar cliente;
+4. PROFESSIONAL não consegue criar/alterar recursos administrativos;
+5. cliente criado pelo PROFESSIONAL pode ser utilizado no fluxo F19;
+6. relacionamento/ownership é respeitado;
+7. tentativa de acesso indevido a cliente fora do relacionamento continua protegida;
+8. duplicidade de e-mail continua protegida.
+
+Executar a suíte completa ao final.
+
+Critério:
+
+**todos os testes verdes.**
+
+TypeScript:
+
+**0 erros.**
+
+---
+
+# 10. NÃO ALTERAR
+
+Não alterar:
+
+- schema/migrations;
+- EXCLUDE constraints;
+- banco de produção;
+- autenticação;
+- SESSION_SECRET;
+- F19;
+- regras de maca;
+- serviços;
+- disponibilidade;
+- bloqueios;
+- Home Care;
+- OpenAPI/codegen, salvo necessidade absolutamente inevitável;
+- funcionalidades ADMIN existentes;
+- funcionalidades CLIENT existentes.
+
+Não implementar:
+
+- cadastro público de cliente;
+- cadastro de profissional pelo próprio profissional;
+- cadastro de ADMIN;
+- permissões administrativas;
+- novas funcionalidades não relacionadas.
+
+---
+
+# 11. REGRA DE PARADA
+
+Antes de alterar banco/schema:
+
+**PARAR E INFORMAR.**
+
+Se a implementação exigir alteração de OpenAPI/codegen:
+
+**PARAR E INFORMAR**, salvo se for absolutamente inevitável e puder ser resolvido sem alterar o contrato.
+
+Se encontrar problema fora deste escopo:
+
+**NÃO CORRIGIR.**
+
+Registrar no relatório final.
+
+Não realizar nova auditoria geral do projeto.
+
+Não reabrir fases anteriores.
+
+---
+
+# 12. CRITÉRIOS DE ACEITE
+
+F20 somente será considerada concluída quando:
+
+- ADMIN continua criando clientes;
+- PROFESSIONAL consegue criar clientes;
+- CLIENT não consegue criar clientes;
+- cliente criado pelo PROFESSIONAL aparece em seus clientes;
+- cliente criado pode ser utilizado imediatamente no fluxo de agendamento F19;
+- ownership permanece seguro;
+- nenhuma elevação indevida de privilégio ocorre;
+- suíte completa verde;
+- TypeScript = 0 erros;
+- nenhum banco/migration alterado sem autorização;
+- nenhuma funcionalidade fora do escopo alterada.
+
+---
+
+# 13. RELATÓRIO FINAL
+
+Ao concluir, apresentar:
+
+1. arquivos alterados;
+2. resumo das alterações;
+3. regra de permissão antes/depois;
+4. fluxo Professional → Novo Cliente → Agendamento;
+5. testes novos;
+6. resultado da suíte completa;
+7. TypeScript;
+8. verificação de segurança/RBAC;
+9. banco/migrations — confirmar se permaneceram inalterados;
+10. OpenAPI/codegen — confirmar se permaneceram inalterados;
+11. git status;
+12. commit/hash;
+13. problemas encontrados fora do escopo;
+14. veredito F20.
+
+### IMPORTANTE
+
+Executar esta fase de forma concentrada e econômica.
+
+Primeiro localizar os arquivos existentes de cadastro de clientes e relacionamento PROFESSIONAL → CLIENT.
+
+Depois implementar somente o menor conjunto de alterações necessário.
+
+Não fazer exploração extensa do projeto.
+
+Não criar funcionalidades paralelas.
+
+Não iniciar a próxima fase automaticamente.

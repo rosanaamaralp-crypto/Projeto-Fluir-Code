@@ -55,6 +55,7 @@ const ProfessionalBook = lazy(() => import("@/pages/professional/book"));
 const ProfessionalAppointmentDetail = lazy(() => import("@/pages/professional/appointment-detail"));
 const ProfessionalClients = lazy(() => import("@/pages/professional/clients"));
 const ProfessionalClientDetail = lazy(() => import("@/pages/professional/client-detail"));
+const ProfessionalClientNew = lazy(() => import("@/pages/professional/clients/new"));
 const ProfessionalAvailability = lazy(() => import("@/pages/professional/availability"));
 const ProfessionalBlockedPeriods = lazy(() => import("@/pages/professional/blocked-periods"));
 const ProfessionalProfile = lazy(() => import("@/pages/professional/profile"));
@@ -215,6 +216,13 @@ function Router() {
           <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
             <Suspense fallback={<LoadingScreen />}>
               <ProfessionalSchedule />
+            </Suspense>
+          </PrivateRoute>
+        </Route>
+        <Route path="/professional/clients/new">
+          <PrivateRoute allowedRoles={[ROLES.PROFESSIONAL]}>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProfessionalClientNew />
             </Suspense>
           </PrivateRoute>
         </Route>

@@ -14,8 +14,8 @@
  *   6. Confirmação (+ validação Home Care com endereço do cliente)
  *   7. Sucesso
  */
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import {
   useListServices,
   useListProfessionalServices,
@@ -181,6 +181,26 @@ export default function ProfessionalBook() {
   );
 
   const createAppointment = useCreateAppointment();
+
+  // F20: pré-seleção de cliente via ?clientId= (vindo do cadastro de cliente)
+  const search = useSearch();
+  const preselectDone = useRef(false);
+  useEffect(() => {
+    if (preselectDone.current) return;
+    const preselectId = new URLSearchParams(search).get("clientId");
+    if (!preselectId || !clientsData?.clients) return;
+    const found = clientsData.clients.find(
+      (c) => c.id === preselectId && c.status === "ACTIVE",
+    );
+    // Só marca como concluído quando o cliente foi de fato encontrado —
+    // uma lista ainda desatualizada (cache) pode não conter o recém-criado.
+    if (found) {
+      preselectDone.current = true;
+      setState((s) =>
+        s.step === 1 && !s.client ? { ...s, client: found, step: 2 } : s,
+      );
+    }
+  }, [search, clientsData]);
 
   // ── Navegação ────────────────────────────────────────────────────────────
   function goTo(step: Step) {
