@@ -14,6 +14,8 @@ import {
   useListProfessionalBlockedPeriods,
   useListAppointments,
   useListServices,
+  useAddProfessionalService,
+  useRemoveProfessionalService,
 } from "@workspace/api-client-react";
 import { AppLayout } from "@/layouts/app-layout";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,9 @@ const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 export default function AdminProfessionalDetail() {
   const { id } = useParams<{ id: string }>();
   const [confirmStatus, setConfirmStatus] = useState<"ACTIVE" | "INACTIVE" | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [confirmRemoveServiceId, setConfirmRemoveServiceId] = useState<string | null>(null);
+  const [serviceActionError, setServiceActionError] = useState<string | null>(null);
 
   const profQ = useGetProfessional(id!);
   const availQ = useListProfessionalAvailability(id!);
@@ -42,9 +47,47 @@ export default function AdminProfessionalDetail() {
   const svcsQ = useListServices();
 
   const { mutate: updateProf, isPending: isUpdating } = useUpdateProfessional();
+  const { mutate: addService, isPending: isAddingService } = useAddProfessionalService();
+  const { mutate: removeService, isPending: isRemovingService } = useRemoveProfessionalService();
 
   const serviceMap: Record<string, string> = {};
   (svcsQ.data?.services ?? []).forEach((s) => { serviceMap[s.id] = s.name; });
+
+  // Serviços já vinculados (ativos) não podem ser vinculados novamente
+  const linkedActiveServiceIds = new Set(
+    (psQ.data?.professionalServices ?? []).filter((ps) => ps.active).map((ps) => ps.serviceId),
+  );
+  const availableServices = (svcsQ.data?.services ?? []).filter(
+    (s) => s.status === "ACTIVE" && !linkedActiveServiceIds.has(s.id),
+  );
+
+  function handleAddService() {
+    if (!selectedServiceId || linkedActiveServiceIds.has(selectedServiceId)) return;
+    setServiceActionError(null);
+    addService(
+      { profId: id!, data: { serviceId: selectedServiceId } },
+      {
+        onSuccess: () => { setSelectedServiceId(""); psQ.refetch(); },
+        onError: (err) =>
+          setServiceActionError(err instanceof Error ? err.message : "Erro ao vincular serviço."),
+      },
+    );
+  }
+
+  function confirmRemoveService() {
+    if (!confirmRemoveServiceId) return;
+    setServiceActionError(null);
+    removeService(
+      { profId: id!, serviceId: confirmRemoveServiceId },
+      {
+        onSuccess: () => { setConfirmRemoveServiceId(null); psQ.refetch(); },
+        onError: (err) => {
+          setConfirmRemoveServiceId(null);
+          setServiceActionError(err instanceof Error ? err.message : "Erro ao remover vínculo.");
+        },
+      },
+    );
+  }
 
   function confirmStatusChange() {
     if (!confirmStatus) return;
@@ -205,7 +248,43 @@ export default function AdminProfessionalDetail() {
               <CardHeader>
                 <CardTitle className="text-base">Serviços Vinculados</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {serviceActionError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{serviceActionError}</AlertDescription>
+                  </Alert>
+                )}
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedServiceId || undefined}
+                    onValueChange={setSelectedServiceId}
+                    disabled={isAddingService || svcsQ.isLoading || availableServices.length === 0}
+                  >
+                    <SelectTrigger className="flex-1" data-testid="select-service-to-link">
+                      <SelectValue
+                        placeholder={
+                          svcsQ.isLoading
+                            ? "Carregando serviços..."
+                            : availableServices.length === 0
+                              ? "Nenhum serviço disponível para vincular"
+                              : "Selecione um serviço para vincular"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableServices.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleAddService}
+                    disabled={!selectedServiceId || isAddingService}
+                    data-testid="button-link-service"
+                  >
+                    {isAddingService ? "Vinculando..." : "Vincular"}
+                  </Button>
+                </div>
                 {psQ.isLoading ? (
                   <Skeleton className="h-24 w-full" />
                 ) : (psQ.data?.professionalServices ?? []).length === 0 ? (
@@ -213,11 +292,25 @@ export default function AdminProfessionalDetail() {
                 ) : (
                   <div className="space-y-2">
                     {psQ.data?.professionalServices.map((ps) => (
-                      <div key={ps.id} className="flex items-center justify-between py-1 border-b last:border-0 text-sm">
+                      <div key={ps.id} className="flex items-center justify-between py-1 border-b last:border-0 text-sm gap-2">
                         <span>{serviceMap[ps.serviceId] || ps.serviceId.slice(0, 8) + "…"}</span>
-                        <Badge variant={ps.active ? "default" : "secondary"} className="text-xs">
-                          {ps.active ? "Ativo" : "Inativo"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={ps.active ? "default" : "secondary"} className="text-xs">
+                            {ps.active ? "Ativo" : "Inativo"}
+                          </Badge>
+                          {ps.active && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              disabled={isRemovingService}
+                              onClick={() => setConfirmRemoveServiceId(ps.serviceId)}
+                              data-testid={`button-remove-service-${ps.serviceId}`}
+                            >
+                              Remover
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -328,6 +421,16 @@ export default function AdminProfessionalDetail() {
           confirmLabel={confirmStatus === "INACTIVE" ? "Desativar" : "Ativar"}
           onConfirm={confirmStatusChange}
           destructive={confirmStatus === "INACTIVE"}
+        />
+
+        <ConfirmDialog
+          open={!!confirmRemoveServiceId}
+          onOpenChange={(open) => !open && setConfirmRemoveServiceId(null)}
+          title="Remover vínculo do serviço?"
+          description={`O serviço "${confirmRemoveServiceId ? (serviceMap[confirmRemoveServiceId] ?? "selecionado") : ""}" deixará de ser oferecido por este profissional em novos agendamentos.`}
+          confirmLabel="Remover"
+          onConfirm={confirmRemoveService}
+          destructive
         />
       </div>
     </AppLayout>

@@ -1,0 +1,139 @@
+# F19 — VINCULAÇÃO DE SERVIÇOS AO PROFISSIONAL
+
+## OBJETIVO
+
+Corrigir exclusivamente o gap de interface identificado:
+
+Atualmente o backend já possui a vinculação de serviços ao profissional, mas a interface ADMIN permite apenas visualizar os serviços vinculados.
+
+Implementar somente a interface necessária para que o ADMIN consiga vincular e desvincular serviços de um profissional.
+
+## ESCOPO AUTORIZADO
+
+Alterar somente a tela existente:
+
+Admin → Profissionais → [Profissional] → aba "Serviços"
+
+A interface deverá permitir:
+
+1. Visualizar os serviços atualmente vinculados.
+2. Selecionar um serviço ainda não vinculado.
+3. Clicar em "Vincular".
+4. Atualizar a lista após o vínculo.
+5. Remover/desvincular um serviço existente.
+6. Atualizar a lista após a remoção.
+7. Não permitir duplicidade.
+8. Exibir estados de loading, sucesso e erro utilizando os padrões já existentes no projeto.
+
+## REUTILIZAR O QUE JÁ EXISTE
+
+O diagnóstico confirmou que já existem:
+
+- POST /api/professionals/:id/services
+- DELETE /api/professionals/:id/services
+- hooks/client gerados necessários.
+
+Reutilizar obrigatoriamente os hooks/services existentes.
+
+NÃO criar novos endpoints.
+
+NÃO alterar backend.
+
+NÃO alterar banco.
+
+NÃO criar migration.
+
+NÃO alterar OpenAPI.
+
+NÃO regenerar codegen, salvo se for tecnicamente indispensável — se for necessário, PARAR e informar antes.
+
+## REGRAS
+
+O seletor deve apresentar somente serviços disponíveis para vínculo.
+
+Serviços já vinculados não devem aparecer como opção de novo vínculo.
+
+Ao remover um serviço, atualizar a lista sem recarregar a aplicação inteira.
+
+Preservar integralmente o restante da tela de profissionais.
+
+Não alterar outras telas.
+
+Não alterar comportamento de clientes, profissionais ou agendamentos.
+
+## TESTES
+
+Após implementar:
+
+1. TypeScript frontend.
+2. Teste da interface ou teste existente mais adequado, se já houver estrutura.
+3. Verificar que o vínculo utiliza o endpoint existente.
+4. Verificar que a remoção utiliza o endpoint existente.
+5. Executar a suíte de testes existente apenas se isso fizer parte do fluxo normal e não exigir nova infraestrutura.
+
+Não criar framework novo.
+Não criar suíte E2E.
+Não fazer auditoria geral.
+Não procurar melhorias adicionais.
+
+## LIMITAÇÃO DE ESCOPO
+
+Alterar somente os arquivos estritamente necessários para a aba "Serviços" do detalhe do profissional.
+
+Não modificar:
+
+- schema/migrations;
+- backend;
+- RBAC;
+- autenticação;
+- appointments;
+- disponibilidade;
+- agenda;
+- clientes;
+- serviços;
+- notificações;
+- OpenAPI;
+- codegen;
+- AdminLayout;
+- outras páginas.
+
+Se descobrir outro problema durante a implementação, NÃO corrigir.
+Apenas registrar no relatório final.
+
+## REGRA DE PARADA
+
+Se os hooks existentes não forem suficientes ou se a implementação exigir alteração de backend, OpenAPI, banco ou codegen:
+
+PARAR imediatamente e informar:
+
+1. qual arquivo seria alterado;
+2. por que é necessário;
+3. qual alternativa mínima existe.
+
+Não implementar sem autorização adicional.
+
+## CRITÉRIO DE ACEITE
+
+F19 será considerada concluída quando:
+
+- ADMIN consegue selecionar um serviço não vinculado;
+- ADMIN consegue vincular o serviço;
+- serviço aparece imediatamente na lista de vinculados;
+- ADMIN consegue remover o vínculo;
+- serviço removido deixa de aparecer na lista;
+- não existe duplicidade;
+- TypeScript = 0 erros;
+- nenhuma alteração fora do escopo;
+- nenhuma regressão conhecida.
+
+Ao final apresentar:
+
+1. arquivos alterados;
+2. resumo das alterações;
+3. testes executados;
+4. TypeScript;
+5. git status;
+6. commit/hash;
+7. veredito F19.
+
+NÃO iniciar nenhuma outra funcionalidade após concluir esta tarefa.
