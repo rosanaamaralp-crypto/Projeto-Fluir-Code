@@ -1,0 +1,333 @@
+# FASE 16 — INÍCIO CONTROLADO E EXECUÇÃO SOMENTE APÓS VALIDAÇÃO DO AUTHDOC
+
+## Contexto obrigatório
+
+A auditoria pré-F16 foi concluída em modo somente-leitura e posteriormente foi realizado o saneamento autorizado.
+
+Estado atual confirmado:
+
+* F1–F15 revalidadas.
+* F15 restaurada integralmente e confirmada contra seu AuthDoc.
+* 507/507 testes passando.
+* TypeScript: 0 erros em frontend e backend.
+* Nenhuma alteração de código de produção no saneamento pré-F16.
+* Banco, migrations, permissões, rotas e contratos existentes permanecem íntegros.
+* Nenhum bloqueador técnico identificado.
+* F16 está liberada para início.
+
+Pendências controladas que NÃO devem ser tratadas automaticamente dentro da F16 sem autorização específica:
+
+1. P1 — sincronização dos 3 endpoints ausentes no OpenAPI.
+2. P5 — decisão sobre recuperação de senha/T-003.
+3. P6 — decisão sobre roteamento da Landing/T-001.
+4. P9 — duplicidade documental do Documento 06.
+5. Flaky de concorrência 500 vs 409 sob carga completa, já conhecido e registrado.
+6. T-019 Configurações Admin permanece placeholder conforme AuthDoc F13.
+7. Notificações Admin permanece placeholder conforme AuthDoc F13.
+8. Status PENDING permanece fora do fluxo vigente conforme decisão F4 e nota documental.
+
+## REGRA PRINCIPAL
+
+NÃO implemente nada ainda.
+
+Primeiro localize e leia integralmente:
+
+* Documento 18 — Pacote Mestre
+* Documento 17 — Plano Oficial
+* Documento 16 — API e Contratos
+* Documento 15 — Mapa Completo de Telas
+* Documento 14 — Regras Completas
+* Documento 13 — Arquitetura Técnica e Banco
+* Documento 12 — Plano de Testes
+* Documento 11 — Backlog Futuro
+* Documento 10 — MVP e Ordem
+* demais documentos relevantes para a F16
+* todos os AuthDocs relacionados à F16, caso já existam.
+
+Também consulte o estado atual do código, Git, banco/schema, OpenAPI, codegen, rotas, permissões e testes.
+
+## OBJETIVO DESTA EXECUÇÃO
+
+Quero que você determine, com base documental, qual é exatamente o escopo autorizado da F16.
+
+Não faça suposições.
+
+Não escolha funcionalidades por conta própria.
+
+Não avance para implementação somente porque uma funcionalidade parece lógica ou necessária.
+
+## ETAPA 1 — IDENTIFICAR A F16
+
+Produza primeiro uma análise:
+
+### 1.1 Documento que define a F16
+
+Informe:
+
+* nome do documento;
+* seção;
+* objetivo;
+* funcionalidades previstas;
+* telas envolvidas;
+* backend envolvido;
+* banco envolvido;
+* APIs envolvidas;
+* regras de negócio;
+* testes exigidos;
+* critérios de aceite;
+* dependências de fases anteriores.
+
+### 1.2 AuthDoc da F16
+
+Verifique se existe AuthDoc formal para a F16.
+
+Se existir:
+
+* identifique o arquivo;
+* leia integralmente;
+* liste cada autorização;
+* liste cada restrição;
+* liste cada arquivo que pode ser alterado;
+* liste explicitamente os arquivos que NÃO podem ser alterados;
+* liste os testes obrigatórios;
+* liste os checkpoints/gates exigidos.
+
+Se NÃO existir AuthDoc F16:
+
+NÃO implemente nada.
+
+Informe:
+
+> "A F16 possui definição documental, porém não encontrei autorização operacional suficiente para iniciar a implementação."
+
+E apresente o que precisa ser autorizado.
+
+## ETAPA 2 — MATRIZ DOCUMENTAÇÃO × IMPLEMENTAÇÃO
+
+Para cada requisito da F16, monte uma matriz:
+
+| ID | Requisito | Documento | Autorização | Código atual | Implementado? | Falta | Arquivos afetados | Teste exigido |
+| -- | --------- | --------- | ----------- | ------------ | ------------- | ----- | ----------------- | ------------- |
+
+Classifique cada item como:
+
+* 🟢 já implementado;
+* 🟡 parcialmente implementado;
+* 🔴 não implementado;
+* ⚪ não aplicável;
+* ⚠️ conflito documental.
+
+## ETAPA 3 — PROTEÇÃO CONTRA REGRESSÃO DAS FASES CONGELADAS
+
+Antes de alterar qualquer arquivo, faça uma lista:
+
+### Arquivos pertencentes a fases anteriores
+
+Identifique arquivos relacionados a:
+
+* F1
+* F2
+* F3
+* F4
+* F5
+* F6
+* F7
+* F8
+* F9
+* F10
+* F11
+* F12
+* F13
+* F14
+* F15
+
+Marque cada arquivo como:
+
+* 🔒 congelado;
+* 🟢 autorizado para reutilização;
+* 🟡 compartilhado;
+* 🔴 não pode ser alterado sem novo AuthDoc.
+
+Especial atenção para:
+
+* autenticação;
+* RBAC;
+* ownership/IDOR;
+* AppLayout;
+* PrivateRoute;
+* AuthContext;
+* schema/migrations;
+* OpenAPI;
+* codegen;
+* agenda;
+* appointments;
+* notifications;
+* recursos/macás;
+* páginas CLIENT;
+* páginas ADMIN;
+* páginas PROFESSIONAL.
+
+## ETAPA 4 — AUDITORIA DE DEPENDÊNCIAS
+
+Antes de implementar qualquer requisito da F16, determine:
+
+1. quais funcionalidades existentes serão consumidas;
+2. quais APIs existentes serão consumidas;
+3. quais hooks existentes serão reutilizados;
+4. se algum endpoint novo é realmente necessário;
+5. se algum endpoint existente precisa ser alterado;
+6. se o banco precisa ser alterado;
+7. se existe risco de quebrar F1–F15;
+8. se existe conflito com alguma decisão anterior.
+
+IMPORTANTE:
+
+Se a F16 puder ser implementada reutilizando código existente, prefira reutilização.
+
+Não crie:
+
+* endpoint duplicado;
+* tabela duplicada;
+* regra duplicada;
+* hook duplicado;
+* lógica paralela;
+* mock quando já existe API real.
+
+## ETAPA 5 — AUDITORIA DO OPENAPI
+
+Verifique se a F16 depende de algum endpoint:
+
+* já existente no OpenAPI;
+* existente no backend mas ausente no OpenAPI;
+* inexistente.
+
+Se precisar criar ou alterar contrato OpenAPI, sinalize explicitamente antes da implementação.
+
+NÃO corrija automaticamente P1 nesta fase apenas porque ela foi encontrada na auditoria anterior.
+
+## ETAPA 6 — TESTES OBRIGATÓRIOS
+
+Identifique no AuthDoc/documentação todos os testes exigidos para a F16.
+
+Separe:
+
+### Testes existentes que já cobrem o requisito
+
+### Testes que precisam ser adicionados
+
+### Testes de regressão F1–F15
+
+### Testes de segurança/IDOR/RBAC
+
+### Testes de regras de negócio
+
+### Testes de concorrência
+
+### Testes de integração
+
+Não considere uma funcionalidade concluída apenas porque o código compila.
+
+## ETAPA 7 — DETECÇÃO DE SCOPE CREEP
+
+Faça uma auditoria inversa.
+
+Para cada alteração proposta na F16, responda:
+
+> "Onde exatamente a documentação ou AuthDoc autoriza esta alteração?"
+
+Se não houver resposta documental:
+
+NÃO implemente.
+
+Classifique como:
+
+> FORA DO ESCOPO — aguardar autorização.
+
+Isso é especialmente importante devido ao incidente anterior envolvendo a restauração da F15.
+
+## ETAPA 8 — PLANO DE EXECUÇÃO
+
+Depois das etapas anteriores, apresente um plano numerado:
+
+### F16.1
+
+...
+
+### F16.2
+
+...
+
+### F16.3
+
+...
+
+Para cada etapa informe:
+
+* objetivo;
+* arquivos que serão alterados;
+* arquivos que serão apenas lidos;
+* testes;
+* dependências;
+* risco;
+* critério de aceite.
+
+## ETAPA 9 — CHECKPOINT ANTES DE CODIFICAR
+
+PARE.
+
+Não altere nenhum arquivo ainda.
+
+Apresente:
+
+# GATE DE AUTORIZAÇÃO F16
+
+Incluindo:
+
+* escopo confirmado;
+* requisitos confirmados;
+* arquivos autorizados;
+* arquivos congelados;
+* APIs;
+* banco;
+* testes;
+* riscos;
+* pendências;
+* decisões necessárias;
+* possíveis conflitos documentais;
+* plano de execução.
+
+Finalize com exatamente uma destas classificações:
+
+🟢 PRONTO PARA IMPLEMENTAÇÃO — AUTORIZAÇÃO SUFICIENTE
+
+ou
+
+🟡 NECESSITA AUTORIZAÇÃO/DECISÃO ANTES DA IMPLEMENTAÇÃO
+
+ou
+
+🔴 BLOQUEADO — CONFLITO DOCUMENTAL OU TÉCNICO
+
+## REGRA FINAL
+
+Até que o GATE seja apresentado e considerado autorizado:
+
+**NÃO ALTERAR CÓDIGO.**
+
+Não criar arquivos.
+
+Não alterar banco.
+
+Não alterar migration.
+
+Não alterar OpenAPI.
+
+Não executar codegen com mudanças.
+
+Não alterar rotas.
+
+Não alterar permissões.
+
+Não alterar componentes de fases congeladas.
+
+A prioridade absoluta é preservar a integridade de F1–F15 e garantir que a F16 seja executada exatamente conforme a documentação e o AuthDoc, sem interpretação criativa ou scope creep.
