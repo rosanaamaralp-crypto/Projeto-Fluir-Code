@@ -1,0 +1,276 @@
+# F18 — FINALIZAÇÃO PÓS-PUBLISH E GO-LIVE
+
+## OBJETIVO
+
+Finalizar exclusivamente a F18 — Produção/Go-Live.
+
+A F17 está concluída.
+
+Estado conhecido:
+
+* F1–F16 concluídas;
+* F17 concluída;
+* commit F17: `05cc423`;
+* 519/519 testes passando;
+* TypeScript = 0 erros;
+* deployment foi publicado;
+* banco de produção agora existe;
+* schema de produção possui 16 tabelas.
+
+NÃO iniciar nova fase de desenvolvimento.
+NÃO implementar cadastro público.
+NÃO implementar T-001 Landing.
+NÃO alterar autenticação.
+NÃO alterar RBAC.
+NÃO alterar OpenAPI/codegen.
+NÃO alterar schema/migrations existentes.
+NÃO reabrir F1–F17.
+NÃO executar nova auditoria geral.
+NÃO procurar melhorias.
+
+## DECISÃO SOBRE "CRIAR CONTA"
+
+A análise documental confirmou divergência entre documentos antigos e consolidados.
+
+DECISÃO DO PROPRIETÁRIO PARA ESTA FASE:
+
+* NÃO implementar cadastro público de CLIENT.
+* NÃO criar botão "Criar conta".
+* NÃO criar endpoint público `/api/auth/register`.
+* Cadastro de CLIENT permanece pelo ADMIN.
+* PROFESSIONAL permanece cadastrado pelo ADMIN.
+* T-003 recuperação de senha já implementada na F17 e deve permanecer funcional.
+
+Registrar essa decisão apenas no relatório final da F18, sem alterar documentos normativos nesta execução.
+
+---
+
+# ETAPA 1 — VALIDAR DEPLOYMENT
+
+Verificar somente:
+
+1. URL pública atual;
+2. se o build publicado corresponde à versão F17/F18 atual;
+3. `/api/healthz` retorna 200;
+4. `/api/auth/login` existe e não retorna 404;
+5. frontend carrega corretamente;
+6. HTTPS está funcionando.
+
+Não corrigir código se houver problema.
+
+Se houver problema de deployment/configuração, diagnosticar e informar antes de alterar qualquer coisa.
+
+---
+
+# ETAPA 2 — BANCO DE PRODUÇÃO
+
+Como o banco de produção já existe:
+
+1. confirmar conexão;
+2. confirmar schema;
+3. confirmar que a migration/schema esperado está aplicado;
+4. verificar se a operação de migrate é idempotente;
+5. NÃO criar nova migration;
+6. NÃO alterar schema.
+
+Se estiver tudo correto, seguir.
+
+---
+
+# ETAPA 3 — SEED MÍNIMO DE PRODUÇÃO
+
+Utilizar exclusivamente os mecanismos de seed já existentes.
+
+Objetivo:
+
+* roles necessárias;
+* 5 macas;
+* nenhum dado fictício de clientes/profissionais/agendamentos;
+* nenhum dado de teste;
+* seed idempotente.
+
+Se o seed existente já fizer exatamente isso, reutilizá-lo.
+
+NÃO criar outro mecanismo se não for necessário.
+
+---
+
+# ETAPA 4 — ADMIN INICIAL
+
+Verificar o mecanismo `bootstrap:admin` existente.
+
+Se ele estiver pronto para produção:
+
+* solicitar ao proprietário, de forma segura, os dados necessários para o ADMIN inicial;
+* NÃO exibir ou registrar senha em logs;
+* NÃO gravar senha em arquivos;
+* utilizar somente variável/secret apropriado.
+
+Se a plataforma já possuir formulário seguro para essa informação, utilizá-lo.
+
+NÃO inventar credenciais.
+
+Se não for possível executar essa etapa automaticamente, PARAR e informar exatamente o que o proprietário precisa fazer manualmente.
+
+---
+
+# ETAPA 5 — SMOKE TESTS DE PRODUÇÃO
+
+Depois que o ambiente estiver disponível:
+
+Executar somente testes essenciais, não a suíte completa novamente.
+
+Validar:
+
+### Infraestrutura
+
+* HTTPS;
+* `/api/healthz`;
+* frontend.
+
+### Autenticação
+
+* login ADMIN;
+* `/me`;
+* logout.
+
+### ADMIN
+
+* acesso ao dashboard;
+* clientes;
+* profissionais;
+* serviços;
+* recursos/maças;
+* agenda.
+
+### CLIENT
+
+Se já existir um cliente real/permitido para teste:
+
+* login;
+* dashboard;
+* disponibilidade;
+* fluxo de booking.
+
+Não criar dados fictícios apenas para smoke test sem autorização.
+
+### Recuperação de senha
+
+Validar somente se houver infraestrutura de e-mail disponível e configuração adequada.
+Não enviar e-mails reais para terceiros.
+
+---
+
+# ETAPA 6 — DEPLOYMENT FINAL
+
+Confirmar:
+
+* aplicação atual publicada;
+* build correto;
+* healthcheck 200;
+* banco de produção conectado;
+* migrations aplicadas;
+* seed mínimo executado;
+* ADMIN inicial criado;
+* login funcionando;
+* HTTPS funcionando.
+
+NÃO fazer novo Publish se o deployment atual já estiver correto.
+
+---
+
+# ETAPA 7 — DOCUMENTAÇÃO OPERACIONAL
+
+Criar SOMENTE se ainda não existir documentação equivalente:
+
+Um documento curto contendo:
+
+1. como publicar nova versão;
+2. como verificar healthcheck;
+3. como executar migrate;
+4. como executar seed;
+5. como criar/bootstrap do ADMIN;
+6. como verificar logs;
+7. como realizar rollback;
+8. procedimento básico de backup.
+
+Não criar documentação extensa.
+
+---
+
+# REGRA DE ECONOMIA DE CRÉDITOS
+
+Esta é uma execução concentrada.
+
+NÃO:
+
+* reler todos os documentos;
+* auditar F1–F17;
+* executar novamente 519 testes;
+* procurar bugs novos;
+* refatorar;
+* melhorar UX;
+* implementar cadastro;
+* implementar landing;
+* implementar paginação;
+* implementar monitoramento avançado;
+* alterar código sem necessidade.
+
+Use os resultados das fases anteriores como baseline.
+
+Execute somente as verificações necessárias para concluir a F18.
+
+Se uma etapa estiver correta, NÃO refaça.
+
+Se encontrar algo fora do escopo, registrar e seguir, desde que não bloqueie o Go-Live.
+
+Se encontrar algo que impeça produção e exija alteração de código, PARAR antes de alterar e informar.
+
+---
+
+# CRITÉRIO DE CONCLUSÃO
+
+F18 será considerada concluída somente se:
+
+* deployment atual confirmado;
+* frontend funcionando;
+* `/api/healthz` = 200;
+* `/api/auth/login` funcionando;
+* banco de produção conectado;
+* schema correto;
+* seed mínimo concluído;
+* ADMIN inicial configurado;
+* login real validado;
+* HTTPS validado;
+* smoke tests essenciais concluídos;
+* procedimento operacional documentado;
+* nenhum código desnecessário alterado.
+
+## IMPORTANTE
+
+NÃO iniciar qualquer fase posterior.
+
+NÃO implementar cadastro público.
+
+NÃO criar "Criar conta".
+
+NÃO iniciar melhorias pós-MVP.
+
+Ao final, apresentar apenas:
+
+1. Status do deployment;
+2. Status do banco;
+3. Status do seed;
+4. Status do ADMIN;
+5. Smoke tests realizados;
+6. Arquivos alterados, se houver;
+7. Git status;
+8. Commit/hash, se houver;
+9. Pendências que impedem ou não impedem o uso;
+10. VEREDITO FINAL F18:
+
+* 🟢 GO-LIVE CONCLUÍDO
+* 🟡 GO-LIVE PARCIAL
+* 🔴 BLOQUEADO
+
+NÃO executar nenhuma ação fora deste escopo.
