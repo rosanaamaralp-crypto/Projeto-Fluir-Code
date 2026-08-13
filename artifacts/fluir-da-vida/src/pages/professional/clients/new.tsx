@@ -12,6 +12,7 @@ import { Link, useLocation } from "wouter";
 import {
   useCreateClient,
   getListMyProfessionalClientsQueryKey,
+  getListClientsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/layouts/app-layout";
@@ -79,6 +80,9 @@ export default function ProfessionalClientNew() {
           // apareça imediatamente (inclusive na pré-seleção do wizard).
           void queryClient.invalidateQueries({
             queryKey: getListMyProfessionalClientsQueryKey(),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: getListClientsQueryKey(),
           });
           setCreatedId(data.client.id);
           setCreatedName(data.user.name ?? form.name.trim());

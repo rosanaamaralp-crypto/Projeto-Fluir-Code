@@ -36,7 +36,9 @@ export const ClientsController = {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const session = req.session.user!;
-      if (session.roleId === ROLES.ADMIN) {
+      // F21: PROFESSIONAL também pode buscar na base de clientes cadastrados
+      // (o cliente pode já ter sido atendido por outro profissional).
+      if (session.roleId === ROLES.ADMIN || session.roleId === ROLES.PROFESSIONAL) {
         const all = await ClientsRepository.findAllWithUser(db);
         res.json({ clients: all });
         return;

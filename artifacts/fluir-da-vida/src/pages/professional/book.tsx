@@ -19,12 +19,12 @@ import { useLocation, useSearch } from "wouter";
 import {
   useListServices,
   useListProfessionalServices,
-  useListMyProfessionalClients,
-  useGetMyProfessionalClient,
+  useListClients,
+  useGetClientAddress,
   useListSlots,
   useCreateAppointment,
 } from "@workspace/api-client-react";
-import type { ServiceRow, ProfessionalClientItem } from "@workspace/api-client-react";
+import type { ServiceRow, ClientRow } from "@workspace/api-client-react";
 import { useProfessionalSelf } from "@/hooks/use-professional-self";
 import { AppLayout } from "@/layouts/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +53,7 @@ type Modality = "IN_PERSON" | "HOME_CARE";
 
 interface WizardState {
   step: Step;
-  client: ProfessionalClientItem | null;
+  client: ClientRow | null;
   service: ServiceRow | null;
   modality: Modality | null;
   date: string; // YYYY-MM-DD
@@ -143,8 +143,11 @@ export default function ProfessionalBook() {
   const { professional, isLoading: selfLoading, isError: selfError } =
     useProfessionalSelf();
 
+  // F21: base completa de clientes cadastrados (o cliente pode já ter sido
+  // atendido por outro profissional) — com busca no passo 1.
   const { data: clientsData, isLoading: clientsLoading, isError: clientsError } =
-    useListMyProfessionalClients();
+    useListClients();
+  const [clientSearch, setClientSearch] = useState("");
 
   const { data: servicesData, isLoading: svcLoading, isError: svcError } =
     useListServices();
@@ -161,12 +164,13 @@ export default function ProfessionalBook() {
     (s) => s.status === "ACTIVE" && linkedServiceIds.has(s.id),
   );
 
-  // Detalhe do cliente selecionado (inclui endereço — necessário para Home Care)
-  const { data: clientDetail } = useGetMyProfessionalClient(
+  // Endereço do cliente selecionado — necessário para Home Care (F21: leitura
+  // liberada ao profissional para qualquer cliente da base)
+  const { data: addressData } = useGetClientAddress(
     state.client?.id ?? "",
     { query: { enabled: !!state.client?.id } } as any,
   );
-  const clientAddress = clientDetail?.address ?? null;
+  const clientAddress = addressData?.address ?? null;
 
   const slotsEnabled =
     state.step >= 5 && !!professional && !!state.service && !!state.date;
@@ -302,8 +306,32 @@ export default function ProfessionalBook() {
               )}
               {clientsData && (
                 <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row gap-2 pb-1">
+                    <Input
+                      placeholder="Buscar por nome, e-mail ou telefone…"
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => navigate("/professional/clients/new")}
+                    >
+                      Novo Cliente
+                    </Button>
+                  </div>
                   {clientsData.clients
                     .filter((c) => c.status === "ACTIVE")
+                    .filter((c) => {
+                      const q = clientSearch.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        (c.name ?? "").toLowerCase().includes(q) ||
+                        (c.email ?? "").toLowerCase().includes(q) ||
+                        (c.phone ?? "").replace(/\D/g, "").includes(q.replace(/\D/g, "") || "\u0000")
+                      );
+                    })
                     .map((c) => (
                       <button
                         key={c.id}
@@ -341,9 +369,8 @@ export default function ProfessionalBook() {
                   {clientsData.clients.filter((c) => c.status === "ACTIVE").length === 0 && (
                     <Alert>
                       <AlertDescription>
-                        Você ainda não possui clientes com atendimentos. É necessário
-                        que o cliente seja cadastrado pelo administrador (e tenha um
-                        atendimento com você) antes de realizar o agendamento.
+                        Nenhum cliente cadastrado ainda. Use o botão "Novo Cliente"
+                        para cadastrar e agendar em seguida.
                       </AlertDescription>
                     </Alert>
                   )}

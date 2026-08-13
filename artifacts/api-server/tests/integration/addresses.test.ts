@@ -89,11 +89,11 @@ describe("GET /api/clients/:clientId/addresses — RBAC e IDOR", () => {
     expect(res.body).toHaveProperty("address");
   });
 
-  it("PROFESSIONAL acessa endereços de cliente → 403 (IDOR)", async () => {
+  it("PROFESSIONAL lê endereço de cliente → 200 (F21 — Home Care)", async () => {
     const res = await request
       .get(`/api/clients/${ids.clientId}/addresses`)
       .set("Cookie", profCookie);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
   it("CLIENT não acessa endereços de outro CLIENT → 403 (IDOR)", async () => {

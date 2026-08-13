@@ -383,28 +383,16 @@ export const AppointmentsService = {
             "clientId é obrigatório quando o solicitante é ADMIN ou PROFESSIONAL.",
           );
         }
-        if (sessionRoleId === ROLES.PROFESSIONAL) {
-          // F19 — ownership: PROFESSIONAL só agenda para os PRÓPRIOS clientes
-          // (relacionamento real via atendimentos — mesmo predicado IDOR-safe
-          // usado em GET /me/professional/clients/:clientId). 404 se não houver
-          // relacionamento, sem vazar existência do cliente.
-          const client = await ClientsRepository.findByIdForProfessional(
-            tx, input.clientId, professionalId,
-          );
-          if (!client) throw new NotFoundError("Cliente não encontrado.");
-          if (client.status !== "ACTIVE") {
-            throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
-          }
-          clientId = client.id;
-        } else {
-          // ADMIN
-          const client = await ClientsRepository.findById(tx, input.clientId);
-          if (!client) throw new NotFoundError("Cliente não encontrado.");
-          if (client.status !== "ACTIVE") {
-            throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
-          }
-          clientId = client.id;
+        // F21 (decisão da proprietária): PROFESSIONAL pode agendar para
+        // qualquer cliente ACTIVE cadastrado — o cliente pode já ter sido
+        // atendido por outro profissional. O professionalId continua sendo
+        // sempre o da sessão (anti-spoofing F19).
+        const client = await ClientsRepository.findById(tx, input.clientId);
+        if (!client) throw new NotFoundError("Cliente não encontrado.");
+        if (client.status !== "ACTIVE") {
+          throw new ValidationError("Cliente inativo. Não é possível criar agendamentos.");
         }
+        clientId = client.id;
       }
 
       // 2. Professional

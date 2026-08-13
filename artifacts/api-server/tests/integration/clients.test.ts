@@ -44,13 +44,14 @@ describe("GET /api/clients", () => {
     expect(res.body.clients[0].id).toBe(ids.clientId);
   });
 
-  it("PROFESSIONAL → 200 com array vazio (sem registro de cliente vinculado) — F9 GAP-05", async () => {
-    // O controller retorna o registro de cliente associado ao userId da sessão.
-    // PROFESSIONAL não possui registro na tabela clients → array vazio.
+  it("PROFESSIONAL lista a base de clientes cadastrados — F21", async () => {
+    // F21: o profissional pode buscar clientes já cadastrados (inclusive
+    // atendidos por outros profissionais) para agendar/cadastrar.
     const res = await request.get("/api/clients").set("Cookie", profCookie);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.clients)).toBe(true);
-    expect(res.body.clients).toHaveLength(0);
+    expect(res.body.clients.length).toBeGreaterThan(0);
+    expect(res.body.clients[0].name).toBeDefined();
   });
 });
 

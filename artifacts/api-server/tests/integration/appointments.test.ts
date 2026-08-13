@@ -221,8 +221,9 @@ describe("POST /api/appointments", () => {
     expect(res.body.appointment.clientId).toBe(newClientId);
   });
 
-  it("F19: PROFESSIONAL não pode agendar para cliente sem relacionamento (404)", async () => {
-    // client2 nunca teve atendimento com o profissional principal
+  it("F21: PROFESSIONAL pode agendar para cliente da base sem relacionamento prévio (201)", async () => {
+    // client2 nunca teve atendimento com o profissional principal — F21
+    // liberou o agendamento para qualquer cliente ACTIVE cadastrado.
     const res = await request
       .post("/api/appointments")
       .set("Cookie", profCookie)
@@ -234,7 +235,8 @@ describe("POST /api/appointments", () => {
         modality: "IN_PERSON",
       });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(201);
+    expect(res.body.appointment.clientId).toBe(concExtras.client2Id);
   });
 
   it("F19: PROFESSIONAL não pode usar serviço não vinculado a ele (400)", async () => {

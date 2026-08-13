@@ -20,7 +20,12 @@ export const AddressesController = {
   async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { clientId } = req.params as { clientId: string };
-      await assertClientOwnership(req, clientId);
+      // F21: PROFESSIONAL pode consultar o endereço de qualquer cliente
+      // (somente leitura — necessário para agendamento Home Care).
+      const session = req.session.user!;
+      if (session.roleId !== ROLES.PROFESSIONAL) {
+        await assertClientOwnership(req, clientId);
+      }
       const address = await AddressesRepository.findByClientId(db, clientId);
       res.json({ address: address ?? null });
     } catch (err) {
