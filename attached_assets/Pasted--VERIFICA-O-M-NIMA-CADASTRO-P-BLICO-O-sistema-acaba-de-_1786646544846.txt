@@ -1,0 +1,76 @@
+# VERIFICAÇÃO MÍNIMA — CADASTRO PÚBLICO
+
+O sistema acaba de ser publicado em produção após a conclusão da F18.
+
+NÃO alterar nenhum arquivo.
+NÃO implementar nada.
+NÃO criar migration.
+NÃO alterar OpenAPI/codegen.
+NÃO alterar autenticação/RBAC.
+NÃO executar nova auditoria geral.
+NÃO reabrir F1–F18.
+
+Quero apenas responder uma dúvida de produto antes de autorizar qualquer nova implementação:
+
+## PERGUNTA
+
+A tela de login atualmente não possui "Criar conta/Cadastrar".
+
+Verifique SOMENTE os documentos e o código já existentes para determinar:
+
+1. O MVP aprovado exige cadastro público/self-service de CLIENT?
+2. O MVP aprovado exige cadastro público/self-service de PROFESSIONAL?
+3. O fluxo aprovado prevê que o ADMIN seja responsável pelo cadastro de usuários?
+4. Existe algum requisito documental explícito para botão "Criar conta" na tela de login?
+5. Existe rota/API/schema já implementado para cadastro público que simplesmente não está exposto na tela?
+6. A ausência do botão "Criar conta" é:
+
+   * comportamento correto conforme documentação; ou
+   * funcionalidade realmente faltante?
+
+## IMPORTANTE
+
+Não faça alterações.
+
+Não proponha funcionalidades novas.
+
+Não transforme esta análise em auditoria.
+
+Use somente o que já existe nos documentos e no código.
+
+Se houver divergência entre documentos, apresente a divergência sem tentar resolvê-la sozinho.
+
+## RESPOSTA ESPERADA
+
+Responder objetivamente:
+
+### VEREDITO
+
+🟢 Cadastro público não faz parte do MVP e não deve ser implementado
+
+OU
+
+🔴 Cadastro público faz parte do MVP e está faltando
+
+OU
+
+🟡 Documentação insuficiente — decisão do proprietário necessária
+
+### EVIDÊNCIAS
+
+Liste somente as evidências concretas encontradas.
+
+### SE ESTIVER FALTANDO
+
+Não implemente.
+
+Informe apenas:
+
+* qual perfil precisa de cadastro;
+* quais telas/rotas/API existentes poderiam ser reutilizadas;
+* quais arquivos provavelmente seriam necessários;
+* se exigiria migration;
+* complexidade estimada: baixa/média/alta;
+* se exigiria um AuthDoc específico.
+
+PARAR após apresentar o diagnóstico.
