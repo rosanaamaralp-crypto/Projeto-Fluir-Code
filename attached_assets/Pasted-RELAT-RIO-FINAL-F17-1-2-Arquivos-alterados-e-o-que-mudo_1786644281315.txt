@@ -1,0 +1,36 @@
+RELATÓRIO FINAL — F17 🟢
+1–2. Arquivos alterados e o que mudou
+F17.1 Responsividade CLIENT (só classes/layout, mobile-first sm:):
+
+client/dashboard.tsx, book.tsx (wizard completo), appointment-detail.tsx, addresses.tsx, notifications.tsx — headers/botões empilham, linhas com flex-wrap/min-w-0, grids grid-cols-1 sm:...
+appointments.tsx e profile.tsx — já utilizáveis em 375px, sem alteração necessária
+F17.2 Responsividade PROFESSIONAL (idem):
+
+Todas as 9 páginas (dashboard, schedule, availability, blocked-periods, clients, client-detail, appointment-detail, notifications, profile) — indicadores empilham, filtros w-full sm:w-44, grids label/valor empilhados com break-words
+F17.3 Recuperação de senha (T-003) — SEM migration, SEM OpenAPI/codegen:
+
+lib/password-reset.ts (novo) — token stateless HMAC-SHA256 (chave SESSION_SECRET + derivado do hash atual): seguro, expira (TTL 60 min configurável), uso único (troca de senha invalida; update condicional atômico garante 1 vencedor sob corrida)
+lib/mailer.ts (novo) — abstração mínima: driver Replit Mail (dev e deploy, nenhum secret adicional em produção no Replit) com fallback console
+auth.service.ts, auth.controller.ts, routes/auth.ts (rate limits dedicados 5 e 10/15min), auth.validator.ts, users.repository.ts — endpoints forgot-password/reset-password; resposta genérica e fire-and-forget (não revela existência do e-mail nem por corpo nem por latência); audit logs
+Frontend: forgot-password.tsx, reset-password.tsx (novas), link "Esqueci minha senha" no login, 2 rotas públicas no App.tsx
+F17.4 Auto-seleção concorrente de maca (appointments.service.ts, exceção autorizada):
+
+Advisory lock transacional na auto-seleção (1 linha; não afeta resourceId explícito; liberado no commit/rollback) + retry controlado (máx. 3) em excl_resource_no_overlap como backstop. Constraint EXCLUDE intacta. Retry sozinho não convergia deterministicamente para 6→5+1 — o lock garante o critério de aceite.
+3–7. Testes e verificações
+Item	Antes	Depois
+Suíte completa	509/509	519/519 (30 arquivos)
+Novos testes	—	+10 (8 recuperação de senha, incl. corrida de token; 2 auto-seleção 6→5+1)
+Teste 6→5+1 auto-seleção	inexistente (só 1–2 venciam)	✅ 5×201 + 1×409, 5 macas distintas, zero double-booking
+TS API / Frontend	0 / 0	0 / 0
+Round de code-review executado: encontrou 2 falhas graves na 1ª versão do T-003 (reuso de token sob corrida; enumeração por latência) — ambas corrigidas e testadas.
+
+8. Ajuste necessário em teste existente (registrado)
+appointments.concurrent.test.ts (Caso C) presumia que a auto-seleção colidia na mesma maca — premissa invalidada pelo comportamento correto da F17.4. Ajustado para disputar a maca explicitamente (preserva a prova da EXCLUDE constraint). Nenhum outro arquivo congelado tocado; sem migration, dependência nova, OpenAPI, schema ou RBAC.
+
+9. Fora do escopo (apenas registro)
+APP_PUBLIC_URL deve ser configurada em produção para o link do e-mail (fallback dev já funciona) — item para F18.
+Fora do Replit, envio de e-mail exigiria driver SMTP próprio (limitação documentada em lib/mailer.ts).
+10–12. Git e veredito
+git status: limpo (tudo commitado)
+Commit: 05cc423
+Veredito F17: 🟢 CONCLUÍDA — todos os critérios de aceite atendidos; F18 não iniciada, conforme instruído.
