@@ -179,7 +179,7 @@ export default function AdminProfessionalDetail() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Nome</p>
                     <p className="font-medium">{prof.name || "—"}</p>

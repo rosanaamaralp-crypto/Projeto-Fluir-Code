@@ -140,7 +140,7 @@ export default function AdminClientDetail() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Nome</p>
                     <p className="font-medium">{client.name || "—"}</p>
@@ -193,7 +193,7 @@ export default function AdminClientDetail() {
                 {addressQ.isLoading ? (
                   <Skeleton className="h-24 w-full" />
                 ) : address ? (
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div><p className="text-xs text-muted-foreground">Logradouro</p><p>{address.street}, {address.number}</p></div>
                     {address.complement && <div><p className="text-xs text-muted-foreground">Complemento</p><p>{address.complement}</p></div>}
                     <div><p className="text-xs text-muted-foreground">Bairro</p><p>{address.neighborhood}</p></div>

@@ -166,7 +166,7 @@ export default function AdminAppointmentDetail() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Data/Hora</p>
                     <p className="font-medium">

@@ -1,0 +1,546 @@
+# AUTHDOC F21 — RESPONSIVIDADE GLOBAL DO APLICATIVO
+
+## FLUIR DA VIDA OFICIAL
+
+### OBJETIVO
+
+Executar uma única fase concentrada para deixar TODA a interface do Fluir da Vida Oficial adequada para:
+
+- celular;
+- tablet;
+- notebook;
+- desktop.
+
+A responsividade deve funcionar para os três perfis:
+
+- ADMIN;
+- PROFESSIONAL;
+- CLIENT.
+
+Esta fase é exclusivamente de FRONTEND/UI/RESPONSIVIDADE.
+
+Não alterar regras de negócio, APIs, banco, autenticação, RBAC, ownership ou lógica de agendamento.
+
+---
+
+# 1. BASE ATUAL
+
+O projeto já possui:
+
+- F1–F20 concluídas;
+- fluxo completo de ADMIN;
+- fluxo completo de PROFESSIONAL;
+- fluxo completo de CLIENT;
+- agendamento pelo CLIENT;
+- agendamento pelo PROFESSIONAL em nome do CLIENT;
+- cadastro de CLIENT pelo PROFESSIONAL;
+- busca de CLIENT existente pelo PROFESSIONAL;
+- serviços vinculados ao PROFESSIONAL;
+- disponibilidade do PROFESSIONAL;
+- bloqueios;
+- 5 macas;
+- Home Care;
+- notificações;
+- recuperação de senha;
+- dashboard;
+- relatórios;
+- auditoria;
+- segurança/RBAC;
+- 530/530 testes verdes na última validação;
+- TypeScript sem erros.
+
+A melhoria anterior de mobile já alterou o layout principal para:
+
+- sidebar fixa no desktop;
+- menu/botão no mobile;
+- conteúdo com margens menores;
+- tabelas com possibilidade de rolagem horizontal.
+
+NÃO assumir, entretanto, que isso significa que todas as páginas estão responsivas.
+
+---
+
+# 2. OBJETIVO VISUAL
+
+A aplicação deve ser realmente utilizável em telas pequenas e grandes.
+
+Prioridade de validação:
+
+### Mobile
+- 375px de largura;
+- 390px;
+- aproximadamente 430px.
+
+### Tablet
+- aproximadamente 768px.
+
+### Desktop
+- 1024px;
+- 1280px;
+- 1440px ou superior.
+
+Não é necessário criar layouts completamente diferentes.
+
+Preferir layout fluido utilizando os padrões e componentes já existentes.
+
+---
+
+# 3. REGRA PRINCIPAL
+
+NÃO FAZER REDESIGN.
+
+NÃO alterar identidade visual.
+
+NÃO trocar cores.
+
+NÃO trocar tipografia.
+
+NÃO alterar navegação existente.
+
+NÃO alterar textos sem necessidade.
+
+NÃO alterar comportamento funcional.
+
+NÃO alterar APIs.
+
+NÃO alterar banco.
+
+NÃO alterar OpenAPI/codegen.
+
+NÃO alterar RBAC.
+
+NÃO alterar regras de agendamento.
+
+NÃO alterar fluxo de negócio.
+
+Apenas adaptar o frontend existente para diferentes tamanhos de tela.
+
+---
+
+# 4. PRIMEIRO PASSO — INSPEÇÃO DIRECIONADA
+
+Antes de alterar arquivos:
+
+1. localizar todas as páginas frontend existentes;
+2. identificar quais usam:
+   - tabelas;
+   - formulários;
+   - grids;
+   - cards;
+   - modais;
+   - filtros;
+   - wizard;
+   - listas;
+   - agendas;
+   - cabeçalhos;
+   - botões agrupados;
+3. identificar componentes compartilhados que possam resolver problemas em várias telas;
+4. reutilizar padrões responsivos já existentes no projeto.
+
+NÃO fazer auditoria geral do backend.
+
+NÃO revisar F1–F20.
+
+NÃO procurar problemas não relacionados à responsividade.
+
+Depois dessa inspeção, implementar diretamente.
+
+---
+
+# 5. APP LAYOUT E NAVEGAÇÃO
+
+Garantir:
+
+- menu lateral funcionando corretamente no desktop;
+- menu mobile acessível por botão;
+- menu mobile não cobrindo conteúdo de forma indevida;
+- fechamento do menu após navegação;
+- botão de menu sempre acessível;
+- cabeçalho adaptado;
+- nenhum overflow horizontal causado pelo layout principal;
+- conteúdo utilizando toda a largura disponível no celular;
+- sidebar não comprimindo páginas em telas pequenas.
+
+Preservar integralmente a navegação atual.
+
+---
+
+# 6. ADMIN
+
+Tornar responsivas as telas do ADMIN, sem alterar suas funcionalidades.
+
+Verificar especialmente:
+
+- dashboard;
+- clientes;
+- novo cliente;
+- detalhe do cliente;
+- profissionais;
+- novo profissional;
+- detalhe do profissional;
+- serviços;
+- recursos/macãs;
+- agenda;
+- agendamentos;
+- relatórios;
+- auditoria;
+- notificações;
+- permissões;
+- demais páginas existentes.
+
+### Tabelas
+
+Em telas pequenas:
+
+- evitar quebra destrutiva;
+- permitir scroll horizontal quando necessário;
+- preservar cabeçalhos e ações;
+- não deixar botões inacessíveis;
+- não permitir que a tabela ultrapasse visualmente o container.
+
+### Formulários
+
+Em celular:
+
+- campos devem ocupar largura adequada;
+- labels devem permanecer legíveis;
+- botões devem ficar acessíveis;
+- grupos de campos podem passar de duas/mais colunas para uma coluna;
+- ações devem quebrar linha quando necessário.
+
+ADMIN é prioridade menor que CLIENT e PROFESSIONAL, mas deve ficar funcional em tablet e celular.
+
+---
+
+# 7. PROFESSIONAL
+
+Prioridade alta.
+
+Verificar e corrigir:
+
+- dashboard;
+- Minha Agenda;
+- Disponibilidade;
+- Bloqueios;
+- Meus Clientes;
+- Novo Cliente;
+- Novo Agendamento;
+- busca de cliente;
+- seleção de cliente;
+- seleção de serviço;
+- modalidade;
+- data;
+- horário;
+- confirmação;
+- sucesso;
+- notificações;
+- Meu Perfil;
+- detalhes de cliente;
+- demais páginas Professional existentes.
+
+### Novo Agendamento
+
+Garantir que todo o wizard funcione em 375px:
+
+CLIENTE
+→ SERVIÇO
+→ MODALIDADE
+→ DATA
+→ HORÁRIO
+→ CONFIRMAÇÃO
+→ SUCESSO
+
+Garantir especialmente:
+
+- busca de cliente;
+- botão "Novo Cliente";
+- cliente selecionado;
+- listas longas;
+- seleção de serviço;
+- seleção de modalidade;
+- seleção de horário;
+- botões voltar/continuar;
+- confirmação;
+- mensagens de erro;
+- Home Care;
+- endereço do cliente.
+
+Nenhum elemento pode ficar cortado ou inacessível.
+
+---
+
+# 8. CLIENT
+
+Prioridade MÁXIMA.
+
+Verificar e corrigir:
+
+- login;
+- recuperação de senha;
+- dashboard;
+- agendamento;
+- wizard completo;
+- meus agendamentos;
+- histórico;
+- cancelamento;
+- remarcação;
+- endereços;
+- perfil;
+- notificações;
+- demais telas CLIENT existentes.
+
+### Wizard CLIENT
+
+Garantir funcionamento completo em 375px.
+
+Nenhuma etapa pode exigir zoom.
+
+Campos devem ser confortáveis para toque.
+
+Botões devem possuir área de toque adequada.
+
+Mensagens de erro e confirmação devem permanecer visíveis.
+
+Modalidades:
+
+- IN_PERSON;
+- HOME_CARE.
+
+Devem funcionar corretamente em mobile.
+
+---
+
+# 9. MODAIS
+
+Verificar todos os modais existentes.
+
+Em celular:
+
+- não ultrapassar a viewport;
+- possuir scroll interno quando necessário;
+- botões acessíveis;
+- título e conteúdo legíveis;
+- fechamento acessível;
+- não ficar parcialmente fora da tela.
+
+---
+
+# 10. CARDS, GRIDS E FILTROS
+
+Garantir que:
+
+- grids se transformem em uma coluna quando necessário;
+- cards não fiquem espremidos;
+- filtros possam quebrar linha;
+- botões de ação possam quebrar linha;
+- campos de pesquisa ocupem largura adequada;
+- datas e selects não provoquem overflow.
+
+---
+
+# 11. AGENDA
+
+Verificar especificamente:
+
+### PROFESSIONAL
+
+`/professional/schedule`
+
+e demais componentes relacionados à agenda.
+
+Garantir que:
+
+- datas sejam acessíveis;
+- filtros sejam utilizáveis;
+- horários não sejam cortados;
+- informações dos atendimentos permaneçam legíveis;
+- ações permaneçam acessíveis.
+
+NÃO transformar a agenda em um calendário novo.
+
+Apenas tornar a implementação existente responsiva.
+
+---
+
+# 12. TABELAS E LISTAGENS
+
+Não substituir tabelas por novos componentes sem necessidade.
+
+Preferir:
+
+- container com overflow-x-auto;
+- colunas essenciais;
+- ações acessíveis;
+- largura mínima controlada;
+- quebra de conteúdo onde for segura.
+
+Quando uma lista já possui layout em cards, adaptar o card.
+
+---
+
+# 13. ORIENTAÇÃO PARA IMPLEMENTAÇÃO
+
+Para economizar tempo e créditos:
+
+1. corrigir primeiro componentes compartilhados;
+2. reaproveitar classes/padrões responsivos existentes;
+3. usar breakpoints já existentes no projeto;
+4. evitar criar dezenas de componentes novos;
+5. evitar dependências novas;
+6. evitar refatorações;
+7. alterar somente arquivos realmente necessários;
+8. não modificar backend.
+
+Se um problema puder ser resolvido em um componente compartilhado, preferir essa solução em vez de corrigir dezenas de páginas individualmente.
+
+---
+
+# 14. TESTE VISUAL
+
+Validar pelo menos:
+
+- 375px;
+- 390px;
+- 430px;
+- 768px;
+- 1024px;
+- 1280px.
+
+Prioridade de validação manual:
+
+1. Login;
+2. CLIENT booking;
+3. CLIENT appointments;
+4. CLIENT profile;
+5. PROFESSIONAL dashboard;
+6. PROFESSIONAL schedule;
+7. PROFESSIONAL availability;
+8. PROFESSIONAL clients;
+9. PROFESSIONAL new client;
+10. PROFESSIONAL new appointment;
+11. ADMIN dashboard;
+12. ADMIN clients;
+13. ADMIN professionals;
+14. ADMIN services;
+15. ADMIN resources;
+16. ADMIN appointments;
+17. ADMIN reports.
+
+Se houver páginas adicionais, aplicar o mesmo padrão somente quando necessário.
+
+---
+
+# 15. CRITÉRIOS DE ACEITE
+
+F21 somente será considerada concluída se:
+
+- nenhuma página principal apresentar overflow horizontal indevido em 375px;
+- menu mobile funcionar;
+- CLIENT conseguir navegar pelo booking em 375px;
+- PROFESSIONAL conseguir cadastrar cliente em 375px;
+- PROFESSIONAL conseguir buscar cliente em 375px;
+- PROFESSIONAL conseguir realizar novo agendamento em 375px;
+- formulários forem utilizáveis em celular;
+- tabelas forem utilizáveis em celular;
+- modais forem utilizáveis em celular;
+- dashboards forem utilizáveis em celular;
+- tablet funcionar adequadamente;
+- desktop continuar funcionando sem regressão;
+- nenhuma funcionalidade de negócio for alterada;
+- nenhum endpoint for alterado;
+- banco permanecer inalterado;
+- RBAC permanecer inalterado;
+- TypeScript continuar com 0 erros;
+- suíte existente continuar verde.
+
+---
+
+# 16. TESTES
+
+Executar somente os testes necessários para validar a alteração.
+
+Obrigatório:
+
+- TypeScript frontend;
+- TypeScript backend, se o comando existente for barato e já fizer parte da rotina;
+- suíte existente de testes para garantir regressão.
+
+NÃO criar E2E completo.
+
+NÃO instalar framework novo.
+
+NÃO criar nova infraestrutura de testes.
+
+---
+
+# 17. REGRA DE PARADA
+
+Se encontrar qualquer problema que exija:
+
+- alteração de banco;
+- migration;
+- alteração de API;
+- alteração de OpenAPI;
+- alteração de RBAC;
+- alteração de autenticação;
+- alteração de regra de negócio;
+- alteração do backend;
+
+PARAR e informar.
+
+Não implementar esse problema dentro desta fase.
+
+---
+
+# 18. NÃO IMPLEMENTAR
+
+Ficam expressamente fora desta fase:
+
+- cadastro público de cliente;
+- novas funcionalidades;
+- novas regras de agendamento;
+- alteração de disponibilidade;
+- alteração de maca;
+- alteração de Home Care;
+- alteração de permissões;
+- alteração de autenticação;
+- paginação;
+- novos relatórios;
+- novos índices;
+- alterações de banco;
+- redesign;
+- nova identidade visual;
+- novos frameworks;
+- novas dependências sem necessidade.
+
+---
+
+# 19. RELATÓRIO FINAL
+
+Ao terminar, apresentar somente:
+
+1. quantidade de arquivos alterados;
+2. arquivos alterados;
+3. resumo das correções de responsividade;
+4. telas CLIENT corrigidas;
+5. telas PROFESSIONAL corrigidas;
+6. telas ADMIN corrigidas;
+7. breakpoints/viewport validados;
+8. TypeScript;
+9. testes antes/depois;
+10. eventuais problemas fora do escopo;
+11. git status;
+12. commit/hash;
+13. veredito F21.
+
+IMPORTANTE:
+
+Não iniciar F22.
+
+Não publicar automaticamente.
+
+Não fazer nova auditoria geral.
+
+Não alterar nada além da responsividade.
+
+Executar esta fase de forma concentrada, reutilizando componentes e padrões existentes para minimizar consumo de créditos.
